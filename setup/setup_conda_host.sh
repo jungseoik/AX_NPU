@@ -4,7 +4,7 @@
 # docker가 필수가 아니다. NPU 추론에 필요한 것은:
 #   - qbruntime (Python wheel)  + libqbruntime.so
 #   - /dev/aries0 (드라이버, 호스트에 이미 설치)
-#   - torch/einops/timm (CPU pool head + perception_models)
+#   - torch/einops/timm/huggingface_hub (CPU pool head + vendored PE 모델 코드)
 # 호스트 conda(base)가 Python 3.13이면 qbruntime wheel(cp38~cp312)이 안 맞으므로,
 # Python 3.10~3.12 전용 env를 따로 만든다.
 #
@@ -29,7 +29,7 @@ conda run -n "$ENV" pip install -q numpy pillow "$WHL"
 
 echo "[3/4] pool head + 모델 deps 설치 (CPU torch)"
 conda run -n "$ENV" pip install -q torch torchvision --index-url https://download.pytorch.org/whl/cpu
-conda run -n "$ENV" pip install -q einops timm
+conda run -n "$ENV" pip install -q einops timm huggingface_hub
 
 echo "[4/4] libqbruntime.so 확인"
 if ldconfig -p 2>/dev/null | grep -q qbruntime; then

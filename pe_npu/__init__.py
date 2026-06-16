@@ -18,7 +18,6 @@ from .pe_model import (
     VisionWrapper,
     FeatWrapper,
     PoolWrapper,
-    _add_packages_to_path,
 )
 
 __all__ = [
@@ -29,7 +28,6 @@ __all__ = [
     "VisionWrapper",
     "FeatWrapper",
     "PoolWrapper",
-    "_add_packages_to_path",
     "MXQInferenceHybrid",
 ]
 

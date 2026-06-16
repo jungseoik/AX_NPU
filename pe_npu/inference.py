@@ -3,7 +3,7 @@ MXQInferenceHybrid — PE-Core-L14-336 비전인코더 NPU 추론 (hybrid).
 
 구조 (정확도 0.997 검증, reports/SOLUTION_single_io_compile.md):
   image -> [24 transformer blocks = NPU INT8 (feat MXQ)] -> 토큰피쳐 (1,577,1024)
-        -> [attn_pool + proj = CPU float (perception_models 가중치)] -> 임베딩 (1,1024)
+        -> [attn_pool + proj = CPU float (vendored pe_vendor 가중치)] -> 임베딩 (1,1024)
 
 이유: attn_pool(577토큰->1토큰 cross-attention pooling)은 NPU INT8 양자화에서 구조적으로
 깨진다(full-NPU cos 0.46). 이 작은 head(전체 연산의 0.8%)만 CPU float로 돌린다.
@@ -11,7 +11,7 @@ MXQInferenceHybrid — PE-Core-L14-336 비전인코더 NPU 추론 (hybrid).
 TRTInference(trt_load.py)와 동일 인터페이스: model(image) -> (B,1024).
 입력: torch.Tensor (B,3,336,336)/(3,336,336) 또는 numpy. 전처리(preprocess_image)는 호출측.
 
-요구: qbruntime + NPU(/dev/aries0), perception_models(Product-AI-mono), feat MXQ.
+요구: qbruntime + NPU(/dev/aries0), feat MXQ. 모델 코드는 vendored(pe_npu/pe_vendor)라 외부 레포 불필요.
 """
 from __future__ import annotations
 

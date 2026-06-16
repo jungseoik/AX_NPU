@@ -14,9 +14,9 @@
 > 런타임 라이브러리 경로는 추론/컴파일 시 매번:
 > `export LD_LIBRARY_PATH=/tmp/qbruntime_aries2-v4_v1.2.0_amd64/qbruntime/qbruntime/lib:$LD_LIBRARY_PATH`
 
-> **외부 의존**: PE 모델 코드(`perception_models`)는 복사하지 않고 경로만 참조한다.
-> `pe_npu`는 자기 위치 기준 `../../Product-AI-mono/packages`(컨테이너: `/workspace/Product-AI-mono/packages`)를
-> 자동으로 sys.path에 추가한다. 다른 위치면 `export PE_PACKAGES_PATH=/경로/packages`로 덮어쓴다.
+> **자기완결(self-contained)**: PE 모델 코드는 `pe_npu/pe_vendor/`에 복사(vendor)되어 있어
+> 외부 레포(Product-AI-mono) 없이 이 레포만 clone하면 동작한다. 가중치만 HuggingFace
+> `facebook/PE-Core-L14-336`에서 최초 1회 자동 다운로드된다.
 
 ---
 
@@ -163,6 +163,7 @@ RGB -> resize 336 bilinear -> /255 -> normalize 0.5).
 | 모듈 | 역할 | CLI |
 |------|------|-----|
 | `pe_npu.pe_model` | 모델 로딩 + 컴파일 패치 (`load_pe`, `apply_pe_patches`) | - |
+| `pe_npu.pe_vendor` | Meta PE vision encoder 코드 vendor 복사본 (외부 의존 제거) | - |
 | `pe_npu.preprocess` | `preprocess_image` (resize 336 + normalize 0.5) | - |
 | `pe_npu.calib` | calibration npy 생성 / HWC 변환 | `python -m pe_npu.calib` |
 | `pe_npu.compile` | PE -> MXQ 컴파일 (`compile_pe`, `parse_pe`) | `python -m pe_npu.compile` |
