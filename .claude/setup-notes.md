@@ -1,0 +1,94 @@
+# AX_NPU 셋업 상세 노트
+
+`CLAUDE.md`의 상세 보충 문서. 필요할 때만 참조한다.
+
+## 하드웨어: ARIES MLA100 PCIe Card
+
+(`docs/aries-mla100-pcie-card.md`)
+
+- Mobilint ARIES NPU 기반 PCIe AI 가속 카드, NPU 아키텍처 코드명 **Aries2**
+- 25W 전력, 최대 80 TOPS
+- 호스트 요구사항: PCIe x8 슬롯 1개 이상
+- 지원 OS: x86-64 / aarch64, Ubuntu 20.04 / 22.04 / 24.04 (22.04.5 권장), Windows 10/11
+- 외부 호스트가 필요한 가속기 (SoC 아님)
+
+## 호스트 환경 현황
+
+- OS: Ubuntu 24.04.1 LTS (x86_64) — 지원 범위 내
+- Docker 29.5.3, NVIDIA Container Toolkit 1.19.1
+- GPU: RTX PRO 6000 Blackwell, 드라이버 580.82.07
+- 호스트 Python: miniconda 3.13 (추론 시 conda libstdc++ 충돌 주의 → venv 권장)
+
+## 컴파일 환경 (구축 완료)
+
+- Docker 이미지: `mobilint/qbcompiler:1.1-cuda12.8.1-ubuntu22.04`
+- 상주 컨테이너: `mblt_compiler`
+- 컨테이너 사전 설치: torch 2.7.1+cu128, torchvision 0.22.1, onnx 1.16.2, einops, timm, huggingface_hub, PIL, numpy
+- qbcompiler 1.1.2 설치됨 (`download/qbcompiler-1.1.2+aries2-py3-none-any.whl`)
+- **마운트**: 레포 상위 `/home/gpuadmin/Repo/seoik/AX_NPU` → `/workspace` (Product-AI-mono 참조용). 컨테이너 내 경로는 `/workspace/AX_NPU/...`.
+
+### 컨테이너 (재)생성
+
+```bash
+docker rm -f mblt_compiler 2>/dev/null
+docker run -dit --gpus all --ipc=host --name mblt_compiler \
+  -v /home/gpuadmin/Repo/seoik/AX_NPU:/workspace -w /workspace \
+  mobilint/qbcompiler:1.1-cuda12.8.1-ubuntu22.04 /bin/bash
+docker exec mblt_compiler pip install /workspace/AX_NPU/download/qbcompiler-1.1.2+aries2-py3-none-any.whl
+```
+
+### 컴파일 재현 명령
+
+```bash
+# ResNet50 (기본 동작 검증)
+docker exec -w /workspace/AX_NPU/compile_test mblt_compiler bash -lc 'python model_compile.py \
+  --onnx-path ./resnet50.onnx --calib-data-path ./calib_images --save-path ./resnet50.mxq'
+
+# 커스텀 모델 PE-Core-L14-336 → 상세는 pe_onnx_export/README.md
+```
+
+### 컴파일 검증 결과 (compile_test/)
+
+- `resnet50.onnx` (102MB float32) → `resnet50.mxq` (26MB INT8)
+- MXQ 포맷 0x70000 = MXQv7, Hardware Version = Aries2
+- `inference_scheme="all"` → Single / Multi / Global / GlobalCluster 4모드 빌드 성공
+- calibration은 동작 검증용 랜덤 이미지 사용 (정확도 무의미)
+
+## 추론 환경 (NPU 카드 장착 후 진행)
+
+필요 파일은 `download/`에 이미 받아둠.
+
+1. **드라이버**: `download/mobilint-aries2-driver_v1.13.tar.gz` 또는 `apt install mobilint-aries-driver`
+   - Secure Boot 활성화 시 MOK 등록 필요 (SSH 불가, 모니터/키보드 직접 연결)
+   - 재부팅 후 `ls -al /dev/aries*` → `/dev/aries0` 확인
+   - PCI 인식 확인: `sudo lspci -vd 209f:`
+2. **펌웨어**: `aries_flash_firmware update` (인터넷 필요)
+3. **런타임**: `download/qbruntime_aries2-v4_v1.2.0_amd64.tar.gz` (x86_64용) 또는 `apt install mobilint-qb-runtime` / `pip install mobilint-qb-runtime`
+   - arm64 파일은 이 호스트(x86_64)엔 불필요
+4. **유틸리티**: `apt install mobilint-cli` (상태 확인, MXQ 버전, 벤치마크)
+5. **추론**: `.mxq`를 NPU에 올려 실행 (`docs/tutorial_resnet50.md`, `docs/programming_guide.md`)
+
+## 버전 호환성
+
+- 받아둔 조합: 드라이버 1.13 / 런타임 1.2.0 / MXQv7 → 상호 호환
+- 호환표상 드라이버 1.11+, 런타임 1.0.0+가 MXQv7 지원
+- 참조: `docs/compatibility.md`
+
+## 양자화 / Calibration 상세
+
+- ARIES NPU는 정수(INT8/INT4) 연산 전용 하드웨어. float 모델을 NPU에 올리려면 양자화 컴파일 필수. bfloat16/float16 네이티브 추론 경로 없음.
+- `weight_dtype`(float32/float16), `CompileConfig.dtype`(float)은 NPU 실행 정밀도가 아니라 **컴파일/calibration 과정의 호스트 연산 정밀도**. 양자화를 끄는 옵션이 아님.
+- float 그대로 돌리려면 NPU가 아니라 GPU/CPU에서 원본 모델 실행.
+- 정확도 손실 줄이기: 8bit 유지(4bit는 손실 큼), per-channel + percentile calibration, 필요 시 SpinQuant/SearchWeightScale.
+- calibration data = 양자화 정수 눈금 범위를 정하려고 모델에 흘려보내는 대표 입력 샘플.
+  - 정확도 중요 → 실제 도메인 데이터(예: ImageNet)
+  - 컴파일 동작 검증만 → `mxq_compile(use_random_calib=True)` 한 줄로 충분
+- 양자화 config 상세: `../mblt-sdk-tutorial/compilation/_guides/01_about_quantization_config.KR.md`
+
+## 참고 자료 위치
+
+- SDK 공식 문서: `docs/`
+- 컴파일 튜토리얼/모델별 예제: `../mblt-sdk-tutorial/compilation/` (image_classification, llm, vlm, stt, object_detection 등)
+- 사전 컴파일 모델: `../mblt-model-zoo/`
+- 다운로드 센터: https://dl.mobilint.com (계정 필요)
+- 받아둔 SDK 파일: `download/` / 컴파일 작업 폴더: `compile_test/`
