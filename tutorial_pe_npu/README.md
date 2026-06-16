@@ -48,6 +48,21 @@ docker exec mblt_compiler pip install onnxruntime
 
 > NPU 장착 후 0-2 + 4단계를 한 번에 돌리려면 `bash ../setup/run_npu_tests.sh`.
 
+### 0-3. (대안) docker 없이 호스트 conda로 — **추론 검증됨 (cos 0.997)**
+docker는 필수가 아니다. NPU 드라이버/`libqbruntime.so`는 호스트에 있고, Python 3.10~3.12 conda
+env만 만들면 호스트에서 동일하게 추론된다(호스트 base conda가 3.13이면 qbruntime wheel(cp38~cp312)이
+안 맞으므로 전용 env를 만든다).
+```bash
+bash ../setup/setup_conda_host.sh          # env(pe_npu_host, py3.11) + qbruntime + torch/einops/timm
+conda activate pe_npu_host
+cd /home/gpuadmin/Repo/seoik/AX_NPU/AX_NPU
+python tutorial_pe_npu/download_images.py
+python tutorial_pe_npu/demo_inference.py    # docker exec 없이 바로 → cos 0.9973
+```
+> 이 경우 아래 단계들의 `docker exec -w /workspace/AX_NPU mblt_compiler python X` 명령은
+> conda env 활성화 후 `python X`로 그대로 대체하면 된다(컨테이너 경로 `/workspace/AX_NPU` =
+> 호스트 `AX_NPU/AX_NPU`). 컴파일(2단계)도 동일하게 호스트에서 가능.
+
 빠른 동작 확인 (패키지 import):
 ```bash
 docker exec -w /workspace/AX_NPU mblt_compiler python -c "import pe_npu; print('pe_npu OK')"
