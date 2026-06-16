@@ -216,3 +216,34 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# NPU 컴파일 산출물 (대용량 - 재현 가능하므로 커밋 제외)
+pe_npu/out/
+_dev/compile_test/*.onnx
+_dev/compile_test/*.mxq
+_dev/compile_test/*.mblt
+_dev/compile_test/calib_images/
+pe_onnx_export/out/
+pe_onnx_export/coco/
+pe_onnx_export/calib_coco/
+pe_onnx_export/calib_coco_hwc/
+pe_onnx_export/calib_imagenet/
+
+# qbcompiler 임시 작업 폴더 (UUID, 컴파일 잔여물)
+[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-*/
+**/*.npy
+**/__pycache__/
+tutorial_pe_npu/images/
+tutorial_pe_npu/out/
+
+# === NPU 작업: 대용량/데이터 제외 (커밋 X, 재생성/다운로드) ===
+download/
+*.mxq
+*.onnx
+*.mblt
+*.npy
+*.whl
+*.tar.gz
+pe_npu/out/
+tutorial_pe_npu/images/
+_dev/compile_test/
