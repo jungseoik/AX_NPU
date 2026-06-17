@@ -185,6 +185,7 @@ RGB -> resize 336 bilinear -> /255 -> normalize 0.5).
 | 파일 | 설명 |
 |------|------|
 | `demo_inference.ipynb` | **(권장)** 추론 데모 노트북 — 이미지/유사도 히트맵/정확도 시각화 |
+| `multicore_benchmark.ipynb` | 멀티코어 처리량 벤치 — 동기 vs async vs 멀티스레딩 (single 모드 8코어, x4.5) |
 | `download_images.py` | 공개 COCO 예제 이미지 5장 다운로드 |
 | `demo_inference.py` | 추론 데모 스크립트 (비대화형/CI용, 텍스트 출력) |
 | `images/` | 다운로드된 예제 이미지 (gitignore) |

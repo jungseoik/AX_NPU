@@ -77,7 +77,8 @@ def compile_pe(mode: str = "feat", save_path: str = DEFAULT_SAVE,
                calib_path: str = None, calib_output: int = 1, calib_method: int = 1,
                device: str = "cpu", use_et: bool = False,
                act16: str = None, weight16: str = None, act16_exclude: str = None,
-               model_name: str = "PE-Core-L14-336"):
+               model_name: str = "PE-Core-L14-336", inference_scheme: str = "single",
+               bit4: float = 0.0):
     """PE vision encoder를 MXQ로 컴파일.
 
     mode        : 'feat'(trunk, hybrid 권장) | 'pool' | 'full'.
@@ -96,7 +97,7 @@ def compile_pe(mode: str = "feat", save_path: str = DEFAULT_SAVE,
     common = dict(
         model=wrapper, backend="torch", feed_dict=fd, save_path=save_path,
         target_device="aries2", yolo_decode_include=True,
-        inference_scheme="single", device=device,
+        inference_scheme=inference_scheme, device=device,
     )
 
     extra = {}
@@ -117,6 +118,17 @@ def compile_pe(mode: str = "feat", save_path: str = DEFAULT_SAVE,
                 activation_16bits=act_names, weight_16bits=w_names,
             )
         )
+
+    if bit4 and bit4 > 0:
+        # mixed-precision weight 양자화: weight의 bit4 비율을 4비트로, 나머지는 8비트.
+        # (docs 미기재 실험적 기능. importance threshold로 중요 레이어는 자동 고비트 유지)
+        from qbcompiler import BitConfig
+        T = BitConfig.Transformer
+        MP = T.model_fields["mixed_precision"].annotation
+        extra["bit_config"] = BitConfig(
+            transformer=T(mixed_precision=MP(apply=True, bit_4=bit4, bit_8=1.0 - bit4))
+        )
+        print(f"[mixed-precision] weight bit_4={bit4}  bit_8={1.0 - bit4}")
 
     if calib_path:
         from qbcompiler import CalibrationConfig
@@ -183,6 +195,10 @@ def main():
     ap.add_argument("--weight16", default=None)
     ap.add_argument("--act16-exclude", default=None)
     ap.add_argument("--dump-names", default=None, help="parse 모드: operator 목록 덤프 파일")
+    ap.add_argument("--scheme", default="single", choices=["single", "multi", "global4", "global8"],
+                    help="코어 모드(컴파일시 고정): single(기본)|multi(4-batch)|global4|global8(단건 latency↓)")
+    ap.add_argument("--bit4", type=float, default=0.0,
+                    help="mixed-precision: weight의 이 비율을 4비트로(0~1, 실험적). 예 0.5")
     ap.add_argument("--feat-only", action="store_true",
                     help="attn_pool 전 forward_features(1,577,1024) (hybrid trunk, 권장)")
     ap.add_argument("--pool-only", action="store_true", help="pool 후 proj 전 출력")
@@ -196,7 +212,8 @@ def main():
         compile_pe(mode=wmode, save_path=args.save, calib_path=args.calib_data_path,
                    calib_output=args.calib_output, calib_method=args.calib_method,
                    device=args.device, use_et=args.use_et,
-                   act16=args.act16, weight16=args.weight16, act16_exclude=args.act16_exclude)
+                   act16=args.act16, weight16=args.weight16, act16_exclude=args.act16_exclude,
+                   inference_scheme=args.scheme, bit4=args.bit4)
 
 
 if __name__ == "__main__":
