@@ -126,16 +126,27 @@ emb = model.infer(x[None])                     # (1, 1024) 비전 임베딩
 
 ## 4. 추론 (예제 이미지 + 유사도 확인)
 
+### 4-A. Jupyter 노트북 (권장) — `demo_inference.ipynb`
+셀 단위로 돌리며 **이미지·유사도 히트맵·정확도 막대그래프를 인라인으로** 바로 본다.
+호스트 conda(0-3) 셋업이면 `LD_LIBRARY_PATH`도 불필요(libqbruntime이 ldconfig 등록됨).
 ```bash
-# 4-1. 예제 이미지 다운로드 (공개 COCO 이미지 5장, 로그인 불필요)
-docker exec -w /workspace/AX_NPU/tutorial_pe_npu mblt_compiler python download_images.py
-# 4-2. 추론 데모: NPU 임베딩 추출 → 이미지 간 유사도 + 원본(pth) 대비 정확도
-docker exec -w /workspace/AX_NPU/tutorial_pe_npu mblt_compiler bash -lc '
-  export LD_LIBRARY_PATH=/tmp/qbruntime_aries2-v4_v1.2.0_amd64/qbruntime/qbruntime/lib:$LD_LIBRARY_PATH
-  python demo_inference.py'
+conda activate pe_npu_host
+cd tutorial_pe_npu
+jupyter notebook demo_inference.ipynb      # 또는 VS Code/Jupyter Lab에서 열기
+```
+노트북 흐름: 0 환경체크 → 1 이미지 준비/미리보기 → 2 전처리+NPU추론 → 3 유사도 히트맵
+→ 4 원본(pth) 대비 정확도 → 5 내 코드에서 쓰기. 커널은 `pe_npu_host` env 선택.
+
+### 4-B. 스크립트 (비대화형/CI용) — `demo_inference.py`
+시각화 없이 텍스트로 같은 결과를 출력. 컨테이너/원격 등 노트북 띄우기 어려운 환경용.
+```bash
+# 예제 이미지 다운로드 (공개 COCO 5장, 로그인 불필요)
+python download_images.py
+# 추론 데모 (호스트 conda면 그대로, 컨테이너면 docker exec + LD_LIBRARY_PATH로 감싼다)
+python demo_inference.py
 ```
 
-데모 출력:
+데모 출력(노트북·스크립트 공통):
 - **이미지 간 코사인 유사도 매트릭스** — 비슷한 이미지는 높고 다른 이미지는 낮게 나오는지
 - **원본 PyTorch 대비 NPU 임베딩 cos** — 양자화 정확도 (평균 0.99+ 면 정상, 검증값 0.997)
 
@@ -173,8 +184,9 @@ RGB -> resize 336 bilinear -> /255 -> normalize 0.5).
 
 | 파일 | 설명 |
 |------|------|
+| `demo_inference.ipynb` | **(권장)** 추론 데모 노트북 — 이미지/유사도 히트맵/정확도 시각화 |
 | `download_images.py` | 공개 COCO 예제 이미지 5장 다운로드 |
-| `demo_inference.py` | 전처리 -> NPU 추론 -> 유사도/정확도 확인 (pe_npu import) |
+| `demo_inference.py` | 추론 데모 스크립트 (비대화형/CI용, 텍스트 출력) |
 | `images/` | 다운로드된 예제 이미지 (gitignore) |
 
 상세 배경/원리: `../reports/SOLUTION_single_io_compile.md`, `../reports/quantization_reference.md`
