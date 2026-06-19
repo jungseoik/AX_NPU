@@ -41,13 +41,13 @@ docker exec mblt_compiler pip install /workspace/AX_NPU/download/qbcompiler-1.1.
 
 ```bash
 # ResNet50 (기본 동작 검증)
-docker exec -w /workspace/AX_NPU/compile_test mblt_compiler bash -lc 'python model_compile.py \
+docker exec -w /workspace/AX_NPU/_dev/compile_test mblt_compiler bash -lc 'python model_compile.py \
   --onnx-path ./resnet50.onnx --calib-data-path ./calib_images --save-path ./resnet50.mxq'
 
-# 커스텀 모델 PE-Core-L14-336 → 상세는 pe_onnx_export/README.md
+# 커스텀 모델 PE-Core-L14-336 → 상세는 tutorial_pe_npu/README.md (python -m pe_npu.compile)
 ```
 
-### 컴파일 검증 결과 (compile_test/)
+### 컴파일 검증 결과 (_dev/compile_test/)
 
 - `resnet50.onnx` (102MB float32) → `resnet50.mxq` (26MB INT8)
 - MXQ 포맷 0x70000 = MXQv7, Hardware Version = Aries2
@@ -91,4 +91,4 @@ docker exec -w /workspace/AX_NPU/compile_test mblt_compiler bash -lc 'python mod
 - 컴파일 튜토리얼/모델별 예제: `../mblt-sdk-tutorial/compilation/` (image_classification, llm, vlm, stt, object_detection 등)
 - 사전 컴파일 모델: `../mblt-model-zoo/`
 - 다운로드 센터: https://dl.mobilint.com (계정 필요)
-- 받아둔 SDK 파일: `download/` / 컴파일 작업 폴더: `compile_test/`
+- 받아둔 SDK 파일: `download/` / PE 컴파일·추론 패키지: `pe_npu/` / 실험 보관: `_dev/compile_test/`

@@ -1,37 +1,45 @@
 # AX_NPU 프로젝트
 
-Mobilint **ARIES MLA100 PCIe Card** (NPU 아키텍처 Aries2) 에서 딥러닝 모델을 컴파일·추론하는 프로젝트.
-호스트: Ubuntu 24.04 / x86_64 / GPU RTX PRO 6000.
+Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코더**를 NPU로 추론.
+호스트: Ubuntu / Core Ultra 9 285K(24T) / RTX PRO 6000 / NPU 장착(`/dev/aries0`).
 
 ## 현재 상태
 
-- **컴파일 환경: 구축·검증 완료.** NPU 카드 없이 Docker+GPU만으로 동작.
-  - ResNet50 ONNX → MXQ(v7) 컴파일 성공 (`compile_test/`)
-  - 커스텀 모델 PE-Core-L14-336 vision encoder → MXQ(v7) 컴파일 성공 (`pe_onnx_export/`). onnxsim으로 ONNX If 노드 제거가 필수였음.
-    - `..._vision.mxq` (single, 314MB), `..._vision_all.mxq` (single/multi/global4/global8 전부, 338MB)
-- **NPU 서비스 준비: 코드 완료, 실행은 카드 후.** 목표 = `perception_encoder`의 비전인코더(TensorRT)를 NPU로 대체하는 신규 서비스 모듈. (`pe_npu_service/`)
-  - `MXQInference` = `TRTInference` 드롭인 대체(qbruntime), 출력 비교 스크립트, NPU 단계별 점검 스크립트 준비됨
-- **추론 환경: 미구축.** NPU 카드가 아직 미장착. 카드 장착 후 드라이버→펌웨어→런타임 설치 필요.
-- **컨테이너 마운트 주의**: `mblt_compiler`는 현재 레포 상위(`/home/gpuadmin/Repo/seoik/AX_NPU`)를 `/workspace`로 마운트한다(Product-AI-mono 참조용). 따라서 컨테이너 내 경로는 `/workspace/AX_NPU/...`.
+- **컴파일·추론 모두 동작.** PE trunk(24 block)=NPU INT8, attn_pool head=CPU float = **hybrid**, 원본 pth 대비 **cos 0.997**.
+- **자기완결(self-contained)**: PE 모델 코드는 `pe_npu/pe_vendor/`에 vendor 복사 → 외부 레포(Product-AI-mono) 의존 없음. 가중치만 HF `facebook/PE-Core-L14-336` 자동 다운로드.
+- 핵심 패키지 = **`pe_npu/`**.
 
-## 헷갈리지 말 것 (핵심 규칙)
+## pe_npu 패키지
 
-- **추론은 NPU 카드가 있어야 가능.** 지금은 컴파일까지만 된다. 커스텀 모델도 "컴파일(=NPU 호환성 검증)"은 지금 가능하나 "실제 추론"은 카드 장착 후.
-- **NPU에 올리려면 양자화(INT8/INT4) 필수.** ARIES는 정수 연산 전용 하드웨어라 float/bf16 네이티브 추론 경로가 없다. `weight_dtype`/`dtype=float`는 양자화를 끄는 옵션이 아니라 컴파일 과정의 호스트 연산 정밀도일 뿐.
-- 컴파일은 상주 Docker 컨테이너 **`mblt_compiler`** 에서 수행 (qbcompiler 1.1.2 설치됨).
-- 받아둔 SDK 파일은 `download/`, 컴파일 작업물은 `compile_test/`.
+| 모듈 | 역할 |
+|------|------|
+| `compile` | PE→MXQ 컴파일. **`python -m pe_npu.compile --help`** (옵션: `--feat-only`/`--scheme`/`--bit4`/`--calib-data-path`/`--device` 등) |
+| `inference` | `MXQInferenceHybrid`(NPU trunk+CPU pool). `.from_hf()` = 미리 컴파일된 자산 사용 |
+| `calib` / `preprocess` / `pe_model` / `export_pool_head` / `assets` / `pe_vendor` | calib 생성 / 전처리 / 모델 로딩·패치 / pool head 추출 / HF 다운로드 / vendor된 PE 코드 |
 
-## 상세 참조
+## 추론 2가지 방식
 
-전체 현황 대시보드·디렉토리·카드 후 흐름 → **`README.md`** (루트)
-NPU 카드 장착 후 통합 테스트 → **`pe_npu_service/run_npu_tests.sh`**
-설치 단계·재현 명령·버전 호환·양자화 상세는 → **`.claude/setup-notes.md`**
-커스텀 모델(PE) 변환 재현 → **`pe_onnx_export/README.md`**
-NPU 서비스 테스트/통합(체크리스트 포함) → **`pe_npu_service/README.md`**
-SDK 공식 문서 → `docs/` · 컴파일 예제 → `../mblt-sdk-tutorial/compilation/`
+- **옵션 A(직접 컴파일)**: calib → `python -m pe_npu.compile --feat-only ...` → 추론. **qbcompiler**(docker `mblt_compiler`) 필요. 커스텀 calib/해상도·실험용.
+- **옵션 B(가져와 쓰기)**: `MXQInferenceHybrid.from_hf("PIA-SPACE-LAB/MXQ_NPU")`. **qbruntime만** 있으면 됨(qbcompiler·원본 가중치 불필요). 운영·빠른 시작.
 
-## Skill (참조 규칙)
+## 헷갈리지 말 것
 
-`mblt-model-zoo` / `mblt-sdk-tutorial` 레포 작업 시 해당 작업 규칙은 `.claude/skills/` 에 복사해 둠.
-- `.claude/skills/mblt-model-zoo.md` — Model Zoo 레포 편집/검증 규칙
-- `.claude/skills/mblt-sdk-tutorial.md` — SDK 튜토리얼 레포 편집/검증 규칙
+- **컴파일은 NPU가 아니라 호스트 CPU/GPU(`--device`)에서** 한다. NPU는 추론 전용.
+- **NPU는 INT8 전용.** 양자화를 더 못 낮춘다(bit4 mixed-precision = no-op 확인). → `reports/NPU_batch_latency.md`
+- 컴파일 = docker `mblt_compiler`(qbcompiler 1.1.2), 추론 = 호스트 conda `pe_npu_host`(qbruntime, py3.10~3.12) 또는 docker.
+- SDK(`download/`)는 비공개라 gitignore — 사람이 직접 배치. MXQ/pool head도 gitignore(HF로 배포).
+
+## 문서 라우팅
+
+- **따라하기**(설치~컴파일~추론, 옵션 A/B): `tutorial_pe_npu/README.md`
+- **신규 서버 NPU 세팅**: `.claude/skills/npu-setup/` (clone 후 `mobilint-cli status`까지)
+- **분석/원리**:
+  - `reports/SOLUTION_single_io_compile.md` — 단일 입출력 컴파일 + hybrid 정확도(0.997) 해결
+  - `reports/NPU_batch_latency.md` — 배치 지연/멀티코어/Multi 모드/bit4 양자화 한계 (실측)
+  - `reports/compile_benchmark.md` — 컴파일 시간 GPU vs CPU
+  - `reports/quantization_reference.md`, `QUANT_TUNING_guide.md` — 양자화 배경
+- Mobilint SDK 공식 문서: `docs/` (멀티코어 `docs/multicore.md` 등)
+
+## Skill
+
+`.claude/skills/npu-setup`(신규 서버 세팅), `mblt-model-zoo.md` / `mblt-sdk-tutorial.md`(해당 레포 작업 규칙).
