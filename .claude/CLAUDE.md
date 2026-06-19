@@ -1,7 +1,10 @@
 # AX_NPU 프로젝트
 
 Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코더**를 NPU로 추론.
-호스트: Ubuntu / Core Ultra 9 285K(24T) / RTX PRO 6000 / NPU 장착(`/dev/aries0`).
+호스트: Ubuntu + NPU 장착 서버. 이 레포는 NPU 있는 여러 서버로 옮겨다니며 쓰는 것을 전제로 한다.
+
+> 아래 결과(cos 0.997 등)를 **검증했던 테스트 환경** 스펙: Ubuntu / Core Ultra 9 285K(24T) / RTX PRO 6000 / NPU `/dev/aries0`.
+> 이건 그 당시 한 서버에서 기록한 값일 뿐, 현재 작업 중인 서버 스펙과 다를 수 있다(CPU/GPU 유무/NPU 개수/OS). 실제 스펙은 각 서버에서 직접 확인할 것.
 
 ## 현재 상태
 
