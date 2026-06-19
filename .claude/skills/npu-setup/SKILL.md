@@ -75,4 +75,9 @@ sudo bash .claude/skills/npu-setup/setup_npu_cli.sh
 
 `mobilint-cli status`까지 됐으면 NPU 자체는 준비 완료. 모델 추론(Python)까지 하려면:
 - `bash setup/setup_conda_host.sh` (conda env + qbruntime + torch/einops/timm/huggingface_hub)
-- `tutorial_pe_npu/README.md` (PE 비전인코더 calib → 컴파일 → hybrid 추론, cos 0.997)
+- 그 다음 추론은 두 가지 방식 중 선택 (`tutorial_pe_npu/README.md`):
+  - **옵션 B (빠름, 권장)**: 컴파일러 없이 HF에서 미리 컴파일된 자산을 받아 추론.
+    `pe_npu.MXQInferenceHybrid.from_hf()` → `PIA-SPACE-LAB/MXQ_NPU`에서 MXQ+pool head 자동 다운로드.
+    NPU + qbruntime + 인터넷만 있으면 됨 (qbcompiler·원본 PE 가중치 불필요).
+  - **옵션 A (직접 컴파일)**: calib → `python -m pe_npu.compile` → 추론. qbcompiler(docker) 필요.
+    커스텀 calib/해상도·컴파일 실험용. cos 0.997.

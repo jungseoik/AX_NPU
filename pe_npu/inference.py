@@ -34,10 +34,16 @@ DEFAULT_FEAT_MXQ = os.path.join(HERE, "out", "pe_feat.mxq")
 
 
 class MXQInferenceHybrid:
-    """NPU trunk(feat MXQ) + CPU pool/proj head. TRTInference 호환."""
+    """NPU trunk(feat MXQ) + CPU pool/proj head. TRTInference 호환.
+
+    pool head(CPU)는 두 가지 소스 중 하나로 복원한다:
+      - pool_head_path 지정 → 추출된 가중치(pe_pool_head.pt)만 로드. PE 전체 가중치
+        (HF 2GB+) 다운로드 없이 동작 = 옵션 B(가져와 쓰기).
+      - None(기본) → load_pe로 원본 PE를 로드해 attn_pool/proj 사용 = 옵션 A(직접 컴파일).
+    """
 
     def __init__(self, feat_mxq_path: str = DEFAULT_FEAT_MXQ, model_name: str = "PE-Core-L14-336",
-                 device_id: int = 0):
+                 device_id: int = 0, pool_head_path: str = None):
         if not _HAS_TORCH:
             raise RuntimeError("torch 필요 (CPU pool head 연산)")
 
@@ -46,10 +52,36 @@ class MXQInferenceHybrid:
         self.model = qbruntime.Model(feat_mxq_path)
         self.model.launch(self.acc)
 
-        # --- CPU: pool head (attn_pool + proj). 원본(미패치) 가중치 사용 ---
-        clip = load_pe(model_name=model_name, mode="clip", patch=False)
-        self.visual = clip.visual  # _pool(attn_pool) + proj (trunk는 NPU가 대체)
+        # --- CPU: pool head (attn_pool + proj) ---
+        if pool_head_path:
+            # 옵션 B: 구조만(가중치 X) 만들고 추출본 로드 → HF 전체 가중치 다운로드 회피
+            from .pe_vendor import pe as pe_mod
+            ckpt = torch.load(pool_head_path, map_location="cpu")
+            skel = pe_mod.CLIP.from_config(
+                ckpt.get("model_name", model_name), device="cpu", load_default_weights=False
+            ).float().eval()
+            skel.visual.attn_pool.load_state_dict(ckpt["attn_pool"])
+            if ckpt.get("proj") is not None and skel.visual.proj is not None:
+                with torch.no_grad():
+                    skel.visual.proj.copy_(ckpt["proj"])
+            self.visual = skel.visual
+        else:
+            # 옵션 A: 원본(미패치) PE 전체에서 attn_pool/proj 사용
+            self.visual = load_pe(model_name=model_name, mode="clip", patch=False).visual
         self.image_size = IMAGE_SIZE
+
+    @classmethod
+    def from_hf(cls, repo_id: str = None, model_name: str = "PE-Core-L14-336",
+                device_id: int = 0, revision: str = None):
+        """옵션 B: HF에서 미리 컴파일된 MXQ + pool head를 받아 추론기를 구성.
+
+        qbcompiler / 원본 PE 전체 가중치 없이 동작한다. repo_id 미지정 시 기본 PIA-SPACE-LAB/MXQ_NPU.
+        """
+        from . import assets
+        repo = repo_id or assets.HF_REPO
+        feat = assets.ensure_feat_mxq(repo_id=repo, revision=revision)
+        pool = assets.ensure_pool_head(repo_id=repo, revision=revision)
+        return cls(feat_mxq_path=feat, model_name=model_name, device_id=device_id, pool_head_path=pool)
 
     def __call__(self, *args, **kwargs):
         return self.infer(*args, **kwargs)

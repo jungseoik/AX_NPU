@@ -20,6 +20,36 @@
 
 ---
 
+## 사용 방식 2가지 (먼저 선택)
+
+| | 옵션 A — 직접 컴파일 | 옵션 B — 가져와 쓰기 (빠름) |
+|---|---|---|
+| 흐름 | calib → 컴파일 → 추론 (아래 0~5 전체) | HF에서 미리 컴파일된 자산 받아 추론만 |
+| 필요한 것 | **qbcompiler**(컴파일러) + 원본 PE 가중치 + GPU | **qbruntime**(런타임)만. 컴파일러·원본 가중치 불필요 |
+| 용도 | 컴파일 실험, 커스텀 calib/해상도, 재현 | 운영·빠른 시작 (NPU만 있으면 바로 추론) |
+| 산출물 출처 | 내가 컴파일 | `PIA-SPACE-LAB/MXQ_NPU` (HF) |
+
+**MXQ는 aries2 아키텍처 바이너리라 어디서 컴파일하든 동일**하다. 그래서 한 번 컴파일해
+HF에 올려두면(옵션 B) 다른 사람은 그냥 받아 쓰면 된다.
+
+### 옵션 B 빠른 시작 (qbcompiler 불필요)
+```bash
+# 런타임 conda env만 있으면 됨 (setup/setup_conda_host.sh)
+conda activate pe_npu_host
+python -c "
+import numpy as np, pe_npu
+m = pe_npu.MXQInferenceHybrid.from_hf()          # PIA-SPACE-LAB/MXQ_NPU에서 MXQ+pool head 자동 다운로드
+x = pe_npu.preprocess_image('tutorial_pe_npu/images/cat1.jpg')
+print(m.infer(x[None]).shape)                    # (1, 1024)
+"
+```
+> 옵션 B는 NPU(`/dev/aries0`) + qbruntime + 인터넷(최초 1회 HF 다운로드)만 필요하다.
+> 직접 만든 자산을 HF에 올리려면: `python -m pe_npu.export_pool_head` 후 `python setup/upload_assets_to_hf.py`.
+
+아래 0~5단계는 **옵션 A(직접 컴파일)** 기준이다. 옵션 B면 0(드라이버/런타임)만 하고 위 빠른 시작으로 가면 된다.
+
+---
+
 ## 0. 사전 준비 (신규 서버)
 
 ### 0-1. NPU 하드웨어/드라이버 인식 확인
@@ -178,7 +208,9 @@ RGB -> resize 336 bilinear -> /255 -> normalize 0.5).
 | `pe_npu.preprocess` | `preprocess_image` (resize 336 + normalize 0.5) | - |
 | `pe_npu.calib` | calibration npy 생성 / HWC 변환 | `python -m pe_npu.calib` |
 | `pe_npu.compile` | PE -> MXQ 컴파일 (`compile_pe`, `parse_pe`) | `python -m pe_npu.compile` |
-| `pe_npu.inference` | `MXQInferenceHybrid` (NPU trunk + CPU pool) | - |
+| `pe_npu.inference` | `MXQInferenceHybrid` (NPU trunk + CPU pool). `.from_hf()` = 옵션 B | - |
+| `pe_npu.export_pool_head` | pool head 가중치 추출 (옵션 B 배포용, ~53MB) | `python -m pe_npu.export_pool_head` |
+| `pe_npu.assets` | HF에서 MXQ/pool head 다운로드 (옵션 B) | - |
 
 ## 튜토리얼 파일
 
