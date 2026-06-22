@@ -11,6 +11,7 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 - **컴파일·추론 모두 동작.** PE trunk(24 block)=NPU INT8, attn_pool head=CPU float = **hybrid**, 원본 pth 대비 **cos 0.997**.
 - **자기완결(self-contained)**: PE 모델 코드는 `pe_npu/pe_vendor/`에 vendor 복사 → 외부 레포(Product-AI-mono) 의존 없음. 가중치만 HF `facebook/PE-Core-L14-336` 자동 다운로드.
 - 핵심 패키지 = **`pe_npu/`**.
+- **멀티카드**: NPU 여러 대면 채널 라운드로빈 분산으로 처리량↑(7대=56코어 실측, `reports/NPU_multicard_62ch_benchmark.md`). 고채널 병목은 CPU 전처리(`reports/NPU_preprocess_parallel.md`). `MXQInferenceHybrid`는 단일 카드(`device_id`)용.
 
 ## pe_npu 패키지
 
@@ -39,6 +40,8 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 - **분석/원리**:
   - `reports/SOLUTION_single_io_compile.md` — 단일 입출력 컴파일 + hybrid 정확도(0.997) 해결
   - `reports/NPU_batch_latency.md` — 배치 지연/멀티코어/Multi 모드/bit4 양자화 한계 (실측)
+  - `reports/NPU_multicard_62ch_benchmark.md` — 멀티카드(7×ARIES=56코어) 62채널 분산 추론 지연 (실측)
+  - `reports/NPU_preprocess_parallel.md` — 고채널 병목인 CPU 전처리 병렬화 벤치
   - `reports/compile_benchmark.md` — 컴파일 시간 GPU vs CPU
   - `reports/quantization_reference.md`, `QUANT_TUNING_guide.md` — 양자화 배경
 - Mobilint SDK 공식 문서: `docs/` (멀티코어 `docs/multicore.md` 등)

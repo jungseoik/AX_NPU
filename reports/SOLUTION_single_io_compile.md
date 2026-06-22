@@ -11,7 +11,7 @@
 | 파서 리포트 | Supported 385.49 GOPS / **Unsupported 0.00 GOPS** (전 연산 지원) |
 | NPU 추론 | `/dev/aries0`에서 image 1장 → embedding 정상 출력 |
 | 원본 대비 정확도 | pth vs NPU **cos 0.936** (random calib 기준), pth vs onnx 1.000 |
-| 산출물 | `pe_npu/compile.py` (구 `pe_onnx_export/pe_torch_compile.py`, `_dev/`에 원본 보존), `pe_npu/out/pe_feat.mxq` |
+| 산출물 | `pe_npu/compile.py` (옛 ONNX 경로 `pe_torch_compile.py`/`export_pe_onnx.py`는 폐기 — git 히스토리 참조), `pe_npu/out/pe_feat.mxq` |
 
 ## 왜 됐나 (핵심)
 
@@ -24,7 +24,7 @@ op 미지원이 아니었다 — qbcompiler는 101개 op(RoPE 포함) 전부 지
 
 ## 적용한 5개 패치 (모두 SDK 무수정, 모델 객체에만 적용)
 
-`pe_npu/pe_model.py`의 `apply_pe_patches()` 참조 (구 `pe_torch_compile.py`, 원본은 `_dev/`). grid 24×24(336/14) 고정 전제.
+`pe_npu/pe_model.py`의 `apply_pe_patches()` 참조. grid 24×24(336/14) 고정 전제.
 
 1. **RoPE 상수화 + nn.Module 호출 제거**
    - `Rope2D`는 nn.Module이 아닌 순수 클래스인데 내부에 `self.rope`(nn.Module)를 호출 →

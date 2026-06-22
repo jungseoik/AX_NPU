@@ -2,8 +2,8 @@
 
 > **경로 갱신(패키지 재편 후)**: 컴파일 스크립트 `pe_onnx_export/pe_torch_compile.py` →
 > 패키지 `pe_npu/compile.py` (CLI `python -m pe_npu.compile`, `-w /workspace/AX_NPU`에서 실행).
-> 튜닝/비교용 보조 스크립트(`compare_backends.py`, `mxq_inference.py`, `prepare_calib.py`,
-> 원본 `pe_torch_compile.py`/`export_pe_onnx.py`)는 모두 `_dev/`로 이동(원본 보존).
+> 옛 보조 스크립트(`compare_backends.py`, `mxq_inference.py`, `prepare_calib.py`,
+> ONNX 경로 `pe_torch_compile.py`/`export_pe_onnx.py`)는 모두 `pe_npu/` 패키지로 흡수되며 폐기됨(git 히스토리 참조).
 > calibration 데이터는 `pe_npu.calib`로 생성(`python -m pe_npu.calib --hwc`).
 > 아래 옛 명령들은 이 매핑으로 치환해 읽을 것.
 

@@ -47,7 +47,7 @@ docker exec -w /workspace/AX_NPU/_dev/compile_test mblt_compiler bash -lc 'pytho
 # 커스텀 모델 PE-Core-L14-336 → 상세는 tutorial_pe_npu/README.md (python -m pe_npu.compile)
 ```
 
-### 컴파일 검증 결과 (_dev/compile_test/)
+### 컴파일 검증 결과 (구 `_dev/compile_test/` — gitignore된 로컬 스크래치, 현재 제거됨. ResNet50 동작검증 기록만 남김)
 
 - `resnet50.onnx` (102MB float32) → `resnet50.mxq` (26MB INT8)
 - MXQ 포맷 0x70000 = MXQv7, Hardware Version = Aries2

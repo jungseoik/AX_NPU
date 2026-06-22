@@ -5,9 +5,9 @@ bit_4 mixed-precision 양자화 스윕 벤치: 여러 feat MXQ에 대해
 를 한 번에 측정해 표로 출력. pth 기준은 한 번만 로드.
 
 사용:
-  python _dev/bench_quant.py <mxq1>:<label1> <mxq2>:<label2> ...
+  python reports/bench_quant.py <mxq1>:<label1> <mxq2>:<label2> ...
 예:
-  python _dev/bench_quant.py pe_npu/out/pe_feat.mxq:INT8 pe_npu/out/pe_feat_b4_50.mxq:bit4=0.5
+  python reports/bench_quant.py pe_npu/out/pe_feat.mxq:INT8 pe_npu/out/pe_feat_b4_50.mxq:bit4=0.5
 """
 import sys, os, time, glob
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -52,7 +52,7 @@ def bench_latency(mxq, x_hwc, N=32):
 def main():
     specs = [s.rsplit(":", 1) for s in sys.argv[1:]]
     if not specs:
-        raise SystemExit("사용: python _dev/bench_quant.py <mxq>:<label> ...")
+        raise SystemExit("사용: python reports/bench_quant.py <mxq>:<label> ...")
     if not IMAGES:
         raise SystemExit("측정 이미지 없음 (tutorial_pe_npu/images). download_images.py 먼저.")
 

@@ -87,7 +87,7 @@ bash ../setup/setup_conda_host.sh          # env(pe_npu_host, py3.11) + qbruntim
 conda activate pe_npu_host
 cd /home/gpuadmin/Repo/seoik/AX_NPU/AX_NPU
 python tutorial_pe_npu/download_images.py
-python tutorial_pe_npu/demo_inference.py    # docker exec 없이 바로 → cos 0.9973
+python tutorial_pe_npu/demo_inference.py    # docker exec 없이 바로 → cos ≈ 0.997
 ```
 > 이 경우 아래 단계들의 `docker exec -w /workspace/AX_NPU mblt_compiler python X` 명령은
 > conda env 활성화 후 `python X`로 그대로 대체하면 된다(컨테이너 경로 `/workspace/AX_NPU` =
