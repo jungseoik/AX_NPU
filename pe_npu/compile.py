@@ -7,7 +7,7 @@ pe_model.apply_pe_patches()로 RoPE 상수화 / einops 제거 / attn_pool 분해
 
 검증된 사용 (hybrid 추론용 trunk MXQ, demo cos 0.997):
     python -m pe_npu.compile --mode compile --save ./out/pe_feat.mxq --feat-only \
-      --calib-data-path ./calib_coco_hwc --calib-output 1 --device gpu
+      --calib-data-path ./calib_coco_hwc --calib-output 1 --device cpu   # 기본 cpu(GPU 없어도 OK), GPU면 gpu
 
 옵션:
   --feat-only : attn_pool 전 forward_features(1,577,1024)만 컴파일 (hybrid trunk, 권장)

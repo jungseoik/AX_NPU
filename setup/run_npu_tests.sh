@@ -23,9 +23,11 @@ if ! ls /dev/aries0 >/dev/null 2>&1; then
 fi
 echo "  OK: $(ls /dev/aries*)"
 
-step "[1/3] 추론 컨테이너 재생성 (--device /dev/aries0)"
+step "[1/3] 추론 컨테이너 재생성 (NPU 기본, GPU 옵션)"
 docker rm -f mblt_compiler 2>/dev/null || true
-docker run -dit --gpus all --ipc=host --name mblt_compiler \
+# GPU는 옵션: nvidia 디바이스가 있을 때만 --gpus all 추가. NPU(/dev/aries0)는 항상 매핑.
+GPU_OPT=$([ -e /dev/nvidia0 ] && echo "--gpus all" || echo "")
+docker run -dit $GPU_OPT --ipc=host --name mblt_compiler \
   --device /dev/aries0:/dev/aries0 \
   -v "$ROOT":/workspace -w /workspace "$IMG" /bin/bash
 echo "  컴파일러/런타임 설치..."

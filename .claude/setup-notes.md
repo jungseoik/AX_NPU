@@ -19,23 +19,37 @@
 - GPU: RTX PRO 6000 Blackwell, 드라이버 580.82.07
 - 호스트 Python: miniconda 3.13 (추론 시 conda libstdc++ 충돌 주의 → venv 권장)
 
-## 컴파일 환경 (구축 완료)
+## 컴파일 환경
 
-- Docker 이미지: `mobilint/qbcompiler:1.1-cuda12.8.1-ubuntu22.04`
-- 상주 컨테이너: `mblt_compiler`
-- 컨테이너 사전 설치: torch 2.7.1+cu128, torchvision 0.22.1, onnx 1.16.2, einops, timm, huggingface_hub, PIL, numpy
-- qbcompiler 1.1.2 설치됨 (`download/qbcompiler-1.1.2+aries2-py3-none-any.whl`)
-- **마운트**: 레포 상위 `/home/gpuadmin/Repo/seoik/AX_NPU` → `/workspace` (Product-AI-mono 참조용). 컨테이너 내 경로는 `/workspace/AX_NPU/...`.
+> **전제: NPU가 기본, GPU는 옵션.** 컴파일은 NPU가 아니라 호스트 CPU/GPU에서 도는데, **CPU만으로 가능**하고
+> GPU가 있으면 더 빠를 뿐(`--device cpu`(기본) / `--device gpu`(옵션)). 추론은 NPU(`/dev/aries*`)에서만.
 
-### 컨테이너 (재)생성
-
+### 방법 A — conda (GPU 없는 NPU 서버 기본) ✅
+GPU 없는 서버에서 컴파일하는 기본 경로. qbcompiler의 `mmc`(C++ 백엔드)가 **torch 2.7.1 + CUDA torch의
+`libtorch_cuda.so`** 에 ABI로 묶여 있어, **torch 버전을 2.7.1로 정확히 맞춰야** 한다(GPU 없어도 .so만 있으면 됨).
 ```bash
-docker rm -f mblt_compiler 2>/dev/null
-docker run -dit --gpus all --ipc=host --name mblt_compiler \
-  -v /home/gpuadmin/Repo/seoik/AX_NPU:/workspace -w /workspace \
+conda create -y -n pe_compile python=3.10
+conda activate pe_compile
+pip install "torch==2.7.1" "torchvision==0.22.1"          # CUDA 빌드(.so 필요), GPU 없어도 OK
+pip install tensorflow-cpu "transformers>=4.54" "onnxruntime>=1.19.2" onnx msgpack tqdm \
+            "numpy<2" opencv-python-headless PyYAML pycocotools typeguard pydantic pydantic_settings einops timm huggingface_hub
+pip install --no-deps download/qbcompiler-1.1.2+aries2-py3-none-any.whl
+# 컴파일 (NPU 서버 기본 = --device cpu)
+python -m pe_npu.compile --mode compile --save pe_npu/out/pe_feat.mxq --feat-only --device cpu
+```
+> ⚠️ torch가 2.7.1이 아니면 `mmc: undefined symbol` / `libtorch_cuda.so 없음` 에러. (이게 컴파일 셋업 시 겪는 함정.)
+
+### 방법 B — Docker (GPU 있을 때 옵션)
+GPU 머신이면 공식 이미지가 torch 2.7.1+cu128 내장이라 위 버전맞춤이 불필요(편함). **GPU 없으면 `--gpus all` 빼고**도 시도 가능하나 방법 A 권장.
+```bash
+docker pull mobilint/qbcompiler:1.1-cuda12.8.1-ubuntu22.04
+docker run -dit --ipc=host --name mblt_compiler \
+  $( [ -e /dev/nvidia0 ] && echo --gpus all )        # GPU 있을 때만 --gpus all (옵션)
+  -v "$PWD/..":/workspace -w /workspace \
   mobilint/qbcompiler:1.1-cuda12.8.1-ubuntu22.04 /bin/bash
 docker exec mblt_compiler pip install /workspace/AX_NPU/download/qbcompiler-1.1.2+aries2-py3-none-any.whl
 ```
+- 컨테이너 사전설치: torch 2.7.1+cu128, torchvision 0.22.1, onnx, einops, timm, huggingface_hub, numpy 등.
 
 ### 컴파일 재현 명령
 
