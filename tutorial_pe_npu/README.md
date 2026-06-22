@@ -186,11 +186,12 @@ python demo_inference.py
 - **이미지 간 코사인 유사도 매트릭스** — 비슷한 이미지는 높고 다른 이미지는 낮게 나오는지
 - **원본 PyTorch 대비 NPU 임베딩 cos** — 양자화 정확도 (평균 0.99+ 면 정상, 검증값 0.997)
 
-### 4-C. 텍스트 프롬프트 제로샷 분류 — `demo_text_classification.py`
+### 4-C. 텍스트 프롬프트 제로샷 분류 — `demo_text_classification.ipynb` (권장)
 PE는 CLIP 계열이라 **이미지 임베딩 ↔ 텍스트 프롬프트 임베딩의 코사인 유사도로 분류**를 푼다.
 NPU가 이미지 임베딩을, 미리 인코딩된 `text_features.json`이 프롬프트 임베딩을 담당.
 ```bash
-python demo_text_classification.py --images images/*.jpg
+jupyter notebook demo_text_classification.ipynb     # (권장) 분류결과 + 클래스별 유사도 차트 인라인
+python demo_text_classification.py --images images/*.jpg   # (옵션) 비대화형/CI
 ```
 - 흐름: `image → (NPU) 1024d` × `prompts → (사전인코딩) (N,1024)` → cosine → **클래스별 점수 → 최고 클래스로 분류**
 - `text_features.json`은 HF `PIA-SPACE-LAB/PE-Core-L14-336`에서 자동 다운로드 (프롬프트별 임베딩).
@@ -221,7 +222,8 @@ RGB -> resize 336 bilinear -> /255 -> normalize 0.5).
 
 같은 배치를 3가지로 처리하며 처리량 비교. **코어(한 장 8개)는 async가 자동 병렬, 카드(여러 장)는 라운드로빈으로 직접 분산**.
 ```bash
-python demo_parallel.py --batch 32
+jupyter notebook demo_parallel.ipynb       # (권장) 처리량 막대그래프 인라인
+python demo_parallel.py --batch 32         # (옵션) 비대화형/CI
 ```
 | 방식 | 설명 | 실측(7×ARIES, 32장) |
 |------|------|------|
@@ -252,12 +254,19 @@ python demo_parallel.py --batch 32
 
 | 파일 | 설명 |
 |------|------|
-| `demo_inference.ipynb` | **(권장)** 추론 데모 노트북 — 이미지/유사도 히트맵/정확도 시각화 |
-| `demo_inference.py` | 추론 데모 스크립트 (비대화형/CI용, 텍스트 출력) |
-| `demo_text_classification.py` | **텍스트 프롬프트 제로샷 분류** — 이미지 vs 프롬프트 유사도로 클래스 판정 |
-| `demo_parallel.py` | **병렬 추론** — 멀티코어(async) vs 멀티카드(라운드로빈) 처리량 비교 |
-| `multicore_benchmark.ipynb` | 멀티코어 처리량 벤치 — 동기 vs async vs 멀티스레딩 (single 모드 8코어, x4.5) |
-| `download_images.py` | 공개 COCO 예제 이미지 5장 다운로드 |
-| `images/` | 다운로드된 예제 이미지 (gitignore) |
+**노트북 (기본 — 권장):**
+| 파일 | 설명 |
+|------|------|
+| `demo_inference.ipynb` | 추론 데모 — 이미지/유사도 히트맵/정확도 시각화 |
+| `demo_text_classification.ipynb` | **텍스트 프롬프트 제로샷 분류** — 클래스별 유사도 차트 |
+| `demo_parallel.ipynb` | **병렬 추론** — 멀티코어(async) vs 멀티카드 처리량 막대그래프 |
+| `multicore_benchmark.ipynb` | 멀티코어 처리량 벤치 — 동기 vs async vs 멀티스레딩 |
+
+**스크립트 (옵션 — 비대화형/CI용, 노트북과 동일 기능):**
+| 파일 | 설명 |
+|------|------|
+| `demo_inference.py` / `demo_text_classification.py` / `demo_parallel.py` | 위 노트북들의 텍스트 출력 버전 |
+| `download_images.py` | 공개 COCO 예제 이미지 다운로드 |
+| `images/` | 예제 이미지 (gitignore) |
 
 상세 배경/원리: `../reports/design/SOLUTION_single_io_compile.md`, `../reports/quantization/quantization_reference.md`
