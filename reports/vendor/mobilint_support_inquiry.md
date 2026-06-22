@@ -1,4 +1,15 @@
-# Mobilint 기술지원 문의 (초안)
+# Mobilint 기술지원 문의 (초안) — ✅ 해결됨 (미발송)
+
+> **[RESOLVED 2026-06] 이 문의는 보내지 않았고, 자체 해결됨.**
+> 25-서브그래프 분할 문제는 **모델 레벨 5개 패치**(RoPE 상수화 / einops→reshape / SelfAttention SDPA /
+> AttentionPooling 분해 / abs_posemb 상수화, `pe_npu/pe_model.py` `apply_pe_patches`)로 **단일 입출력
+> MXQ 컴파일에 성공**했다 — **Mobilint/SDK 패치 불필요**.
+> 정확도 핵심 이슈는 attn_pool이 NPU INT8에서 깨지는 것(full-NPU cos 0.46)이었고, attn_pool/proj head만
+> **CPU float(hybrid)** 로 돌려 **원본 대비 cos 0.9987** 달성.
+> 상세: [`../design/SOLUTION_single_io_compile.md`](../design/SOLUTION_single_io_compile.md).
+> 아래 원문은 당시 분석 기록(historical)으로만 보존.
+
+---
 
 > 목적: 커스텀 **RoPE2D 기반 ViT-L/14 vision encoder**를 단일 입력/단일 출력 MXQ로
 > 컴파일하려 했으나, 24개 transformer block이 독립 서브그래프로 분할되어 실사용 추론이

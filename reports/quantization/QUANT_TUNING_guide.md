@@ -1,5 +1,11 @@
 # PE-Core-L14-336 NPU 양자화 정확도 튜닝 가이드 (재현용)
 
+> **[SUPERSEDED 2026-06] 이 문서가 목표한 "0.5 → 0.99+"는 양자화 튜닝이 아니라 hybrid로 해결됐다.**
+> full-NPU 정확도(cos~0.46)의 원인은 **attn_pool**이었고(이 문서의 진단 자체는 맞음), 해결책은
+> 양자화 튜닝이 아니라 **attn_pool/proj head를 CPU float로 분리(hybrid)** → 원본 대비 **cos 0.9987**.
+> 따라서 아래의 "다음 단계(EquivalentTransformation / 16bit override / 민감레이어 튜닝)"는 **불필요**하며,
+> 음성결과(negative result) 기록으로만 보존한다. 현재 정답 경로: [`../design/SOLUTION_single_io_compile.md`](../design/SOLUTION_single_io_compile.md).
+
 > **경로 갱신(패키지 재편 후)**: 컴파일 스크립트 `pe_onnx_export/pe_torch_compile.py` →
 > 패키지 `pe_npu/compile.py` (CLI `python -m pe_npu.compile`, `-w /workspace/AX_NPU`에서 실행).
 > 옛 보조 스크립트(`compare_backends.py`, `mxq_inference.py`, `prepare_calib.py`,

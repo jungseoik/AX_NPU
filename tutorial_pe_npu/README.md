@@ -180,6 +180,18 @@ python demo_inference.py
 - **이미지 간 코사인 유사도 매트릭스** — 비슷한 이미지는 높고 다른 이미지는 낮게 나오는지
 - **원본 PyTorch 대비 NPU 임베딩 cos** — 양자화 정확도 (평균 0.99+ 면 정상, 검증값 0.997)
 
+### 4-C. 텍스트 프롬프트 제로샷 분류 — `demo_text_classification.py`
+PE는 CLIP 계열이라 **이미지 임베딩 ↔ 텍스트 프롬프트 임베딩의 코사인 유사도로 분류**를 푼다.
+NPU가 이미지 임베딩을, 미리 인코딩된 `text_features.json`이 프롬프트 임베딩을 담당.
+```bash
+python demo_text_classification.py --images images/*.jpg
+```
+- 흐름: `image → (NPU) 1024d` × `prompts → (사전인코딩) (N,1024)` → cosine → **클래스별 점수 → 최고 클래스로 분류**
+- `text_features.json`은 HF `PIA-SPACE-LAB/PE-Core-L14-336`에서 자동 다운로드 (프롬프트별 임베딩).
+- 출력 예: `falldown.jpg → falldown`, 클래스별 점수 + Top 매칭 프롬프트.
+- 임의 문자열 프롬프트를 **즉석 인코딩**하려면 PE 텍스트 인코더+토크나이저가 필요(여긴 사전 인코딩본 사용).
+  운영 `pe_binary`/`pe_npu` 서비스도 동일하게 사전 인코딩 프롬프트로 retrieval 분류한다.
+
 ---
 
 ## 5. 직접 코드에서 쓰기 (요약)
@@ -196,6 +208,24 @@ emb = model.infer(x)   # (B, 1024) 비전 임베딩
 
 전처리는 `pe_npu.preprocess_image` (운영 `service.preprocess_image`와 동일:
 RGB -> resize 336 bilinear -> /255 -> normalize 0.5).
+
+---
+
+## 6. 병렬 추론 — 멀티코어 · 멀티카드 (`demo_parallel.py`)
+
+같은 배치를 3가지로 처리하며 처리량 비교. **코어(한 장 8개)는 async가 자동 병렬, 카드(여러 장)는 라운드로빈으로 직접 분산**.
+```bash
+python demo_parallel.py --batch 32
+```
+| 방식 | 설명 | 실측(7×ARIES, 32장) |
+|------|------|------|
+| sync | 1카드 blocking 루프 | 3.5 img/s |
+| async | 1카드 `infer_async`+`set_async_pipeline_enabled` → 8코어 | 15.8 img/s (×4.6) |
+| **multicard** | 전 카드 라운드로빈(async) | **77.9 img/s (×22.5)** |
+
+- 코어 모드(Single/Multi/Global)는 **컴파일 시 결정**(`pe_npu.compile --scheme`). Single+async가 throughput 최선.
+- 멀티카드 분산 상세/62채널 스윕: `../reports/performance/NPU_multicard_62ch_benchmark.md`.
+- 고채널에선 CPU 전처리가 병목 → 병렬화: `../reports/performance/NPU_preprocess_parallel.md`.
 
 ---
 
@@ -217,9 +247,11 @@ RGB -> resize 336 bilinear -> /255 -> normalize 0.5).
 | 파일 | 설명 |
 |------|------|
 | `demo_inference.ipynb` | **(권장)** 추론 데모 노트북 — 이미지/유사도 히트맵/정확도 시각화 |
+| `demo_inference.py` | 추론 데모 스크립트 (비대화형/CI용, 텍스트 출력) |
+| `demo_text_classification.py` | **텍스트 프롬프트 제로샷 분류** — 이미지 vs 프롬프트 유사도로 클래스 판정 |
+| `demo_parallel.py` | **병렬 추론** — 멀티코어(async) vs 멀티카드(라운드로빈) 처리량 비교 |
 | `multicore_benchmark.ipynb` | 멀티코어 처리량 벤치 — 동기 vs async vs 멀티스레딩 (single 모드 8코어, x4.5) |
 | `download_images.py` | 공개 COCO 예제 이미지 5장 다운로드 |
-| `demo_inference.py` | 추론 데모 스크립트 (비대화형/CI용, 텍스트 출력) |
 | `images/` | 다운로드된 예제 이미지 (gitignore) |
 
 상세 배경/원리: `../reports/design/SOLUTION_single_io_compile.md`, `../reports/quantization/quantization_reference.md`
