@@ -30,7 +30,8 @@ conda run -n "$ENV" pip install -q numpy pillow "$WHL"
 echo "[3/4] pool head + 모델 deps 설치 (CPU torch)"
 conda run -n "$ENV" pip install -q torch torchvision --index-url https://download.pytorch.org/whl/cpu
 conda run -n "$ENV" pip install -q einops timm huggingface_hub
-conda run -n "$ENV" pip install -q matplotlib jupyter ipykernel   # 노트북 튜토리얼(demo_inference.ipynb)용
+conda run -n "$ENV" pip install -q open_clip_torch   # 텍스트 분류 데모(즉석 텍스트 인코딩, CLIP BPE 토크나이저)
+conda run -n "$ENV" pip install -q matplotlib jupyter ipykernel   # 노트북 튜토리얼용
 
 echo "[4/4] libqbruntime.so 확인"
 if ldconfig -p 2>/dev/null | grep -q qbruntime; then

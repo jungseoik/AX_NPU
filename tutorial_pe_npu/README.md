@@ -186,18 +186,19 @@ python demo_inference.py
 - **이미지 간 코사인 유사도 매트릭스** — 비슷한 이미지는 높고 다른 이미지는 낮게 나오는지
 - **원본 PyTorch 대비 NPU 임베딩 cos** — 양자화 정확도 (평균 0.99+ 면 정상, 검증값 0.997)
 
-### 4-C. 텍스트 프롬프트 제로샷 분류 — `demo_text_classification.ipynb` (권장)
-PE는 CLIP 계열이라 **이미지 임베딩 ↔ 텍스트 프롬프트 임베딩의 코사인 유사도로 분류**를 푼다.
-NPU가 이미지 임베딩을, 미리 인코딩된 `text_features.json`이 프롬프트 임베딩을 담당.
+### 4-C. 텍스트 프롬프트 제로샷 분류 (live 텍스트) — `demo_text_classification.ipynb` (권장)
+PE는 CLIP 계열이라 **이미지 임베딩 ↔ 텍스트 임베딩의 코사인 유사도로 분류**를 푼다.
+**임의 텍스트 문자열을 직접 입력 → PE 텍스트 인코더가 즉석 인코딩**(사전 파일 아님)하고, 이미지는 NPU로 임베딩.
 ```bash
-jupyter notebook demo_text_classification.ipynb     # (권장) 분류결과 + 클래스별 유사도 차트 인라인
-python demo_text_classification.py --images images/*.jpg   # (옵션) 비대화형/CI
+jupyter notebook demo_text_classification.ipynb     # (권장) 예시 이미지 + 예측 라벨 인라인 표시
+python demo_text_classification.py --images images/*.jpg \
+   --prompts "a fire" "smoke" "a person who has fallen down" "a normal scene"   # (옵션)
 ```
-- 흐름: `image → (NPU) 1024d` × `prompts → (사전인코딩) (N,1024)` → cosine → **클래스별 점수 → 최고 클래스로 분류**
-- `text_features.json`은 HF `PIA-SPACE-LAB/PE-Core-L14-336`에서 자동 다운로드 (프롬프트별 임베딩).
-- 출력 예: `falldown.jpg → falldown`, 클래스별 점수 + Top 매칭 프롬프트.
-- 임의 문자열 프롬프트를 **즉석 인코딩**하려면 PE 텍스트 인코더+토크나이저가 필요(여긴 사전 인코딩본 사용).
-  운영 `pe_binary`/`pe_npu` 서비스도 동일하게 사전 인코딩 프롬프트로 retrieval 분류한다.
+- 흐름: `image → (NPU) 1024d` × `prompts → (PE 텍스트 인코더, CPU) (N,1024)` → cosine → 최고 클래스
+- 토크나이저 = CLIP BPE(`open_clip`) — **공식 `perception_models`의 `SimpleTokenizer`와 동일**(검증함). 이미지 정규화 0.5/0.5도 공식 transform과 동일.
+- 노트북은 **예시 이미지를 인라인 표시**하고 각 이미지에 예측 라벨을 붙여 보여줌. 함수 `classify(img, prompts)`로 아무 문장이나 시도 가능.
+- 검증: 도메인 프롬프트에서 잘 분류 (falldown→"넘어진 사람" 0.97, smoke→smoke 0.93). (PE-Core는 일반 객체 zero-shot은 약함 — 공식 모델 특성.)
+- 참고: 운영 `pe_binary`/`pe_npu` 서비스는 **같은 원리**지만 프롬프트를 미리 인코딩(`text_features.json`)해 속도를 높인다.
 
 ---
 
