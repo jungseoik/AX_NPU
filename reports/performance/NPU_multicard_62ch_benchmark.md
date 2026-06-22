@@ -11,7 +11,7 @@
 | **I 순수추론** | 모델 input → output. INT8 feat MXQ(24 transformer block) | NPU trunk (7대 분산) |
 
 > hybrid의 CPU pool head(attn_pool, 장당 ~2ms)는 별도이며 위 추론시간에 미포함.
-> 추론 정확도는 원본 PE 대비 cos 0.9987로 검증됨(`SOLUTION_single_io_compile.md`).
+> 추론 정확도는 원본 PE 대비 cos 0.9987로 검증됨(`../design/SOLUTION_single_io_compile.md`).
 
 ---
 
@@ -36,7 +36,7 @@
 - **고채널에서는 전처리(CPU)가 추론보다 더 큰 병목.** 4K→336 resize가 채널당 ~18~20ms(단일 스레드)라 56채널 전처리 1131ms > 추론 519ms.
   → 전처리를 멀티프로세스/멀티스레드로 병렬화하면 전체 처리시간을 크게 더 줄일 수 있다(미적용, 개선 여지).
 
-![multicard benchmark](npu_multicard_62ch.png)
+![multicard benchmark](../assets/npu_multicard_62ch.png)
 
 ---
 
@@ -149,8 +149,8 @@ P=전처리(ms) / I=순수추론(ms) / Total=P+I / I/ch=추론 채널당(ms) / i
 
 ```bash
 conda activate pe_npu_host          # qbruntime(cp311) + CPU torch + 모듈 deps
-python bench_multinpu.py            # 1→62채널 스윕 (P/I 분리), → npu_multicard_62ch.csv
-python bench_scaling.py             # 1/2/4/7대 스케일링
+python ../scripts/bench_multinpu.py            # 1→62채널 스윕 (P/I 분리), → ../assets/npu_multicard_62ch.csv
+python ../scripts/bench_scaling.py             # 1/2/4/7대 스케일링
 ```
 - 자산: MXQ/pool head = HF `PIA-SPACE-LAB/MXQ_NPU` 자동 다운로드. 입력 = 실제 4K 프레임.
-- 원자료: `npu_multicard_62ch.csv` · 차트: `npu_multicard_62ch.png` · 스크립트: `bench_multinpu.py`, `bench_scaling.py`
+- 원자료: `../assets/npu_multicard_62ch.csv` · 차트: `../assets/npu_multicard_62ch.png` · 스크립트: `../scripts/bench_multinpu.py`, `../scripts/bench_scaling.py`

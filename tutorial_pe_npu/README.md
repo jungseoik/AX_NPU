@@ -7,7 +7,7 @@
 - 대상 모델: PE-Core-L14-336 (Meta Perception Encoder, CLIP ViT-L/14) vision encoder
 - 결과: 이미지 -> 1024-d 임베딩. 원본 PyTorch 대비 코사인 유사도 **0.997**
 - 구조: 무거운 24 transformer block은 NPU(INT8), 작은 attn_pool head는 CPU(float) = **hybrid**
-  (이유는 `../reports/SOLUTION_single_io_compile.md`. attn_pool은 NPU INT8에서 깨져서 CPU로 둠)
+  (이유는 `../reports/design/SOLUTION_single_io_compile.md`. attn_pool은 NPU INT8에서 깨져서 CPU로 둠)
 
 > 모든 명령은 `mblt_compiler` 컨테이너 안에서 실행하며, `docker exec`로 감싸면 된다.
 > 패키지 위치는 `/workspace/AX_NPU/`(= 호스트 `AX_NPU/AX_NPU/`)이고, 여기서 `import pe_npu`가 된다.
@@ -222,4 +222,4 @@ RGB -> resize 336 bilinear -> /255 -> normalize 0.5).
 | `demo_inference.py` | 추론 데모 스크립트 (비대화형/CI용, 텍스트 출력) |
 | `images/` | 다운로드된 예제 이미지 (gitignore) |
 
-상세 배경/원리: `../reports/SOLUTION_single_io_compile.md`, `../reports/quantization_reference.md`
+상세 배경/원리: `../reports/design/SOLUTION_single_io_compile.md`, `../reports/quantization/quantization_reference.md`

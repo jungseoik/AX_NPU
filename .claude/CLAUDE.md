@@ -11,7 +11,7 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 - **컴파일·추론 모두 동작.** PE trunk(24 block)=NPU INT8, attn_pool head=CPU float = **hybrid**, 원본 pth 대비 **cos 0.997**.
 - **자기완결(self-contained)**: PE 모델 코드는 `pe_npu/pe_vendor/`에 vendor 복사 → 외부 레포(Product-AI-mono) 의존 없음. 가중치만 HF `facebook/PE-Core-L14-336` 자동 다운로드.
 - 핵심 패키지 = **`pe_npu/`**.
-- **멀티카드**: NPU 여러 대면 채널 라운드로빈 분산으로 처리량↑(7대=56코어 실측, `reports/NPU_multicard_62ch_benchmark.md`). 고채널 병목은 CPU 전처리(`reports/NPU_preprocess_parallel.md`). `MXQInferenceHybrid`는 단일 카드(`device_id`)용.
+- **멀티카드**: NPU 여러 대면 채널 라운드로빈 분산으로 처리량↑(7대=56코어 실측, `reports/performance/NPU_multicard_62ch_benchmark.md`). 고채널 병목은 CPU 전처리(`reports/performance/NPU_preprocess_parallel.md`). `MXQInferenceHybrid`는 단일 카드(`device_id`)용.
 
 ## pe_npu 패키지
 
@@ -29,7 +29,7 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 ## 헷갈리지 말 것
 
 - **컴파일은 NPU가 아니라 호스트 CPU/GPU(`--device`)에서** 한다. NPU는 추론 전용.
-- **NPU는 INT8 전용.** 양자화를 더 못 낮춘다(bit4 mixed-precision = no-op 확인). → `reports/NPU_batch_latency.md`
+- **NPU는 INT8 전용.** 양자화를 더 못 낮춘다(bit4 mixed-precision = no-op 확인). → `reports/performance/NPU_batch_latency.md`
 - 컴파일 = docker `mblt_compiler`(qbcompiler 1.1.2), 추론 = 호스트 conda `pe_npu_host`(qbruntime, py3.10~3.12) 또는 docker.
 - SDK(`download/`)는 비공개라 gitignore — 사람이 직접 배치. MXQ/pool head도 gitignore(HF로 배포).
 
@@ -38,12 +38,12 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 - **따라하기**(설치~컴파일~추론, 옵션 A/B): `tutorial_pe_npu/README.md`
 - **신규 서버 NPU 세팅**: `.claude/skills/npu-setup/` (clone 후 `mobilint-cli status`까지)
 - **분석/원리**:
-  - `reports/SOLUTION_single_io_compile.md` — 단일 입출력 컴파일 + hybrid 정확도(0.997) 해결
-  - `reports/NPU_batch_latency.md` — 배치 지연/멀티코어/Multi 모드/bit4 양자화 한계 (실측)
-  - `reports/NPU_multicard_62ch_benchmark.md` — 멀티카드(7×ARIES=56코어) 62채널 분산 추론 지연 (실측)
-  - `reports/NPU_preprocess_parallel.md` — 고채널 병목인 CPU 전처리 병렬화 벤치
-  - `reports/compile_benchmark.md` — 컴파일 시간 GPU vs CPU
-  - `reports/quantization_reference.md`, `QUANT_TUNING_guide.md` — 양자화 배경
+  - `reports/design/SOLUTION_single_io_compile.md` — 단일 입출력 컴파일 + hybrid 정확도(0.997) 해결
+  - `reports/performance/NPU_batch_latency.md` — 배치 지연/멀티코어/Multi 모드/bit4 양자화 한계 (실측)
+  - `reports/performance/NPU_multicard_62ch_benchmark.md` — 멀티카드(7×ARIES=56코어) 62채널 분산 추론 지연 (실측)
+  - `reports/performance/NPU_preprocess_parallel.md` — 고채널 병목인 CPU 전처리 병렬화 벤치
+  - `reports/performance/compile_benchmark.md` — 컴파일 시간 GPU vs CPU
+  - `reports/quantization/quantization_reference.md`, `reports/quantization/QUANT_TUNING_guide.md` — 양자화 배경
 - Mobilint SDK 공식 문서: `docs/` (멀티코어 `docs/multicore.md` 등)
 
 ## Skill

@@ -53,7 +53,7 @@ NPU(aries)는 **추론 전용**이다. `--device {cpu|gpu}`는 컴파일 과정(
 - **컴파일은 1분 남짓**(PE feat trunk 기준). GPU/CPU 차이는 random calib에선 미미(6%).
 - calibration 데이터가 많으면 GPU(`--device gpu`)가 유리할 수 있으니, 실 calib 컴파일은 GPU 권장.
 - **컴파일은 한 번만 하면 된다** — MXQ는 aries2 바이너리라 재사용/배포 가능
-  (옵션 B: HF `PIA-SPACE-LAB/MXQ_NPU`). 매번 컴파일할 필요 없음. (`reports/NPU_batch_latency.md` 참고)
+  (옵션 B: HF `PIA-SPACE-LAB/MXQ_NPU`). 매번 컴파일할 필요 없음. (`reports/performance/NPU_batch_latency.md` 참고)
 
 ## 재현
 

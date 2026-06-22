@@ -91,4 +91,4 @@ ONNX 그래프 op 분포(단순화 후): Softmax 25, MatMul 150, LayerNormalizat
 
 ---
 
-*작성: 2026-06-15. 내부 분석 상세는 `reports/test_results.md` 참조.*
+*작성: 2026-06-15. 내부 분석 상세는 `reports/testing/test_results.md` 참조.*
