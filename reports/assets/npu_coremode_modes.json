@@ -1,0 +1,78 @@
+[
+  {
+    "mode": "single",
+    "core_mode": "CoreMode.Single",
+    "cores_per_npu": 8,
+    "npu_mem_loaded_mb": 582,
+    "npu_mem_peak_mb": 582,
+    "host_rss_mb": 430,
+    "latency_ms": {
+      "1": 284.8,
+      "2": 284.9,
+      "4": 285.6,
+      "7": 288.5,
+      "8": 308.3,
+      "14": 318.6,
+      "28": 381.4,
+      "42": 447.4,
+      "56": 532.0
+    }
+  },
+  {
+    "mode": "multi",
+    "core_mode": "CoreMode.Multi",
+    "cores_per_npu": 10,
+    "npu_mem_loaded_mb": 564,
+    "npu_mem_peak_mb": 564,
+    "host_rss_mb": 460,
+    "latency_ms": {
+      "1": 358.5,
+      "2": 358.5,
+      "4": 358.6,
+      "7": 358.6,
+      "8": 384.9,
+      "14": 391.0,
+      "28": 779.6,
+      "42": 1169.0,
+      "56": 1559.0
+    }
+  },
+  {
+    "mode": "global4",
+    "core_mode": "CoreMode.Global4",
+    "cores_per_npu": 10,
+    "npu_mem_loaded_mb": 387,
+    "npu_mem_peak_mb": 387,
+    "host_rss_mb": 497,
+    "latency_ms": {
+      "1": 118.7,
+      "2": 118.6,
+      "4": 118.8,
+      "7": 118.9,
+      "8": 123.1,
+      "14": 123.7,
+      "28": 244.7,
+      "42": 366.9,
+      "56": 488.1
+    }
+  },
+  {
+    "mode": "global8",
+    "core_mode": "CoreMode.Global8",
+    "cores_per_npu": 10,
+    "npu_mem_loaded_mb": 341,
+    "npu_mem_peak_mb": 341,
+    "host_rss_mb": 516,
+    "latency_ms": {
+      "1": 70.5,
+      "2": 70.5,
+      "4": 70.6,
+      "7": 70.6,
+      "8": 139.4,
+      "14": 139.4,
+      "28": 277.4,
+      "42": 415.1,
+      "56": 553.1
+    }
+  }
+]
