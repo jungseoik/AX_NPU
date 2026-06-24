@@ -34,6 +34,7 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 | 문서 | 내용 |
 |------|------|
 | [mobilint_support_inquiry.md](vendor/mobilint_support_inquiry.md) | Mobilint 기술지원 문의 정리 |
+| [mobilint_inquiry_attn_pool.md](vendor/mobilint_inquiry_attn_pool.md) | attention pooling head INT8 양자화 붕괴 문의 (연산도+op리스트) |
 
 ## 🛠 scripts/ · assets/
 - `scripts/` — 벤치마크 재현 스크립트 (`bench_*.py`). 실행: `conda activate pe_npu_host` 후 해당 스크립트.
