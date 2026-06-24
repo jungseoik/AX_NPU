@@ -19,11 +19,16 @@ from huggingface_hub import hf_hub_download
 import qbruntime
 
 SP = "/tmp/claude-1000/-home-gpuadmin/057c9eaa-b86d-4a41-ab6f-9dc6babfd1fe/scratchpad"
-NUM_NPU = 7; REPEAT = 7
-CHANNELS = [1, 2, 4, 7, 8, 9, 10, 11, 12, 14, 16]
+NUM_NPU = 7; REPEAT = 5
+CHANNELS = [1, 2, 4, 7, 8, 12, 16, 28, 42, 56]   # 최대 56 = 7카드 x 8코어
 
-print("[init] 모델/pool/text/event 로드")
-mxq = hf_hub_download("PIA-SPACE-LAB/MXQ_NPU", "pe_feat.mxq")
+import argparse
+_ap = argparse.ArgumentParser()
+_ap.add_argument("--mxq", default="", help="trunk MXQ 경로 (빈값=HF single)")
+_ap.add_argument("--label", default="single")
+_args = _ap.parse_args()
+print(f"[init] 모델/pool/text/event 로드 (trunk={_args.label})")
+mxq = _args.mxq if _args.mxq else hf_hub_download("PIA-SPACE-LAB/MXQ_NPU", "pe_feat.mxq")
 pool_path = hf_hub_download("PIA-SPACE-LAB/MXQ_NPU", "pe_pool_head.pt")
 # trunk: 7카드 async
 models = []
