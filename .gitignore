@@ -250,3 +250,6 @@ download/
 pe_npu/out/
 tutorial_pe_npu/images/
 _dev/compile_test/
+
+# 임시 결과물(주석 영상 등)
+tmp/

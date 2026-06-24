@@ -33,6 +33,15 @@ conda run -n "$ENV" pip install -q einops timm huggingface_hub
 conda run -n "$ENV" pip install -q open_clip_torch   # 텍스트 분류 데모(즉석 텍스트 인코딩, CLIP BPE 토크나이저)
 conda run -n "$ENV" pip install -q matplotlib jupyter ipykernel   # 노트북 튜토리얼용
 
+# (선택) Qwen3-VL 등 VLM 추론을 같은 env에서 쓰려면 WITH_VLM=1 로 실행.
+#   mblt-model-zoo는 1.3.1로 핀(런타임 1.2.0 호환), transformers는 4.57(Qwen3-VL 지원)으로 올린다.
+#   perception-models의 pillow/tokenizers 핀 충돌 경고가 뜨지만 PE-Core·VLM 둘 다 정상 동작(실측).
+#   → tutorial_pe_npu/README_VLM_qwen3.md
+if [ "${WITH_VLM:-0}" = "1" ]; then
+  echo "[+] VLM(mblt-model-zoo 1.3.1 + transformers 4.57.1) 설치"
+  conda run -n "$ENV" pip install -q "mblt-model-zoo[transformers]==1.3.1" "transformers==4.57.1"
+fi
+
 echo "[4/4] libqbruntime.so 확인"
 if ldconfig -p 2>/dev/null | grep -q qbruntime; then
   echo "    libqbruntime.so 등록됨 (LD_LIBRARY_PATH 불필요)"

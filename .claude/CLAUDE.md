@@ -36,6 +36,7 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 ## 문서 라우팅
 
 - **따라하기**(설치~컴파일~추론, 옵션 A/B): `tutorial_pe_npu/README.md`
+- **Qwen3-VL(멀티모달 LLM) 추론**: `tutorial_pe_npu/README_VLM_qwen3.md` + `demo_vlm_qwen3.ipynb` + 헬퍼 `tutorial_pe_npu/vlm_npu.py` + skill `.claude/skills/qwen3-vl/`. 이미지+프롬프트→텍스트. PE-Core와 별개로, Mobilint가 올린 `mobilint/Qwen3-VL-*` MXQ를 표준 HF API(`AutoModelForImageTextToText`+`mblt-model-zoo`)로 그대로 가져와 씀(포팅 불필요). **코어모드=global8**(8코어 전부, 단일스트림 latency 최적화, max_batch_size=1). 설치 핀: `mblt-model-zoo==1.3.1` + `transformers>=4.57`. 출처: `mobilint-runtime-gui` 백엔드
 - **신규 서버 NPU 세팅**: `.claude/skills/npu-setup/` (clone 후 `mobilint-cli status`까지)
 - **분석/원리**:
   - `reports/design/SOLUTION_single_io_compile.md` — 단일 입출력 컴파일 + hybrid 정확도(0.997) 해결
@@ -48,4 +49,4 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 
 ## Skill
 
-`.claude/skills/npu-setup`(신규 서버 세팅), `mblt-model-zoo.md` / `mblt-sdk-tutorial.md`(해당 레포 작업 규칙).
+`.claude/skills/npu-setup`(신규 서버 세팅), `.claude/skills/qwen3-vl`(Qwen3-VL VLM 추론 코드 작성), `mblt-model-zoo.md` / `mblt-sdk-tutorial.md`(해당 레포 작업 규칙).
