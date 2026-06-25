@@ -1,7 +1,11 @@
-# pool head 배치화는 이득 없음 (음성 결과, 실측)
+# [hybrid 시절] pool head 배치화는 이득 없음 (음성 결과, 실측)
 
-hybrid 추론에서 CPU로 도는 **pool head(attn_pool + proj)**를 채널마다(per-item) 도는 현재
-방식 대신 **`(B,577,1024)`로 한 번에 배치 처리**하면 빨라질 것 같지만 — **재보니 오히려 ~20% 느리다.**
+> **[UPDATE 2026-06]** 이 문서는 **hybrid 시절 CPU pool head**에 대한 것. 이후 attn_pool의 QKᵀ를
+> 16bit로 올려 **full NPU**(attn_pool도 NPU, cos 0.99)가 되면서 **CPU pool head 자체가 사라졌다** →
+> 이 배치화 고민은 더 이상 해당 없음. → [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md)
+
+(아래는 hybrid 당시 기록) CPU로 도는 **pool head(attn_pool + proj)**를 채널마다(per-item) 도는 방식
+대신 **`(B,577,1024)`로 한 번에 배치 처리**하면 빨라질 것 같지만 — **재보니 오히려 ~20% 느리다.**
 "pool 배치하면 빠르지 않나?"는 재실험 없이 이 문서로 갈음한다.
 
 > 결론 먼저: **`multi_npu.py`/`inference.py`의 per-item loop를 그대로 둘 것.** 배치화 금지.

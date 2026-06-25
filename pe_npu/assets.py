@@ -6,9 +6,13 @@
 한 번 만들어 공유하면 된다.
 
 HF repo 구조 (기본 PIA-SPACE-LAB/MXQ_NPU):
-  pe_full.mxq        # full NPU (trunk+attn_pool, QK^T 16bit, image->embedding). 권장
-  pe_feat.mxq        # NPU trunk만 (INT8) — hybrid(+CPU pool head)용. 레거시
-  pe_pool_head.pt    # hybrid용 CPU pool head 가중치 (attn_pool + proj, 약 55MB)
+  README.md              # 모델카드
+  single/pe_full.mxq     # full NPU (trunk+attn_pool, QK^T 16bit, image->embedding) — 코어모드별 폴더
+  multi/pe_full.mxq      #   각 폴더에 pe_full.mxq + CALIBRATION.md
+  global4/pe_full.mxq    #   ensure_full_mxq(scheme=...)로 선택
+  global8/pe_full.mxq
+  pe_feat.mxq            # [레거시] NPU trunk만 (INT8) — hybrid(+CPU pool head)용
+  pe_pool_head.pt        # [레거시] hybrid용 CPU pool head 가중치 (attn_pool + proj, 약 55MB)
 """
 from __future__ import annotations
 

@@ -35,7 +35,8 @@ pip install tensorflow-cpu "transformers>=4.54" "onnxruntime>=1.19.2" onnx msgpa
             "numpy<2" opencv-python-headless PyYAML pycocotools typeguard pydantic pydantic_settings einops timm huggingface_hub
 pip install --no-deps download/qbcompiler-1.1.2+aries2-py3-none-any.whl
 # 컴파일 (NPU 서버 기본 = --device cpu)
-python -m pe_npu.compile --mode compile --save pe_npu/out/pe_feat.mxq --feat-only --device cpu
+python -m pe_npu.compile --mode compile --save pe_npu/out/pe_full.mxq --device cpu   # full NPU(기본, QK^T 16bit 자동)
+# (레거시 hybrid trunk) python -m pe_npu.compile --mode compile --save pe_npu/out/pe_feat.mxq --feat-only --device cpu
 ```
 > ⚠️ torch가 2.7.1이 아니면 `mmc: undefined symbol` / `libtorch_cuda.so 없음` 에러. (이게 컴파일 셋업 시 겪는 함정.)
 

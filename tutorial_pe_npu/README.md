@@ -84,7 +84,7 @@ docker exec mblt_compiler pip install onnxruntime
 
 > GPU 없는 서버는 도커 대신 **conda 컴파일(방법 A)** 을 쓴다. NPU 장착 후 통합 실행: `bash ../setup/run_npu_tests.sh`.
 
-### 0-3. (대안) docker 없이 호스트 conda로 — **추론 검증됨 (cos 0.997)**
+### 0-3. (대안) docker 없이 호스트 conda로 — **추론 검증됨 (cos 0.99, full NPU)**
 docker는 필수가 아니다. NPU 드라이버/`libqbruntime.so`는 호스트에 있고, Python 3.10~3.12 conda
 env만 만들면 호스트에서 동일하게 추론된다(호스트 base conda가 3.13이면 qbruntime wheel(cp38~cp312)이
 안 맞으므로 전용 env를 만든다).
@@ -93,7 +93,7 @@ bash ../setup/setup_conda_host.sh          # env(pe_npu_host, py3.11) + qbruntim
 conda activate pe_npu_host
 cd /home/gpuadmin/Repo/seoik/AX_NPU/AX_NPU
 python tutorial_pe_npu/download_images.py
-python tutorial_pe_npu/demo_inference.py    # docker exec 없이 바로 → cos ≈ 0.997
+python tutorial_pe_npu/demo_inference.py    # docker exec 없이 바로 → cos ≈ 0.99 (full NPU)
 ```
 > 이 경우 아래 단계들의 `docker exec -w /workspace/AX_NPU mblt_compiler python X` 명령은
 > conda env 활성화 후 `python X`로 그대로 대체하면 된다(컨테이너 경로 `/workspace/AX_NPU` =
@@ -189,7 +189,7 @@ python demo_inference.py
 
 데모 출력(노트북·스크립트 공통):
 - **이미지 간 코사인 유사도 매트릭스** — 비슷한 이미지는 높고 다른 이미지는 낮게 나오는지
-- **원본 PyTorch 대비 NPU 임베딩 cos** — 양자화 정확도 (평균 0.99+ 면 정상, 검증값 0.997)
+- **원본 PyTorch 대비 NPU 임베딩 cos** — 양자화 정확도 (평균 0.99+ 면 정상, full NPU 검증값 0.99)
 
 ### 4-C. 텍스트 프롬프트 제로샷 분류 (live 텍스트) — `demo_text_classification.ipynb` (권장)
 PE는 CLIP 계열이라 **이미지 임베딩 ↔ 텍스트 임베딩의 코사인 유사도로 분류**를 푼다.

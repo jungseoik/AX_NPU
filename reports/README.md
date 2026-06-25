@@ -29,7 +29,7 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 ## 🧩 design/ — 설계·해결
 | 문서 | 내용 |
 |------|------|
-| [SOLUTION_single_io_compile.md](design/SOLUTION_single_io_compile.md) | 단일 입출력 컴파일 + hybrid(NPU trunk + CPU pool) 정확도 0.997 해결 |
+| [SOLUTION_single_io_compile.md](design/SOLUTION_single_io_compile.md) | [비포] 단일 입출력 컴파일 + hybrid(0.997). 현재는 full NPU(QKᵀ16bit, cos 0.99) → vendor/mobilint_resolution_attn_pool.md |
 
 ## ✅ testing/ — 테스트
 | 문서 | 내용 |

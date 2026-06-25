@@ -2,12 +2,12 @@
 PE-Core-L14-336 비전인코더 NPU 추론.
 
   - MXQInferenceFull  : image->embedding 전부 NPU (CPU head 없음). **권장.**
-                        attn_pool의 QKᵀ outlier만 16bit로 올린 full MXQ(--qk16)로 cos 0.996.
+                        attn_pool의 QKᵀ outlier만 16bit로 올린 full MXQ(--qk16)로 cos 0.99.
   - MXQInferenceHybrid: NPU trunk + CPU attn_pool/proj. **레거시.** QKᵀ 16bit 해결 전 방식.
 
 배경: attn_pool(577토큰->1토큰 cross-attention pooling)을 그냥 INT8로 양자화하면 QKᵀ matmul의
 outlier 때문에 깨졌었다(full-NPU cos 0.46). Mobilint 해결책(그 score matmul만 16bit)으로
-full 모델도 NPU에서 cos 0.996 달성 → CPU head 우회가 불필요해졌다.
+full 모델도 NPU에서 cos 0.99 달성 → CPU head 우회가 불필요해졌다.
 (reports/vendor/mobilint_resolution_attn_pool.md)
 
 공통 인터페이스(TRTInference 호환): model(image) -> (B,1024).

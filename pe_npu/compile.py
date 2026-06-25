@@ -5,15 +5,19 @@ CLI: python -m pe_npu.compile
 pe_model.apply_pe_patches()로 RoPE 상수화 / einops 제거 / attn_pool 분해 / abs_posemb 상수화
 패치를 적용한 PE 모델을 qbcompiler가 그래프로 추적·INT8 양자화·컴파일한다.
 
-검증된 사용 (hybrid 추론용 trunk MXQ, demo cos 0.997):
-    python -m pe_npu.compile --mode compile --save ./out/pe_feat.mxq --feat-only \
+권장 사용 (full NPU, image->embedding 전부 NPU, 원본 대비 cos 0.99):
+    python -m pe_npu.compile --mode compile --save ./out/pe_full.mxq \
       --calib-data-path ./calib_coco_hwc --calib-output 1 --device cpu   # 기본 cpu(GPU 없어도 OK), GPU면 gpu
+    # 기본 mode=full이고 full에는 --qk16(attn_pool QK^T 16bit)이 자동 적용된다(없으면 attn_pool이 INT8서 붕괴, cos 0.46).
+
+레거시 (hybrid trunk MXQ, +CPU pool head, cos 0.997):
+    python -m pe_npu.compile --mode compile --save ./out/pe_feat.mxq --feat-only --calib-data-path ./calib_coco_hwc
 
 옵션:
-  --feat-only : attn_pool 전 forward_features(1,577,1024)만 컴파일 (hybrid trunk, 권장)
-  --pool-only : pool 후 proj 전까지
-  (둘 다 없으면 full VisionWrapper -> 1024 임베딩)
-  --mode parse : 컴파일 없이 operator 목록/타입만 확인 (16bit override 이름 추출용)
+  (기본) full VisionWrapper -> 1024 임베딩. full엔 QK^T 16bit 자동(끄려면 --no-qk16, 실험용).
+  --feat-only : attn_pool 전 forward_features(1,577,1024)만 (레거시 hybrid trunk)
+  --pool-only : pool 후 proj 전까지 (진단용)
+  --mode parse : 컴파일 없이 operator 목록/타입만 확인
   --calib-data-path : calib npy 디렉토리(npy_files.txt) 또는 txt. 미지정 시 random calib
   --calib-output 0/1, --calib-method, --use-et, --act16/--weight16/--act16-exclude
 """
@@ -27,7 +31,7 @@ import torch
 from .pe_model import IMAGE_SIZE, load_pe
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_SAVE = os.path.join(HERE, "out", "pe_feat.mxq")
+DEFAULT_SAVE = os.path.join(HERE, "out", "pe_full.mxq")
 
 
 def _build_feed_dict(wrapper):
@@ -231,14 +235,20 @@ def main():
     ap.add_argument("--bit4", type=float, default=0.0,
                     help="mixed-precision: weight의 이 비율을 4비트로(0~1, 실험적). 예 0.5")
     ap.add_argument("--feat-only", action="store_true",
-                    help="attn_pool 전 forward_features(1,577,1024)만 (trunk hybrid용)")
-    ap.add_argument("--pool-only", action="store_true", help="pool 후 proj 전 출력")
+                    help="attn_pool 전 forward_features(1,577,1024)만 (레거시 hybrid trunk)")
+    ap.add_argument("--pool-only", action="store_true", help="pool 후 proj 전 출력 (진단용)")
     ap.add_argument("--qk16", action="store_true",
-                    help="attention score MatMul(QK^T)을 16bit override → full 모델 INT8 붕괴 복구 "
-                         "(cos 0.46→0.99). full 모드(--feat-only/--pool-only 없이)와 함께 사용 권장")
+                    help="attention score MatMul(QK^T) 16bit override. full 모드엔 자동 적용되므로 명시 불필요 "
+                         "(호환용 유지). feat/pool에 쓰면 그 그래프의 score matmul도 16bit")
+    ap.add_argument("--no-qk16", action="store_true",
+                    help="full 모드에서 QK^T 16bit override 비활성화(실험용). 끄면 attn_pool이 INT8서 붕괴(cos 0.46)")
     args = ap.parse_args()
 
     wmode = "feat" if args.feat_only else ("pool" if args.pool_only else "full")
+    # full 모드는 QK^T 16bit가 필수(없으면 attn_pool 붕괴) → 기본 자동 적용. feat/pool(레거시·진단)은 명시(--qk16) 시만.
+    qk16 = args.qk16 or ((wmode == "full") and (not args.no_qk16))
+    if wmode == "full" and not qk16:
+        print("[warn] full 모드 + --no-qk16: attn_pool이 INT8서 붕괴해 cos~0.46이 됩니다(실험용만).")
 
     if args.mode == "parse":
         parse_pe(mode=wmode, dump_names=args.dump_names)
@@ -247,7 +257,7 @@ def main():
                    calib_output=args.calib_output, calib_method=args.calib_method,
                    device=args.device, use_et=args.use_et,
                    act16=args.act16, weight16=args.weight16, act16_exclude=args.act16_exclude,
-                   inference_scheme=args.scheme, bit4=args.bit4, qk16=args.qk16)
+                   inference_scheme=args.scheme, bit4=args.bit4, qk16=qk16)
 
 
 if __name__ == "__main__":

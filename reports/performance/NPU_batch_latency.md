@@ -118,7 +118,7 @@ Global Core 중재(target cores 10개) 비용이 든다. ViT trunk는 이미 코
 ### 판정: mixed_precision은 no-op
 - 크기·latency·throughput·**cos(소수 4자리)까지 4종 완전 동일.** 우연이면 미세하게라도 달라야 하므로, `bit_config(mixed_precision)`가 컴파일 경로(PE torch backend + aries2)에서 **무시됨**이 확정.
 - 컴파일은 "successful"로 끝나지만(에러 없음) 실제 양자화 비트에 영향 0. docs 미기재 = 실험적/미지원 정황과 일치.
-- (주의) 위 cos 0.9238은 calib 16장이라 낮다. 정식 `pe_feat.mxq`는 COCO 200장 calib으로 0.997. 여기선 4종 상대비교가 목적이라 calib을 통일했을 뿐, 절대 정확도 비교 아님.
+- (주의) 위 cos 0.9238은 calib 16장이라 낮다. 정식 배포본은 COCO 200장 calib: **full NPU `pe_full.mxq`(--qk16) = cos 0.99**, 레거시 trunk `pe_feat.mxq`(hybrid+CPU pool) = cos 0.997. 여기선 4종 상대비교가 목적이라 calib을 통일했을 뿐, 절대 정확도 비교 아님.
 
 ### 결론
 - **양자화로 속도를 더 짜내는 길은 막혀 있다. INT8이 ARIES의 실질 최저 정밀도.** (bit_4는 API엔 있으나 무효)

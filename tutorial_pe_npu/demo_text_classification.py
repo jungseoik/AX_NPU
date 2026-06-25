@@ -1,6 +1,6 @@
 """데모(.py 옵션): PE 제로샷 분류 — live 텍스트 인코딩 × NPU 이미지 임베딩.
 
-임의 텍스트 문자열을 PE 텍스트 인코더(CPU)로 즉석 인코딩하고, 이미지는 NPU(MXQ hybrid)로
+임의 텍스트 문자열을 PE 텍스트 인코더(CPU)로 즉석 인코딩하고, 이미지는 NPU(full NPU, MXQInferenceFull)로
 임베딩해 코사인 유사도로 분류한다. (노트북 버전: demo_text_classification.ipynb 권장)
 
   image --(NPU)--> 1024 ┐

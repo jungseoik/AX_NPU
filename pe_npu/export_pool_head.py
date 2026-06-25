@@ -1,11 +1,12 @@
 """
-pool head(attn_pool + proj) 가중치만 추출해 pe_pool_head.pt로 저장.
+[레거시 — hybrid 전용] pool head(attn_pool + proj) 가중치만 추출해 pe_pool_head.pt로 저장.
 
-옵션 B(미리 컴파일된 MXQ를 HF에서 가져와 쓰기)에서, 원본 PE 전체 가중치(HF에서 2GB+
-다운로드)를 받지 않고도 CPU pool head를 복원하기 위한 작은(약 55MB) 산출물.
+현재 권장 경로는 full NPU(`MXQInferenceFull`, attn_pool도 NPU)라 이 파일이 필요 없다.
+이 스크립트는 레거시 hybrid(`MXQInferenceHybrid`, CPU pool head) 호환용으로만 유지된다.
 
 hybrid 구조상 NPU trunk(MXQ)는 weight를 자체 포함하지만, CPU에서 도는 attn_pool+proj는
-별도 가중치가 필요하다. 이 스크립트가 그 부분만 떼어 저장한다.
+별도 가중치가 필요해, 원본 PE 전체 가중치(2GB+) 없이 CPU pool head를 복원하려고 그 부분만
+떼어 저장(약 55MB)한다.
 
 사용:
   python -m pe_npu.export_pool_head --out ./pe_npu/out/pe_pool_head.pt

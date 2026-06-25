@@ -4,12 +4,14 @@ so layer names changing between the isolated head and the full model don't matte
 
 Uses only the public qbcompiler release API (load_mblt_model).
 
-출처: Mobilint(전근우) 기술지원 제공. attention pooling head의 INT8 양자화 붕괴(cos 0.69)
-원인이 QK^T matmul의 outlier임을 규명하고, 그 노드 activation만 16-bit로 올리면 복구됨을
-확인(cos 0.998). 레이어 이름이 모델마다 달라지므로 그래프 구조(MatMul -> ... -> Softmax)로
-score matmul을 자동 탐지한다. → reports/vendor/mobilint_resolution_attn_pool.md 참고.
+출처: Mobilint(전근우) 기술지원 제공. attention pooling head의 INT8 양자화 붕괴 원인이
+QK^T matmul의 outlier임을 규명하고, 그 노드 activation만 16-bit로 올리면 복구됨을 확인.
+(head 단독 격리: cos 0.69→0.998 / full 모델: cos 0.46→0.99) 레이어 이름이 모델마다 달라지므로
+그래프 구조(MatMul -> ... -> Softmax)로 score matmul을 자동 탐지한다.
+→ reports/vendor/mobilint_resolution_attn_pool.md 참고.
 """
-from qbcompiler.model_dict.serialize import load_mblt_model
+# qbcompiler는 컴파일 전용(pe_compile env)이라 함수 내부에서 lazy import — 런타임 env에서도
+# 이 모듈 자체는 import 가능하게.
 
 # ops that merely reshape/rescale the logits between MatMul and Softmax — walk through them
 # ops between the score MatMul and the Softmax that merely rescale/reshape/mask the
@@ -25,6 +27,7 @@ def _lt(op):
 
 
 def find_score_matmuls(mblt_path):
+    from qbcompiler.model_dict.serialize import load_mblt_model
     md, _ = load_mblt_model(mblt_path)
     names = []
     for sg in md.subgraphs:

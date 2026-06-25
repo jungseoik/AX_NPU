@@ -44,7 +44,7 @@ def main():
     npus = detect_npus()
     if not npus:
         sys.exit("NPU(/dev/aries*) 없음")
-    mxq = assets.ensure_feat_mxq()  # HF에서 MXQ 자동 다운로드 (trunk)
+    mxq = assets.ensure_full_mxq(scheme="single")  # HF full NPU MXQ (image→embedding, single 모드)
     print(f"장착 NPU: {npus} ({len(npus)}장) | 배치 {args.batch}장")
 
     # 입력 준비 (HWC float32) — 지연 측정용 동일 입력 재사용

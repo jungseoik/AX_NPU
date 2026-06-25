@@ -1,4 +1,9 @@
-# 코어모드(Single/Global4/Global8) × 파이프라인 단계별 지연 × 채널(최대 56) — 종합
+# [비포·hybrid] 코어모드 × 파이프라인 단계별 지연 × 채널(최대 56) — 종합
+
+> **[UPDATE 2026-06]** 이 문서는 **hybrid 시절**(NPU trunk + **CPU attn_pool**, cos 0.997)의 벤치마크다.
+> 여기서 분석한 `Pool(CPU attn_pool)` 병목은 이후 **QKᵀ 16bit → full NPU**(attn_pool도 NPU, cos 0.99)로
+> **제거**되었다. 현재 구성의 동일 측정: [`NPU_full_pipeline_e2e.md`](NPU_full_pipeline_e2e.md).
+> 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md).
 
 `service._detect` 파이프라인을 단계별로 쪼개, **3개 코어모드 MXQ**로 **채널 1~56(=7카드×8코어 최대배치)**
 까지 e2e·단계별 지연을 실측. NPU 추론 병목이 어디서·언제 커지는지 종합. 현재 7×ARIES(GPU 없음, CPU+NPU).
