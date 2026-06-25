@@ -25,12 +25,12 @@ def main():
     ap.add_argument("--images", nargs="+", default=sorted(glob.glob("images/*.jpg")))
     ap.add_argument("--prompts", nargs="+",
                     default=["a fire", "smoke", "a person who has fallen down", "a normal scene"])
-    ap.add_argument("--feat-mxq", default=None)
+    ap.add_argument("--full-mxq", default=None)
     args = ap.parse_args()
     if not args.images:
         sys.exit("이미지 없음. download_images.py 먼저 실행하거나 --images 지정.")
 
-    npu = pe_npu.MXQInferenceHybrid(args.feat_mxq) if args.feat_mxq else pe_npu.MXQInferenceHybrid.from_hf()
+    npu = pe_npu.MXQInferenceFull(args.full_mxq) if args.full_mxq else pe_npu.MXQInferenceFull.from_hf()
     clip = load_pe("PE-Core-L14-336", mode="clip", patch=False)   # 텍스트 타워(CPU)
     tok = open_clip.get_tokenizer("ViT-L-14")
 

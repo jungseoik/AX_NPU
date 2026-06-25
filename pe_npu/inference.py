@@ -1,17 +1,18 @@
 """
-MXQInferenceHybrid — PE-Core-L14-336 비전인코더 NPU 추론 (hybrid).
+PE-Core-L14-336 비전인코더 NPU 추론.
 
-구조 (정확도 0.997 검증, reports/SOLUTION_single_io_compile.md):
-  image -> [24 transformer blocks = NPU INT8 (feat MXQ)] -> 토큰피쳐 (1,577,1024)
-        -> [attn_pool + proj = CPU float (vendored pe_vendor 가중치)] -> 임베딩 (1,1024)
+  - MXQInferenceFull  : image->embedding 전부 NPU (CPU head 없음). **권장.**
+                        attn_pool의 QKᵀ outlier만 16bit로 올린 full MXQ(--qk16)로 cos 0.996.
+  - MXQInferenceHybrid: NPU trunk + CPU attn_pool/proj. **레거시.** QKᵀ 16bit 해결 전 방식.
 
-이유: attn_pool(577토큰->1토큰 cross-attention pooling)은 NPU INT8 양자화에서 구조적으로
-깨진다(full-NPU cos 0.46). 이 작은 head(전체 연산의 0.8%)만 CPU float로 돌린다.
+배경: attn_pool(577토큰->1토큰 cross-attention pooling)을 그냥 INT8로 양자화하면 QKᵀ matmul의
+outlier 때문에 깨졌었다(full-NPU cos 0.46). Mobilint 해결책(그 score matmul만 16bit)으로
+full 모델도 NPU에서 cos 0.996 달성 → CPU head 우회가 불필요해졌다.
+(reports/vendor/mobilint_resolution_attn_pool.md)
 
-TRTInference(trt_load.py)와 동일 인터페이스: model(image) -> (B,1024).
+공통 인터페이스(TRTInference 호환): model(image) -> (B,1024).
 입력: torch.Tensor (B,3,336,336)/(3,336,336) 또는 numpy. 전처리(preprocess_image)는 호출측.
-
-요구: qbruntime + NPU(/dev/aries0), feat MXQ. 모델 코드는 vendored(pe_npu/pe_vendor)라 외부 레포 불필요.
+요구: qbruntime + NPU(/dev/aries0). 모델 코드는 vendored(pe_npu/pe_vendor)라 외부 레포 불필요.
 """
 from __future__ import annotations
 
@@ -31,10 +32,62 @@ from .pe_model import IMAGE_SIZE, load_pe
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_FEAT_MXQ = os.path.join(HERE, "out", "pe_feat.mxq")
+DEFAULT_FULL_MXQ = os.path.join(HERE, "out", "pe_full.mxq")
+
+
+class MXQInferenceFull:
+    """full NPU 추론: image -> embedding 전부 NPU 한 번에 (CPU head 없음).
+
+    attn_pool의 QK^T outlier로 INT8서 깨지던 head를, 그 score MatMul만 16bit로 올린
+    full MXQ(컴파일 시 --qk16)로 NPU에서 직접 돌린다. 원본 pth 대비 cos ≈ 0.99.
+    (Mobilint 해결책. reports/vendor/mobilint_resolution_attn_pool.md)
+
+    hybrid(MXQInferenceHybrid) 대비:
+      - CPU attn_pool/proj 불필요 → 고채널 CPU 병목 제거, torch/pe_vendor 의존 없음.
+      - 입력/출력 인터페이스 동일: model(image (B,3,336,336)) -> (B,1024).
+    """
+
+    def __init__(self, full_mxq_path: str = DEFAULT_FULL_MXQ, device_id: int = 0):
+        self.acc = qbruntime.Accelerator(device_id)
+        self.model = qbruntime.Model(full_mxq_path)
+        self.model.launch(self.acc)
+        self.image_size = IMAGE_SIZE
+
+    @classmethod
+    def from_hf(cls, repo_id: str = None, device_id: int = 0, revision: str = None):
+        """HF에서 미리 컴파일된 full MXQ를 받아 추론기 구성 (qbruntime만 필요)."""
+        from . import assets
+        repo = repo_id or assets.HF_REPO
+        full = assets.ensure_full_mxq(repo_id=repo, revision=revision)
+        return cls(full_mxq_path=full, device_id=device_id)
+
+    def __call__(self, *args, **kwargs):
+        return self.infer(*args, **kwargs)
+
+    def infer(self, image):
+        return_torch = _HAS_TORCH and isinstance(image, torch.Tensor)
+        arr = image.detach().cpu().numpy() if return_torch else np.asarray(image)
+        arr = arr.astype(np.float32, copy=False)
+        if arr.ndim == 3:
+            arr = arr[None]
+        embs = []
+        for i in range(arr.shape[0]):
+            hwc = np.ascontiguousarray(arr[i].transpose(1, 2, 0))   # NPU 입력 = HWC
+            o = self.model.infer(hwc)                               # image -> embedding (NPU 전부)
+            o = o[0] if isinstance(o, (list, tuple)) else o
+            embs.append(np.asarray(o).reshape(-1).astype(np.float32))
+        out = np.stack(embs, axis=0)                                # (B,1024)
+        if return_torch:
+            t = torch.from_numpy(out)
+            return t.to(image.device) if image.is_cuda else t
+        return out
 
 
 class MXQInferenceHybrid:
-    """NPU trunk(feat MXQ) + CPU pool/proj head. TRTInference 호환.
+    """[레거시] NPU trunk(feat MXQ) + CPU pool/proj head. TRTInference 호환.
+
+    QKᵀ 16bit 해결(MXQInferenceFull) 이전 방식. CPU attn_pool이 고채널에서 병목이라
+    신규 코드는 MXQInferenceFull 사용 권장. 하위호환/비교용으로 유지.
 
     pool head(CPU)는 두 가지 소스 중 하나로 복원한다:
       - pool_head_path 지정 → 추출된 가중치(pe_pool_head.pt)만 로드. PE 전체 가중치

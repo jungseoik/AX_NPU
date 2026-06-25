@@ -73,19 +73,40 @@ def _select_names(ops, spec):
     return out
 
 
+def _detect_score_matmuls(wrapper, fd):
+    """attention score MatMul(QK^T) 노드 이름을 그래프 구조로 자동 탐지.
+
+    mblt_compile로 한 번 파싱한 .mblt에서 find_score_matmuls로 MatMul->...->Softmax
+    경로를 찾는다. 레이어 이름이 모델/패키징마다 달라도 동작. (출처: Mobilint 기술지원)
+    """
+    import tempfile
+    from qbcompiler import mblt_compile
+    from .find_score_matmul import find_score_matmuls
+    with tempfile.NamedTemporaryFile(suffix=".mblt", delete=False) as tf:
+        mblt_path = tf.name
+    mblt_compile(model=wrapper, mblt_save_path=mblt_path, backend="torch",
+                 feed_dict=fd, target_device="aries2")
+    names = find_score_matmuls(mblt_path)
+    os.remove(mblt_path)
+    return names
+
+
 def compile_pe(mode: str = "feat", save_path: str = DEFAULT_SAVE,
                calib_path: str = None, calib_output: int = 1, calib_method: int = 1,
                device: str = "cpu", use_et: bool = False,
                act16: str = None, weight16: str = None, act16_exclude: str = None,
                model_name: str = "PE-Core-L14-336", inference_scheme: str = "single",
-               bit4: float = 0.0):
+               bit4: float = 0.0, qk16: bool = False):
     """PE vision encoder를 MXQ로 컴파일.
 
-    mode        : 'feat'(trunk, hybrid 권장) | 'pool' | 'full'.
+    mode        : 'feat'(trunk) | 'pool' | 'full'(trunk+attn_pool, qk16와 함께 권장).
     save_path   : 출력 .mxq 경로.
     calib_path  : calib npy 디렉토리(HWC, npy_files.txt 포함) 또는 txt. None이면 random calib.
     calib_output: 0=activation per-layer, 1=per-channel(정밀↑).
     device      : 'cpu' | 'gpu'.
+    qk16        : True면 attention score MatMul(QK^T)을 16bit로 자동 override.
+                  attn_pool의 QK^T outlier로 인한 INT8 붕괴(cos 0.46)를 복구 → full 모델도
+                  cos 0.99. (Mobilint 해결책, full 모드에서 권장)
     """
     wrap_mode = {"feat": "feat", "pool": "pool", "full": "full"}[mode]
     wrapper = load_pe(model_name=model_name, mode=wrap_mode, patch=True)
@@ -101,18 +122,28 @@ def compile_pe(mode: str = "feat", save_path: str = DEFAULT_SAVE,
     )
 
     extra = {}
-    if act16 or weight16:
+    qk_names = []
+    if qk16:
+        qk_names = _detect_score_matmuls(wrapper, fd)
+        print(f"[qk16] 16bit 대상 score MatMul {len(qk_names)}개: {qk_names}")
+        if not qk_names:
+            raise RuntimeError("qk16=True인데 score MatMul(MatMul->Softmax)을 못 찾음")
+    if act16 or weight16 or qk16:
         from qbcompiler import BitConfig
-        print("[16bit] re-parse to enumerate operator names")
-        ops = _parse_operators(wrapper, fd)
-        act_names = _select_names(ops, act16)
-        w_names = _select_names(ops, weight16)
-        if act16_exclude:
-            ex = [s.strip().lower() for s in act16_exclude.split(",") if s.strip()]
-            before = len(act_names)
-            act_names = [n for n in act_names if not any(s in n.lower() for s in ex)]
-            print(f"    act16 exclude: {before} -> {len(act_names)}")
-        print(f"    total ops={len(ops)}  act16={len(act_names)}  weight16={len(w_names)}")
+        act_names, w_names = [], []
+        if act16 or weight16:
+            print("[16bit] re-parse to enumerate operator names")
+            ops = _parse_operators(wrapper, fd)
+            act_names = _select_names(ops, act16)
+            w_names = _select_names(ops, weight16)
+            if act16_exclude:
+                ex = [s.strip().lower() for s in act16_exclude.split(",") if s.strip()]
+                before = len(act_names)
+                act_names = [n for n in act_names if not any(s in n.lower() for s in ex)]
+                print(f"    act16 exclude: {before} -> {len(act_names)}")
+            print(f"    total ops={len(ops)}  act16={len(act_names)}  weight16={len(w_names)}")
+        # qk16: score MatMul을 activation 16bit 목록에 합침 (중복 제거)
+        act_names = sorted(set(act_names) | set(qk_names))
         extra["bit_config"] = BitConfig(
             layer_overrides=BitConfig.LayerOverrides(
                 activation_16bits=act_names, weight_16bits=w_names,
@@ -200,8 +231,11 @@ def main():
     ap.add_argument("--bit4", type=float, default=0.0,
                     help="mixed-precision: weight의 이 비율을 4비트로(0~1, 실험적). 예 0.5")
     ap.add_argument("--feat-only", action="store_true",
-                    help="attn_pool 전 forward_features(1,577,1024) (hybrid trunk, 권장)")
+                    help="attn_pool 전 forward_features(1,577,1024)만 (trunk hybrid용)")
     ap.add_argument("--pool-only", action="store_true", help="pool 후 proj 전 출력")
+    ap.add_argument("--qk16", action="store_true",
+                    help="attention score MatMul(QK^T)을 16bit override → full 모델 INT8 붕괴 복구 "
+                         "(cos 0.46→0.99). full 모드(--feat-only/--pool-only 없이)와 함께 사용 권장")
     args = ap.parse_args()
 
     wmode = "feat" if args.feat_only else ("pool" if args.pool_only else "full")
@@ -213,7 +247,7 @@ def main():
                    calib_output=args.calib_output, calib_method=args.calib_method,
                    device=args.device, use_et=args.use_et,
                    act16=args.act16, weight16=args.weight16, act16_exclude=args.act16_exclude,
-                   inference_scheme=args.scheme, bit4=args.bit4)
+                   inference_scheme=args.scheme, bit4=args.bit4, qk16=args.qk16)
 
 
 if __name__ == "__main__":

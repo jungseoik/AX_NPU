@@ -5,9 +5,10 @@
 파이썬 패키지를 통해 수행한다 (`python -m pe_npu.*` 또는 `import pe_npu`).
 
 - 대상 모델: PE-Core-L14-336 (Meta Perception Encoder, CLIP ViT-L/14) vision encoder
-- 결과: 이미지 -> 1024-d 임베딩. 원본 PyTorch 대비 코사인 유사도 **0.997**
-- 구조: 무거운 24 transformer block은 NPU(INT8), 작은 attn_pool head는 CPU(float) = **hybrid**
-  (이유는 `../reports/design/SOLUTION_single_io_compile.md`. attn_pool은 NPU INT8에서 깨져서 CPU로 둠)
+- 결과: 이미지 -> 1024-d 임베딩. 원본 PyTorch 대비 코사인 유사도 **0.9957**
+- 구조: **image→embedding 전부 NPU (full NPU)**. trunk 24 block + attn_pool head 모두 NPU INT8이되,
+  attn_pool의 QKᵀ matmul만 16bit로 올려(`--qk16`) 양자화 붕괴를 피한다.
+  (원인·해결: `../reports/vendor/mobilint_resolution_attn_pool.md`. 예전 hybrid 방식은 attn_pool을 CPU로 뒀음)
 
 > 모든 명령은 `mblt_compiler` 컨테이너 안에서 실행하며, `docker exec`로 감싸면 된다.
 > 패키지 위치는 `/workspace/AX_NPU/`(= 호스트 `AX_NPU/AX_NPU/`)이고, 여기서 `import pe_npu`가 된다.
@@ -38,13 +39,14 @@ HF에 올려두면(옵션 B) 다른 사람은 그냥 받아 쓰면 된다.
 conda activate pe_npu_host
 python -c "
 import numpy as np, pe_npu
-m = pe_npu.MXQInferenceHybrid.from_hf()          # PIA-SPACE-LAB/MXQ_NPU에서 MXQ+pool head 자동 다운로드
+m = pe_npu.MXQInferenceFull.from_hf()            # PIA-SPACE-LAB/MXQ_NPU에서 pe_full.mxq 자동 다운로드
 x = pe_npu.preprocess_image('tutorial_pe_npu/images/cat1.jpg')
 print(m.infer(x[None]).shape)                    # (1, 1024)
 "
 ```
-> 옵션 B는 NPU(`/dev/aries0`) + qbruntime + 인터넷(최초 1회 HF 다운로드)만 필요하다.
-> 직접 만든 자산을 HF에 올리려면: `python -m pe_npu.export_pool_head` 후 `python setup/upload_assets_to_hf.py`.
+> 옵션 B는 NPU(`/dev/aries0`) + qbruntime + 인터넷(최초 1회 HF 다운로드)만 필요하다. full NPU라 torch도 불필요.
+> 직접 만든 자산을 HF에 올리려면: `python setup/upload_assets_to_hf.py` (pe_full.mxq 업로드).
+> (레거시 hybrid를 쓰려면 `MXQInferenceHybrid.from_hf()` + `--legacy` 업로드.)
 
 아래 0~5단계는 **옵션 A(직접 컴파일)** 기준이다. 옵션 B면 0(드라이버/런타임)만 하고 위 빠른 시작으로 가면 된다.
 
@@ -123,40 +125,43 @@ docker exec -w /workspace/AX_NPU mblt_compiler \
 
 ---
 
-## 2. NPU용 MXQ 컴파일
+## 2. NPU용 MXQ 컴파일 (full NPU)
 
-trunk(24 transformer block)를 NPU용 MXQ로 컴파일한다(`--feat-only` = attn_pool 전까지).
-attn_pool은 CPU에서 처리하므로 trunk만 NPU로 보낸다. PE는 RoPE2D·attention pooling 때문에
-일반 ONNX 경로로는 컴파일이 막혀, `pe_npu`가 모델에 전용 패치(5개)를 적용한 뒤 컴파일한다.
+full 모델(trunk 24 block + attn_pool head)을 한 번에 NPU용 MXQ로 컴파일한다(`--qk16`). PE는
+RoPE2D·attention pooling 때문에 일반 ONNX 경로로는 컴파일이 막혀, `pe_npu`가 모델에 전용 패치(5개)를
+적용한 뒤 컴파일한다. `--qk16`은 attention score MatMul(QKᵀ)을 자동 탐지해 16bit로 올린다 —
+attn_pool이 그냥 INT8에서 깨지던(cos 0.46) 문제를 막아준다.
 
 ```bash
 # 기본: --device cpu (GPU 없는 NPU 서버). GPU 있으면 --device gpu 로 더 빠르게(옵션).
-python -m pe_npu.compile --mode compile --save ./pe_npu/out/pe_feat.mxq --feat-only \
+python -m pe_npu.compile --mode compile --save ./pe_npu/out/pe_full.mxq --qk16 \
   --calib-data-path ./pe_npu/calib_coco_hwc --calib-output 1 --device cpu
 # (도커로 할 경우) docker exec -w /workspace/AX_NPU mblt_compiler bash -lc '... 위 명령 ...'
-# → pe_npu/out/pe_feat.mxq (약 314MB) 생성. "Compilation was successful." 확인.
+# → pe_npu/out/pe_full.mxq (약 327MB) 생성. "Compilation was successful." 확인.
+# [qk16] 16bit 대상 score MatMul 25개: [...] 로그가 나오면 정상 (trunk 24 + head 1).
 # 코어모드는 --scheme single(기본)|multi|global4|global8 — 출력 동일, 속도/메모리만 차이
 #   (→ ../reports/performance/NPU_coremode_benchmark.md)
 ```
 
-> 검증된 `pe_feat.mxq`가 이미 `pe_npu/out/`에 있으면 재컴파일 없이 4단계로 바로 갈 수 있다.
-> 컴파일 없이 operator 목록만 확인하려면 `--mode parse` (16bit override 이름 추출용).
+> 검증된 `pe_full.mxq`가 이미 `pe_npu/out/`에 있으면 재컴파일 없이 4단계로 바로 갈 수 있다.
+> (레거시 hybrid trunk만 만들려면 `--feat-only` — attn_pool 전까지, CPU pool과 함께 사용.)
 
 ---
 
 ## 3. 추론 클래스 (참고)
 
-추론은 `pe_npu.MXQInferenceHybrid`가 제공한다 (NPU trunk + CPU pool을 묶어
+추론은 `pe_npu.MXQInferenceFull`이 제공한다 (image→embedding 전부 NPU,
 `model(image) -> (B,1024)`, 기존 `TRTInference`와 인터페이스 동일). 직접 만들 필요 없다.
 
 ```python
 import pe_npu
 import numpy as np
 
-model = pe_npu.MXQInferenceHybrid()            # 기본 MXQ = pe_npu/out/pe_feat.mxq
+model = pe_npu.MXQInferenceFull()              # 기본 MXQ = pe_npu/out/pe_full.mxq
 x = pe_npu.preprocess_image("some.jpg")        # (3,336,336) float32
 emb = model.infer(x[None])                     # (1, 1024) 비전 임베딩
 ```
+> 레거시 hybrid가 필요하면 `pe_npu.MXQInferenceHybrid()` (NPU trunk + CPU pool, pe_feat.mxq+pool head).
 
 ---
 
@@ -208,10 +213,10 @@ python demo_text_classification.py --images images/*.jpg \
 import pe_npu
 import numpy as np
 
-model = pe_npu.MXQInferenceHybrid("/workspace/AX_NPU/pe_npu/out/pe_feat.mxq")
+model = pe_npu.MXQInferenceFull("/workspace/AX_NPU/pe_npu/out/pe_full.mxq")
 # image: 전처리된 (B,3,336,336) float32 numpy 또는 torch
 x = np.stack([pe_npu.preprocess_image(p) for p in paths], axis=0)
-emb = model.infer(x)   # (B, 1024) 비전 임베딩
+emb = model.infer(x)   # (B, 1024) 비전 임베딩 (image→embedding 전부 NPU)
 ```
 
 전처리는 `pe_npu.preprocess_image` (운영 `service.preprocess_image`와 동일:
@@ -246,9 +251,10 @@ python demo_parallel.py --batch 32         # (옵션) 비대화형/CI
 | `pe_npu.pe_vendor` | Meta PE vision encoder 코드 vendor 복사본 (외부 의존 제거) | - |
 | `pe_npu.preprocess` | `preprocess_image` (resize 336 + normalize 0.5) | - |
 | `pe_npu.calib` | calibration npy 생성 / HWC 변환 | `python -m pe_npu.calib` |
-| `pe_npu.compile` | PE -> MXQ 컴파일 (`compile_pe`, `parse_pe`) | `python -m pe_npu.compile` |
-| `pe_npu.inference` | `MXQInferenceHybrid` (NPU trunk + CPU pool). `.from_hf()` = 옵션 B | - |
-| `pe_npu.export_pool_head` | pool head 가중치 추출 (옵션 B 배포용, ~53MB) | `python -m pe_npu.export_pool_head` |
+| `pe_npu.compile` | PE -> MXQ 컴파일 (`compile_pe`, `parse_pe`). `--qk16`=full NPU | `python -m pe_npu.compile` |
+| `pe_npu.find_score_matmul` | attention score MatMul(QKᵀ) 자동 탐지 (`--qk16`이 16bit override) | - |
+| `pe_npu.inference` | `MXQInferenceFull`(image→embedding 전부 NPU, 권장) / `MXQInferenceHybrid`(레거시). `.from_hf()` = 옵션 B | - |
+| `pe_npu.export_pool_head` | (레거시) hybrid용 pool head 가중치 추출 (~53MB) | `python -m pe_npu.export_pool_head` |
 | `pe_npu.assets` | HF에서 MXQ/pool head 다운로드 (옵션 B) | - |
 
 ## 튜토리얼 파일
