@@ -54,11 +54,16 @@ class MXQInferenceFull:
         self.image_size = IMAGE_SIZE
 
     @classmethod
-    def from_hf(cls, repo_id: str = None, device_id: int = 0, revision: str = None):
-        """HF에서 미리 컴파일된 full MXQ를 받아 추론기 구성 (qbruntime만 필요)."""
+    def from_hf(cls, repo_id: str = None, device_id: int = 0, revision: str = None,
+                scheme: str = "single"):
+        """HF에서 미리 컴파일된 full MXQ를 받아 추론기 구성 (qbruntime만 필요).
+
+        scheme: 코어모드 (single|multi|global4|global8). HF `<scheme>/pe_full.mxq`.
+                single=throughput(async), global8=단건 latency 최소.
+        """
         from . import assets
         repo = repo_id or assets.HF_REPO
-        full = assets.ensure_full_mxq(repo_id=repo, revision=revision)
+        full = assets.ensure_full_mxq(repo_id=repo, revision=revision, scheme=scheme)
         return cls(full_mxq_path=full, device_id=device_id)
 
     def __call__(self, *args, **kwargs):

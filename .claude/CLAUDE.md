@@ -27,7 +27,9 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 ## 추론 2가지 방식
 
 - **옵션 A(직접 컴파일)**: calib → `python -m pe_npu.compile --qk16 ...`(full NPU) → 추론. **qbcompiler**(docker `mblt_compiler`) 필요. 커스텀 calib/해상도·실험용.
-- **옵션 B(가져와 쓰기)**: `MXQInferenceFull.from_hf("PIA-SPACE-LAB/MXQ_NPU")`. **qbruntime만** 있으면 됨(qbcompiler·원본 가중치 불필요). 운영·빠른 시작.
+- **옵션 B(가져와 쓰기)**: `MXQInferenceFull.from_hf(scheme="single")`. **qbruntime만** 있으면 됨(qbcompiler·원본 가중치 불필요). 운영·빠른 시작.
+  - HF `PIA-SPACE-LAB/MXQ_NPU`는 **코어모드 폴더별**: `single/` `multi/` `global4/` `global8/`(각 `pe_full.mxq` + `CALIBRATION.md`). `scheme=`로 선택. 단건 latency=global8, throughput=single/global4. (레거시 hybrid: 루트 `pe_feat.mxq`+`pe_pool_head.pt`)
+  - 4모드 동일 calib(도메인 영상 64프레임), 전부 cos 0.9957. 모드 선택: `reports/performance/NPU_full_pipeline_e2e.md`.
 
 ## 헷갈리지 말 것
 
@@ -44,6 +46,7 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 - **분석/원리**:
   - `reports/vendor/mobilint_resolution_attn_pool.md` — ★ attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.9957
   - `reports/performance/NPU_full_vs_hybrid.md` — full NPU vs hybrid, CPU pool 병목 제거 실측
+  - `reports/performance/NPU_full_pipeline_e2e.md` — [애프터] full NPU 코어모드 4종 × 채널 스윕 단계별 (모드 선택 가이드)
   - `reports/design/SOLUTION_single_io_compile.md` — 단일 입출력 컴파일 + (당시)hybrid 정확도(0.997) 해결
   - `reports/performance/NPU_batch_latency.md` — 배치 지연/멀티코어/Multi 모드/bit4 양자화 한계 (실측)
   - `reports/performance/NPU_multicard_62ch_benchmark.md` — 멀티카드(7×ARIES=56코어) 62채널 분산 추론 지연 (실측)

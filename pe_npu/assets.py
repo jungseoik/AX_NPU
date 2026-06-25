@@ -26,11 +26,15 @@ def download_asset(filename: str, repo_id: str = HF_REPO, revision: str = None):
     return hf_hub_download(repo_id=repo_id, filename=filename, revision=revision)
 
 
-def ensure_full_mxq(path: str = None, repo_id: str = HF_REPO, revision: str = None):
-    """로컬 path가 있으면 그대로, 없으면 HF에서 full MXQ(image->embedding)를 받아 경로 반환."""
+def ensure_full_mxq(path: str = None, repo_id: str = HF_REPO, revision: str = None,
+                    scheme: str = "single"):
+    """로컬 path가 있으면 그대로, 없으면 HF에서 full MXQ(image->embedding)를 받아 경로 반환.
+
+    scheme: 코어모드 폴더 (single|multi|global4|global8). HF repo는 `<scheme>/pe_full.mxq` 구조.
+    """
     if path and os.path.exists(path):
         return path
-    return download_asset(FULL_MXQ, repo_id, revision)
+    return download_asset(f"{scheme}/{FULL_MXQ}", repo_id, revision)
 
 
 def ensure_feat_mxq(path: str = None, repo_id: str = HF_REPO, revision: str = None):
