@@ -1,7 +1,13 @@
-# PE-NPU 추론 파이프라인 단계별 지연 + e2e (이미지 리스트 입력, 채널 스윕)
+# [비포·hybrid] PE-NPU 파이프라인 단계별 지연 + e2e (single 모드, 채널 스윕)
+
+> **[UPDATE 2026-06]** 이 문서는 **hybrid 시절**(NPU trunk + **CPU pool**) single 모드 측정이다.
+> 여기서 "고채널 병목 = CPU단(전처리+pool)"이라 한 그 **Pool(CPU attn_pool) 단계는 이후
+> QKᵀ 16bit → full NPU**로 **제거**됐다(attn_pool도 NPU). full NPU 동일 측정(같은 채널 스윕):
+> [`NPU_full_pipeline_e2e.md`](NPU_full_pipeline_e2e.md)(4모드) · 직접 비포/애프터 한 표:
+> [`NPU_full_vs_hybrid.md`](NPU_full_vs_hybrid.md). 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md).
 
 이미지 리스트(N채널)가 동시에 들어올 때 `service._detect` 파이프라인을 단계별로 쪼개
-각 단계 지연과 end-to-end(e2e)를 실측. 현재 7×ARIES 서버(GPU 없음, CPU+NPU).
+각 단계 지연과 end-to-end(e2e)를 실측. (당시 hybrid 구성, 7×ARIES 서버 GPU 없음, CPU+NPU.)
 
 **파이프라인 단계**
 ```

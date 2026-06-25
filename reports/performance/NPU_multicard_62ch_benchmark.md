@@ -10,7 +10,8 @@
 | **P 전처리** | 원본 이미지 N장 → 모델 입력(HWC float32). resize 336 + normalize + layout | CPU (단일, torchvision) |
 | **I 순수추론** | 모델 input → output. INT8 feat MXQ(24 transformer block) | NPU trunk (7대 분산) |
 
-> hybrid의 CPU pool head(attn_pool, 장당 ~2ms)는 별도이며 위 추론시간에 미포함.
+> (당시 hybrid) CPU pool head(attn_pool, 장당 ~2ms)는 별도이며 위 추론시간에 미포함.
+> 현재 full NPU에선 attn_pool이 NPU로 흡수돼 추가비용 ≈0 → 위 trunk 시간이 곧 full 시간. → `NPU_full_pipeline_e2e.md`
 > 추론 정확도는 원본 PE 대비 cos 0.9987로 검증됨(`../design/SOLUTION_single_io_compile.md`).
 
 ---
