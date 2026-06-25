@@ -2,7 +2,7 @@
 
 > **[UPDATE 2026-06]** 이 문서의 hybrid(attn_pool을 CPU로 분리, cos 0.997)는 당시 해결책이다.
 > 이후 attn_pool의 **QKᵀ matmul만 16bit**로 올리면 NPU에서도 정상임이 확인되어(Mobilint),
-> 지금은 **full NPU**(image→embedding 전부 NPU, cos 0.9957)가 기본이다.
+> 지금은 **full NPU**(image→embedding 전부 NPU, cos 0.99)가 기본이다.
 > → [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md)
 
 > 25-서브그래프 분할 문제를 **해결**했다. SDK 수정 없이 사용자 코드(모델 패치 + `backend="torch"`)로

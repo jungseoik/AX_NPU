@@ -80,4 +80,4 @@ sudo bash .claude/skills/npu-setup/setup_npu_cli.sh
     `pe_npu.MXQInferenceFull.from_hf()` → `PIA-SPACE-LAB/MXQ_NPU`에서 `pe_full.mxq` 자동 다운로드
     (image→embedding 전부 NPU). NPU + qbruntime + 인터넷만 있으면 됨 (qbcompiler·원본 가중치 불필요).
   - **옵션 A (직접 컴파일)**: calib → `python -m pe_npu.compile --qk16` → 추론. qbcompiler(docker) 필요.
-    커스텀 calib/해상도·컴파일 실험용. full NPU cos 0.9957.
+    커스텀 calib/해상도·컴파일 실험용. full NPU cos 0.99.

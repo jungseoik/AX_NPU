@@ -3,7 +3,7 @@
 > **[SUPERSEDED 2026-06] full-NPU 붕괴(cos~0.46)의 원인은 attn_pool이 맞았고, 최종 해결은 QKᵀ 16bit.**
 > 처음엔 hybrid(attn_pool을 CPU로 분리, cos 0.9987)로 우회했으나, 이후 Mobilint가 원인을 **attn_pool의
 > QKᵀ matmul outlier**로 규명 → 그 **score matmul만 16bit**로 올리면 NPU에서도 정상(cos 0.998).
-> 지금은 **full NPU**(image→embedding 전부 NPU, cos 0.9957)가 기본이다.
+> 지금은 **full NPU**(image→embedding 전부 NPU, cos 0.99)가 기본이다.
 > (이 문서가 "불필요"라 적었던 16bit override가 사실은 정답이었다 — 단, head 전체가 아니라
 > **QKᵀ matmul 한 노드만**이 핵심.) 현재 정답 경로:
 > [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md).

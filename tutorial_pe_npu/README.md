@@ -5,7 +5,7 @@
 파이썬 패키지를 통해 수행한다 (`python -m pe_npu.*` 또는 `import pe_npu`).
 
 - 대상 모델: PE-Core-L14-336 (Meta Perception Encoder, CLIP ViT-L/14) vision encoder
-- 결과: 이미지 -> 1024-d 임베딩. 원본 PyTorch 대비 코사인 유사도 **0.9957**
+- 결과: 이미지 -> 1024-d 임베딩. 원본 PyTorch 대비 코사인 유사도 **0.99**
 - 구조: **image→embedding 전부 NPU (full NPU)**. trunk 24 block + attn_pool head 모두 NPU INT8이되,
   attn_pool의 QKᵀ matmul만 16bit로 올려(`--qk16`) 양자화 붕괴를 피한다.
   (원인·해결: `../reports/vendor/mobilint_resolution_attn_pool.md`. 예전 hybrid 방식은 attn_pool을 CPU로 뒀음)

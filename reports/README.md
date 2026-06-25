@@ -2,7 +2,7 @@
 
 PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 정리.
 
-> ★ **현재 상태: full NPU (image→embedding 전부 NPU, cos 0.9957)**. attn_pool INT8 붕괴는
+> ★ **현재 상태: full NPU (image→embedding 전부 NPU, cos 0.99)**. attn_pool INT8 붕괴는
 > QKᵀ matmul 16bit로 해결됨 → [vendor/mobilint_resolution_attn_pool.md](vendor/mobilint_resolution_attn_pool.md).
 > 그 이전 hybrid(NPU trunk + CPU pool) 분석 문서들은 히스토리로 보존.
 
@@ -39,7 +39,7 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 ## 📨 vendor/ — Mobilint 커뮤니케이션
 | 문서 | 내용 |
 |------|------|
-| [mobilint_resolution_attn_pool.md](vendor/mobilint_resolution_attn_pool.md) | ★ **[해결]** attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.9957 |
+| [mobilint_resolution_attn_pool.md](vendor/mobilint_resolution_attn_pool.md) | ★ **[해결]** attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.99 |
 | [mobilint_inquiry_attn_pool.md](vendor/mobilint_inquiry_attn_pool.md) | attention pooling head INT8 붕괴 문의 (해결됨, 당시 기록 보존) |
 | [mobilint_support_inquiry.md](vendor/mobilint_support_inquiry.md) | Mobilint 기술지원 문의 정리 |
 

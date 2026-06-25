@@ -8,7 +8,7 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 
 ## 현재 상태
 
-- **컴파일·추론 모두 동작. image→embedding 전부 NPU (full NPU).** trunk 24 block + attn_pool head 모두 NPU. 원본 pth 대비 **cos 0.9957**. → `MXQInferenceFull`.
+- **컴파일·추론 모두 동작. image→embedding 전부 NPU (full NPU).** trunk 24 block + attn_pool head 모두 NPU. 원본 pth 대비 **cos 0.99**. → `MXQInferenceFull`.
   - **핵심 해결**: attn_pool은 그냥 INT8로 하면 QKᵀ matmul outlier로 깨졌는데(full-NPU cos 0.46), 그 **score matmul만 16bit**로 올리면 복구(Mobilint 해결책, 컴파일 시 `--qk16`). → `reports/vendor/mobilint_resolution_attn_pool.md`
   - **레거시 hybrid**(NPU trunk + CPU attn_pool, cos 0.997)는 `MXQInferenceHybrid`로 유지(비교/하위호환). full이 CPU pool 병목 제거 → `reports/performance/NPU_full_vs_hybrid.md`.
 - **자기완결(self-contained)**: PE 모델 코드는 `pe_npu/pe_vendor/`에 vendor 복사 → 외부 레포(Product-AI-mono) 의존 없음. 가중치만 HF `facebook/PE-Core-L14-336` 자동 다운로드.
@@ -29,7 +29,7 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 - **옵션 A(직접 컴파일)**: calib → `python -m pe_npu.compile --qk16 ...`(full NPU) → 추론. **qbcompiler**(docker `mblt_compiler`) 필요. 커스텀 calib/해상도·실험용.
 - **옵션 B(가져와 쓰기)**: `MXQInferenceFull.from_hf(scheme="single")`. **qbruntime만** 있으면 됨(qbcompiler·원본 가중치 불필요). 운영·빠른 시작.
   - HF `PIA-SPACE-LAB/MXQ_NPU`는 **코어모드 폴더별**: `single/` `multi/` `global4/` `global8/`(각 `pe_full.mxq` + `CALIBRATION.md`). `scheme=`로 선택. 단건 latency=global8, throughput=single/global4. (레거시 hybrid: 루트 `pe_feat.mxq`+`pe_pool_head.pt`)
-  - 4모드 동일 calib(도메인 영상 64프레임), 전부 cos 0.9957. 모드 선택: `reports/performance/NPU_full_pipeline_e2e.md`.
+  - 4모드 동일 calib(COCO val2017 200장), 전부 cos 0.99. 모드 선택: `reports/performance/NPU_full_pipeline_e2e.md`.
 
 ## 헷갈리지 말 것
 
@@ -44,7 +44,7 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 - **Qwen3-VL(멀티모달 LLM) 추론**: `tutorial_pe_npu/README_VLM_qwen3.md` + `demo_vlm_qwen3.ipynb` + 헬퍼 `tutorial_pe_npu/vlm_npu.py` + skill `.claude/skills/qwen3-vl/`. 이미지+프롬프트→텍스트. PE-Core와 별개로, Mobilint가 올린 `mobilint/Qwen3-VL-*` MXQ를 표준 HF API(`AutoModelForImageTextToText`+`mblt-model-zoo`)로 그대로 가져와 씀(포팅 불필요). **코어모드=global8**(8코어 전부, 단일스트림 latency 최적화, max_batch_size=1). 설치 핀: `mblt-model-zoo==1.3.1` + `transformers>=4.57`. 출처: `mobilint-runtime-gui` 백엔드
 - **신규 서버 NPU 세팅**: `.claude/skills/npu-setup/` (clone 후 `mobilint-cli status`까지)
 - **분석/원리**:
-  - `reports/vendor/mobilint_resolution_attn_pool.md` — ★ attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.9957
+  - `reports/vendor/mobilint_resolution_attn_pool.md` — ★ attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.99
   - `reports/performance/NPU_full_vs_hybrid.md` — full NPU vs hybrid, CPU pool 병목 제거 실측
   - `reports/performance/NPU_full_pipeline_e2e.md` — [애프터] full NPU 코어모드 4종 × 채널 스윕 단계별 (모드 선택 가이드)
   - `reports/design/SOLUTION_single_io_compile.md` — 단일 입출력 컴파일 + (당시)hybrid 정확도(0.997) 해결

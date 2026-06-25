@@ -65,7 +65,7 @@ python -m pe_npu.compile --mode compile --save out/pe_full.mxq \
 | 구성 | cos(NPU, 원본 float) | head 처리 |
 |------|:---:|------|
 | hybrid (trunk INT8 + CPU pool) — 기존 | 0.997 | **CPU** |
-| **full NPU (QKᵀ 16bit)** — 신규 | **0.9957** (0.9945~0.9976) | **NPU** |
+| **full NPU (QKᵀ 16bit)** — 신규 | **0.99** (COCO holdout 0.9905 / 도메인 0.9889) | **NPU** |
 | head 단독 INT8 (수정 전, 참고) | 0.69 | — |
 | head 단독 QKᵀ16bit (수정 후, 참고) | 0.998 | — |
 
