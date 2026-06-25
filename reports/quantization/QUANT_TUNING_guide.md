@@ -1,10 +1,12 @@
 # PE-Core-L14-336 NPU 양자화 정확도 튜닝 가이드 (재현용)
 
-> **[SUPERSEDED 2026-06] 이 문서가 목표한 "0.5 → 0.99+"는 양자화 튜닝이 아니라 hybrid로 해결됐다.**
-> full-NPU 정확도(cos~0.46)의 원인은 **attn_pool**이었고(이 문서의 진단 자체는 맞음), 해결책은
-> 양자화 튜닝이 아니라 **attn_pool/proj head를 CPU float로 분리(hybrid)** → 원본 대비 **cos 0.9987**.
-> 따라서 아래의 "다음 단계(EquivalentTransformation / 16bit override / 민감레이어 튜닝)"는 **불필요**하며,
-> 음성결과(negative result) 기록으로만 보존한다. 현재 정답 경로: [`../design/SOLUTION_single_io_compile.md`](../design/SOLUTION_single_io_compile.md).
+> **[SUPERSEDED 2026-06] full-NPU 붕괴(cos~0.46)의 원인은 attn_pool이 맞았고, 최종 해결은 QKᵀ 16bit.**
+> 처음엔 hybrid(attn_pool을 CPU로 분리, cos 0.9987)로 우회했으나, 이후 Mobilint가 원인을 **attn_pool의
+> QKᵀ matmul outlier**로 규명 → 그 **score matmul만 16bit**로 올리면 NPU에서도 정상(cos 0.998).
+> 지금은 **full NPU**(image→embedding 전부 NPU, cos 0.9957)가 기본이다.
+> (이 문서가 "불필요"라 적었던 16bit override가 사실은 정답이었다 — 단, head 전체가 아니라
+> **QKᵀ matmul 한 노드만**이 핵심.) 현재 정답 경로:
+> [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md).
 
 > **경로 갱신(패키지 재편 후)**: 컴파일 스크립트 `pe_onnx_export/pe_torch_compile.py` →
 > 패키지 `pe_npu/compile.py` (CLI `python -m pe_npu.compile`, `-w /workspace/AX_NPU`에서 실행).
