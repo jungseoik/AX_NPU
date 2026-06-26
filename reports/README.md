@@ -15,6 +15,7 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 | [NPU_multicard_62ch_benchmark.md](performance/NPU_multicard_62ch_benchmark.md) | 멀티카드(7×ARIES=56코어) 1→62채널 분산 추론 지연 (실측) |
 | [NPU_multicard_62ch_full.md](performance/NPU_multicard_62ch_full.md) | ★ [full NPU] 멀티카드 1→62ch 배치 지연 (비포와 동일 구조, attn_pool도 NPU) |
 | [NPU_coremode_benchmark.md](performance/NPU_coremode_benchmark.md) | 코어모드 4종(Single/Multi/Global4/Global8) × 다채널 지연·메모리 (현재 서버 실측) |
+| [NPU_1card_coremode_16ch.md](performance/NPU_1card_coremode_16ch.md) | ★ NPU 1장 코어모드 4종 × 1~16채널 순수추론 증가폭 (슬롯 거동·모드선택) |
 | [NPU_pipeline_stage_latency.md](performance/NPU_pipeline_stage_latency.md) | _detect 파이프라인 단계별(전처리/NPU/pool/event) + e2e 지연, 채널 스윕(1~16) |
 | [NPU_coremode_pipeline_e2e.md](performance/NPU_coremode_pipeline_e2e.md) | **종합**: 코어모드 3종 × 단계별 × 채널(최대 56=7×8) — NPU 병목 어디서 커지는지 |
 | [NPU_preprocess_parallel.md](performance/NPU_preprocess_parallel.md) | 고채널 병목인 CPU 전처리 병렬화 (스레드/멀티프로세스) |
