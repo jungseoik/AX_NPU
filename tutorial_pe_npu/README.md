@@ -163,6 +163,26 @@ emb = model.infer(x[None])                     # (1, 1024) 비전 임베딩
 ```
 > 레거시 hybrid가 필요하면 `pe_npu.MXQInferenceHybrid()` (NPU trunk + CPU pool, pe_feat.mxq+pool head).
 
+### 코어모드 선택 (추론 시점, 컴파일 불필요)
+
+코어모드(single/multi/global4/global8)는 **출력은 동일하고 속도·메모리만 다르다.** Mobilint가 4종을
+미리 컴파일해 HF에 올려놔서, **모드를 바꾸려고 직접 컴파일할 필요가 없다** — `from_hf(scheme=...)`로 골라 받으면 된다.
+
+```python
+m = pe_npu.MXQInferenceFull.from_hf(scheme="global4")   # single | multi | global4 | global8
+emb = m.infer(x[None])                                  # (B,1024), 결과는 모드 무관 동일
+```
+
+| 모드 | 단건(1장) | 56ch(7카드) | 권장 상황 |
+|------|---:|---:|------|
+| `global8` | **71ms** | 553ms | 단건/저채널(≤카드수) 실시간 |
+| `global4` | 119ms | **488ms** | 중간~고채널 균형 최선 |
+| `single` | 285ms | 532ms | 고채널 throughput(8코어 독립) |
+| `multi` | 358ms | 1559ms | (비권장) |
+
+> 모드를 골라 단건/멀티채널 지연을 **직접 비교**하는 실행 예제: **`demo_coremode.ipynb`**.
+> 상세 실측: `../reports/performance/NPU_coremode_benchmark.md`, `../reports/performance/NPU_full_pipeline_e2e.md`.
+
 ---
 
 ## 4. 추론 (예제 이미지 + 유사도 확인)
@@ -237,7 +257,7 @@ python demo_parallel.py --batch 32         # (옵션) 비대화형/CI
 | async | 1카드 `infer_async`+`set_async_pipeline_enabled` → 8코어 | 15.8 img/s (×4.6) |
 | **multicard** | 전 카드 라운드로빈(async) | **77.9 img/s (×22.5)** |
 
-- 코어 모드(Single/Multi/Global)는 **컴파일 시 결정**(`pe_npu.compile --scheme`). Single+async가 throughput 최선.
+- 위 표는 `single` 모드. **다른 코어모드는 재컴파일 없이** `MXQInferenceFull.from_hf(scheme=...)`로 바로 바꿔 쓴다(위 "코어모드 선택" 절). 모드별 비교 실행: `demo_coremode.ipynb`.
 - 멀티카드 분산 상세/62채널 스윕: `../reports/performance/NPU_multicard_62ch_benchmark.md`.
 - 고채널에선 CPU 전처리가 병목 → 병렬화: `../reports/performance/NPU_preprocess_parallel.md`.
 
@@ -267,6 +287,7 @@ python demo_parallel.py --batch 32         # (옵션) 비대화형/CI
 | `demo_inference.ipynb` | 추론 데모 — 이미지/유사도 히트맵/정확도 시각화 |
 | `demo_text_classification.ipynb` | **텍스트 프롬프트 제로샷 분류** — 클래스별 유사도 차트 |
 | `demo_parallel.ipynb` | **병렬 추론** — 멀티코어(async) vs 멀티카드 처리량 막대그래프 |
+| `demo_coremode.ipynb` | **코어모드 비교** — single/global4/global8 단건·멀티채널 지연 (`from_hf(scheme=)`, 재컴파일 불필요) |
 | `multicore_benchmark.ipynb` | 멀티코어 처리량 벤치 — 동기 vs async vs 멀티스레딩 |
 
 **스크립트 (옵션 — 비대화형/CI용, 노트북과 동일 기능):**
