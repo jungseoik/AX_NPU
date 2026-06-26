@@ -37,6 +37,11 @@
 - **★ 비포(trunk-only) 대비 I가 거의 동일**: 56ch 525ms(full) ≈ 519ms(trunk). **attn_pool을 NPU에 올렸는데 추론시간 추가 ≈0** (head는 전체 연산의 ~0.8%). 즉 **CPU pool head를 없애고도(=full NPU) 추론 처리량 손실 없음.**
 - **고채널 병목은 여전히 전처리(CPU)** — full NPU도 추론(525ms)은 빠르고, 4K→336 resize가 채널 수에 선형. 전처리 병렬화가 다음 1순위(`NPU_preprocess_parallel.md`).
 
+![multicard benchmark (full NPU)](../assets/npu_multicard_62ch_full.png)
+
+> (좌) 배치 지연 = full NPU 추론 + 전처리 누적. (우) 채널당 추론 지연 ↓ / throughput ↑, 56코어서 knee.
+> 우측 패널은 비포(trunk)와 거의 동일 — attn_pool을 NPU에 올린 영향이 없음을 보여준다.
+
 ---
 
 ## 3. NPU 대수 스케일링 (고정 부하, 순수 추론 ms — full NPU)
@@ -154,7 +159,7 @@ python ../scripts/bench_multinpu_full.py     # 1→62채널 (P/I 분리, full NP
 python ../scripts/bench_scaling_full.py      # 1/2/4/7대 스케일링 (full NPU)
 ```
 - MXQ = HF `PIA-SPACE-LAB/MXQ_NPU` `single/pe_full.mxq` 자동 다운로드. 입력 = 실제 4K 프레임.
-- 원자료: `bench_multinpu_full.json`, `bench_scaling_full.json`
+- 원자료: `bench_multinpu_full.json`, `bench_scaling_full.json` · 차트: `../assets/npu_multicard_62ch_full.png`
 - 비교(비포·hybrid trunk): [`NPU_multicard_62ch_benchmark.md`](NPU_multicard_62ch_benchmark.md)
 
 *작성 2026-06. full NPU(QKᵀ16bit) single 모드, cos 0.99, 7×ARIES2 실측.*
