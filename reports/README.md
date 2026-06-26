@@ -13,6 +13,7 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 | [NPU_full_pipeline_e2e.md](performance/NPU_full_pipeline_e2e.md) | ★ [애프터] full NPU 코어모드 4종 × 채널 스윕 단계별 e2e (Pool 단계 제거) |
 | [NPU_batch_latency.md](performance/NPU_batch_latency.md) | 단일 NPU 배치 지연/처리량, 코어 모드, bit4 양자화 한계 (실측) |
 | [NPU_multicard_62ch_benchmark.md](performance/NPU_multicard_62ch_benchmark.md) | 멀티카드(7×ARIES=56코어) 1→62채널 분산 추론 지연 (실측) |
+| [NPU_multicard_62ch_full.md](performance/NPU_multicard_62ch_full.md) | ★ [full NPU] 멀티카드 1→62ch 배치 지연 (비포와 동일 구조, attn_pool도 NPU) |
 | [NPU_coremode_benchmark.md](performance/NPU_coremode_benchmark.md) | 코어모드 4종(Single/Multi/Global4/Global8) × 다채널 지연·메모리 (현재 서버 실측) |
 | [NPU_pipeline_stage_latency.md](performance/NPU_pipeline_stage_latency.md) | _detect 파이프라인 단계별(전처리/NPU/pool/event) + e2e 지연, 채널 스윕(1~16) |
 | [NPU_coremode_pipeline_e2e.md](performance/NPU_coremode_pipeline_e2e.md) | **종합**: 코어모드 3종 × 단계별 × 채널(최대 56=7×8) — NPU 병목 어디서 커지는지 |

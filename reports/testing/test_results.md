@@ -2,8 +2,10 @@
 
 > **[UPDATE 2026-06] 이 문서(2026-06-15 작성)의 §4·§6 "막힘/측정불가/기술지원 문의 필요" 서술은 이후 해결되어 superseded.**
 > 단일 입출력 컴파일 = **5개 모델 패치로 자체 해결**(§6.5 [해결됨]), 정확도 = **hybrid(NPU trunk + CPU attn_pool)로 원본 대비 cos 0.9987**.
-> 멀티카드/전처리/실서비스까지 완료. 최신은 [`../design/SOLUTION_single_io_compile.md`](../design/SOLUTION_single_io_compile.md),
-> [`../performance/NPU_multicard_62ch_benchmark.md`](../performance/NPU_multicard_62ch_benchmark.md) 참조. 아래 §4·§6 상단부는 당시 기록(historical).
+> 멀티카드/전처리/실서비스까지 완료. **그리고 그 hybrid(CPU attn_pool)도 이후 superseded** — attn_pool의
+> QKᵀ matmul을 16bit로 올려 **full NPU**(image→embedding 전부 NPU, cos 0.99)가 현재 기본이다.
+> 최신: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md),
+> [`../performance/NPU_full_pipeline_e2e.md`](../performance/NPU_full_pipeline_e2e.md). 아래 §4·§6은 당시 기록(historical).
 
 - 대상 모델: **PE-Core-L14-336** vision encoder (Meta Perception Encoder, CLIP 계열 ViT-L/14)
 - 목표: Product-AI-mono `perception_encoder`의 비전 인코더(현 TensorRT)를 NPU로 대체
