@@ -1,6 +1,6 @@
 ---
 name: npu-setup
-description: 신규 서버에서 이 레포(AX_NPU)를 clone한 뒤 Mobilint ARIES NPU 환경을 세팅해 'mobilint-cli status'가 동작하게 만든다. 사용자가 download/ 에 Mobilint SDK 파일(드라이버/런타임 tar, 컴파일러 whl)을 넣어준 상태에서, 드라이버 빌드/설치 -> 런타임+CLI 설치 -> 디바이스/상태 점검을 수행한다. "NPU 세팅", "mobilint-cli status 되게", "신규 서버 환경설정" 같은 요청에 사용.
+description: 신규 서버에서 이 레포(AX_NPU)를 clone한 뒤 Mobilint ARIES NPU 환경을 세팅해 'mobilint-cli status'가 동작하게 만든다. HF 로그인만 하면 SDK(드라이버/런타임 tar, 컴파일러 whl)를 HF private 레포에서 자동으로 download/에 받아(fetch_sdk_from_hf.py) 드라이버 빌드/설치 -> 런타임+CLI 설치 -> 디바이스/상태 점검을 수행한다. (SDK를 download/에 수동 배치해도 됨) "NPU 세팅", "mobilint-cli status 되게", "신규 서버 환경설정" 같은 요청에 사용.
 ---
 
 # NPU Setup (Mobilint ARIES — mobilint-cli status까지)
@@ -10,30 +10,36 @@ description: 신규 서버에서 이 레포(AX_NPU)를 clone한 뒤 Mobilint ARI
 신규 서버에서 AX_NPU 레포를 clone하고, NPU를 쓸 수 있게 환경을 세팅할 때.
 목표 종착점은 **`mobilint-cli status`가 정상 출력**되는 것(= 드라이버+디바이스+런타임 OK).
 
-## 대전제 (사람이 먼저 해줘야 하는 것)
+## 대전제
 
-clone만으로는 안 된다. 아래는 git에 올라가지 않으므로(비공개/대용량) **사람이 직접** 준비:
+SDK 바이너리는 git에 없다(비공개/대용량). **HF private 레포에서 받는다** — clone 후 준비물은:
 
-1. **Mobilint SDK 파일을 `download/` 에 넣기** (Mobilint에서 받은 비공개 파일):
-   - `mobilint-aries2-driver_*.tar.gz`   (드라이버, 필수)
-   - `qbruntime_aries2-*_amd64.tar.gz`   (런타임+CLI, 필수)
-   - `qbcompiler-*+aries2-py3-none-any.whl` (컴파일러, status엔 불필요·컴파일 시 필요)
+1. **HF 로그인** (조직 계정): `huggingface-cli login` 또는 `export HF_TOKEN=...`.
+   → SDK(드라이버/런타임/컴파일러)는 setup 스크립트가 **HF `PIA-SPACE-LAB/MXQ_NPU`의 `sdk/aries2_v1.2.0/`에서
+   자동으로 `download/`에 받아온다** (`setup/fetch_sdk_from_hf.py`). 수동 배치도 여전히 가능.
 2. **NPU 카드 물리 장착** (PCIe 슬롯). 미장착이면 드라이버는 깔려도 `status`에 디바이스가 안 뜬다.
 3. **sudo 권한** (드라이버 빌드/설치, modprobe, make install에 필요).
 
-이 3가지가 충족되면 나머지는 이 skill의 스크립트가 자동 처리한다.
+→ 즉 **아무것도 없는 서버라도 "clone → HF 로그인 → 이 skill 실행"** 이면 SDK 다운로드부터 설치·검증까지 자동.
+(HF 접근 불가 시엔 SDK를 `download/`에 직접 넣어도 됨: `mobilint-aries2-driver_*.tar.gz`,
+`qbruntime_aries2-*_amd64.tar.gz`, `qbcompiler-*+aries2-py3-none-any.whl`.)
 
 ## 절차 (에이전트가 수행)
 
 작업 디렉토리는 레포 루트(`AX_NPU/AX_NPU`, `download/`가 보이는 곳)다.
 스크립트는 레포 위치를 동적으로 찾으므로 어느 서버에 clone하든 그대로 동작한다.
 
-### 1단계 — SDK 파일 확인 (sudo 불필요)
+### 0단계 — HF 로그인 (SDK 자동 다운로드용, 1회)
+```bash
+huggingface-cli login          # 또는 export HF_TOKEN=hf_...
+```
+
+### 1단계 — SDK 확인/자동 fetch (sudo 불필요)
 ```bash
 bash .claude/skills/npu-setup/setup_npu_cli.sh --check
 ```
-먼저 `--check`로 현재 상태를 본다. SDK 파일이 `download/`에 없으면 여기서 멈추고,
-**사용자에게 어떤 파일을 `download/`에 넣어야 하는지 안내**한다(위 대전제 1번 목록).
+`--check`가 `download/`에 SDK 없으면 **HF에서 자동으로 받아온다**(`setup/fetch_sdk_from_hf.py`).
+HF 접근이 안 되면 SDK를 `download/`에 수동 배치하도록 안내한다. (직접 받기: `python setup/fetch_sdk_from_hf.py`)
 
 ### 2단계 — 전체 세팅 (sudo 필요)
 SDK 파일이 준비됐으면:
