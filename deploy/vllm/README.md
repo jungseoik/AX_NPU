@@ -4,6 +4,12 @@
 GPU/vLLM 블로그 구성을 NPU로 치환한 것 — 핵심은 **`vllm-mblt` 플러그인**이 vLLM에 `device=cpu`로
 등록하고 실제 연산을 qbruntime(NPU)로 보내는 것. 그래서 CUDA/GPU 없이 이 CPU+NPU 서버에서 동작한다.
 
+> **운영 기준 = batch 1.** 검증 모델 `mobilint/Qwen3-VL-2B-Instruct`는 **batch=1로 컴파일된 MXQ**라
+> 동시요청은 vLLM이 직렬 큐잉한다(NPU 메모리 ~2.5GB 고정, 부하로 안 터짐 — `loadtest_vllm.py` 실측).
+> **배치>1이 필요하면** batch-compiled MXQ가 있어야 하고, 그건 **Mobilint에 요청**해야 한다
+> (실행중 `--model-loader-extra-config`로 batch 올리기는 Qwen3-VL에서 불가 — 아래 [한계] 참조).
+> 참고 clone(추적 안 함): `vllm-mblt`(플러그인 소스), `mblt-model-zoo`(런타임 래퍼), `mblt-sdk-tutorial`(컴파일 레시피).
+
 ## GPU 블로그 vs 여기(NPU) 차이
 | GPU 블로그 | 여기 (NPU) |
 |---|---|
@@ -35,8 +41,8 @@ curl -s http://localhost:8000/v1/chat/completions -H "Content-Type: application/
 
 ### 기동 시 주의(실전 팁)
 - **`MAX_MODEL_LEN`은 모델 config의 `max_position_embeddings` 이하**로. Qwen3-VL-2B=**4096**. 초과 시 기동 실패.
-- `command`는 **list 형식**으로 둠(JSON 인자 quoting 문제 회피). core_mode/dev_no override는 compose에
-  `--model-loader-extra-config` + `'{"...":...}'`(작은따옴표) 두 줄 추가(파일 주석 참조). 기본은 config.json 따름.
+- `command`는 **list 형식**으로 둠(JSON 인자 quoting 문제 회피). **기본은 config.json 레이아웃(batch1)**을 따르며
+  `--model-loader-extra-config`를 **넣지 않는다**(Qwen3-VL에선 이게 크래시 유발 — [한계] 참조. 텍스트 batch 모델에서만 opt-in).
 - vllm이 CUDA torch/nvidia 휠을 끌어와 이미지가 큼(~11GB). GPU 없어도 `libcuda.so.1 ... cannot open`,
   `Triton ... 0 driver` **경고는 정상**(mblt=cpu 경로라 무해).
 
@@ -70,3 +76,17 @@ docker exec vllm_mblt vllm bench serve --model mobilint/Qwen3-VL-2B-Instruct \
 (sonnet.txt는 vllm-mblt 레포에 포함.)
 
 *참고: `vllm-mblt/` = 별개 clone(upstream). 이 deploy는 그걸 pip로 설치해 서빙.*
+
+## [한계] 배치(batch) — 왜 못 올리나 (실측·조사 결론)
+- **배치는 MXQ 컴파일 시 박히는 값**(`max_batch_size`). `mobilint/Qwen3-VL-2B`는 batch=1.
+- 실행중 override(`--model-loader-extra-config '{"max_batch_size":N}'`)는 **Qwen3-VL에서 불가**:
+  dev_no/max_batch_size가 `from_pretrained`로 넘어가 wrapper `__init__` TypeError → 엔진 크래시(실측).
+- `mblt-model-zoo`(런타임 래퍼)엔 컴파일러 없음. `mblt-sdk-tutorial`엔 VLM/LLM 컴파일 레시피 있고
+  우리 qbcompiler에 `qwen3vl` 파서도 있어 **직접 batch 컴파일은 이론상 가능**하나(Qwen2-VL 레시피를
+  Qwen3-VL로 포팅 + vision/language 각각 컴파일 + 패키징, ~20GB·수 시간), 난이도 높음.
+- **권장: Mobilint에 batch-compiled Qwen3-VL-2B MXQ 요청**(`Llama-3.2-1B-Instruct-Batch32` 선례).
+  받으면 `.env`의 `MODEL_NAME`만 교체해 이 구성 그대로 배치 서빙 가능.
+
+## 알려진 이슈(vllm-mblt 0.1.0, Mobilint 보고 대상)
+1. VLM(Qwen3-VL) `config.vocab_size` AttributeError → Dockerfile에서 `text_config` 폴백 패치 적용.
+2. Qwen3-VL에 `--model-loader-extra-config`(dev_no 등) 전달 시 `from_pretrained` TypeError.
