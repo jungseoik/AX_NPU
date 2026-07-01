@@ -11,6 +11,7 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 |------|------|
 | [NPU_full_vs_hybrid.md](performance/NPU_full_vs_hybrid.md) | ★ full NPU vs hybrid — CPU attn_pool 병목 제거 실측 (QKᵀ 16bit) |
 | [NPU_full_pipeline_e2e.md](performance/NPU_full_pipeline_e2e.md) | ★ [애프터] full NPU 코어모드 4종 × 채널 스윕 단계별 e2e (Pool 단계 제거) |
+| [NPU_throughput_modes_correct.md](performance/NPU_throughput_modes_correct.md) | ★ 다채널 처리량·모드선택 (올바른 1모델+멀티스레드 sync 패턴, 출력검증) |
 | [NPU_batch_latency.md](performance/NPU_batch_latency.md) | 단일 NPU 배치 지연/처리량, 코어 모드, bit4 양자화 한계 (실측) |
 | [NPU_multicard_62ch_benchmark.md](performance/NPU_multicard_62ch_benchmark.md) | 멀티카드(7×ARIES=56코어) 1→62채널 분산 추론 지연 (실측) |
 | [NPU_multicard_62ch_full.md](performance/NPU_multicard_62ch_full.md) | ★ [full NPU] 멀티카드 1→62ch 배치 지연 (비포와 동일 구조, attn_pool도 NPU) |

@@ -1,5 +1,7 @@
 # [full NPU] PE-Core-L14-336 멀티카드(7×ARIES) 멀티채널 배치 지연시간 벤치마크
 
+> **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_throughput_modes_correct.md`](NPU_throughput_modes_correct.md).
+
 `NPU_multicard_62ch_benchmark.md`(당시 hybrid: NPU trunk만 측정, CPU pool 별도)의 **full NPU 판**.
 **동일 테스트 구조**로, 이번엔 추론 단계 I가 **full NPU MXQ(trunk + attn_pool, QKᵀ16bit) = image→embedding
 전부 NPU**다. 배치로 N채널이 한꺼번에 들어올 때 7대(56코어)에 분산, 1→62채널 1채널씩 측정.

@@ -1,5 +1,7 @@
 # [애프터] full NPU 코어모드 × 채널 스윕 단계별 e2e — CPU attn_pool 병목 제거
 
+> **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_throughput_modes_correct.md`](NPU_throughput_modes_correct.md).
+
 `NPU_coremode_pipeline_e2e.md`(hybrid: `P→T(NPU trunk)→Pool(CPU attn_pool)→E`, 고채널 CPU 병목)의
 **애프터판**. attn_pool의 QKᵀ matmul만 16bit로 올린 **full NPU**(image→embedding 전부 NPU)에서
 같은 채널 스윕을 다시 측정. **Pool(CPU) 단계가 사라졌다.** (원인·해결: `../vendor/mobilint_resolution_attn_pool.md`)

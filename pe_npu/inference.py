@@ -1,7 +1,7 @@
 """
 PE-Core-L14-336 비전인코더 NPU 추론.
 
-  - MXQInferenceFull  : image->embedding 전부 NPU (CPU head 없음). **권장.**
+  - MXQInferenceFull  : image->embedding 전부 NPU (CPU head 없음). **권장.** 배치는 1모델+멀티스레드 sync로 코어 활용.
                         attn_pool의 QKᵀ outlier만 16bit로 올린 full MXQ(--qk16)로 cos 0.99.
   - MXQInferenceHybrid: NPU trunk + CPU attn_pool/proj. **레거시.** QKᵀ 16bit 해결 전 방식.
 
@@ -47,27 +47,44 @@ class MXQInferenceFull:
       - 입력/출력 인터페이스 동일: model(image (B,3,336,336)) -> (B,1024).
     """
 
-    def __init__(self, full_mxq_path: str = DEFAULT_FULL_MXQ, device_id: int = 0):
+    def __init__(self, full_mxq_path: str = DEFAULT_FULL_MXQ, device_id: int = 0,
+                 num_threads: int = 8):
         self.acc = qbruntime.Accelerator(device_id)
         self.model = qbruntime.Model(full_mxq_path)
         self.model.launch(self.acc)
         self.image_size = IMAGE_SIZE
+        # 배치 추론 동시성: 1모델 + num_threads개 스레드로 동기 infer를 동시 호출한다.
+        # 런타임이 동시 호출을 카드 코어에 안전 분배 → single 모드서 8코어 활용, 출력 정확(cos 1.0).
+        # (주의: qbruntime async(infer_async) multi-in-flight는 출력버퍼 충돌로 깨져 쓰지 않는다.
+        #  multi-model 인스턴스는 이 방식과 처리량 동일하고 메모리만 낭비라 쓰지 않는다.)
+        self.num_threads = max(1, int(num_threads))
+        self._pool = None
+        if self.num_threads > 1:
+            from concurrent.futures import ThreadPoolExecutor
+            self._pool = ThreadPoolExecutor(max_workers=self.num_threads)
 
     @classmethod
     def from_hf(cls, repo_id: str = None, device_id: int = 0, revision: str = None,
-                scheme: str = "single"):
+                scheme: str = "single", num_threads: int = 8):
         """HF에서 미리 컴파일된 full MXQ를 받아 추론기 구성 (qbruntime만 필요).
 
         scheme: 코어모드 (single|multi|global4|global8). HF `<scheme>/pe_full.mxq`.
-                single=throughput(async), global8=단건 latency 최소.
+                single=throughput(멀티스레드), global8=단건 latency 최소.
+        num_threads: 배치 추론 시 동시 동기호출 스레드 수(카드 코어수=8 권장, single 모드서 8코어 활용).
         """
         from . import assets
         repo = repo_id or assets.HF_REPO
         full = assets.ensure_full_mxq(repo_id=repo, revision=revision, scheme=scheme)
-        return cls(full_mxq_path=full, device_id=device_id)
+        return cls(full_mxq_path=full, device_id=device_id, num_threads=num_threads)
 
     def __call__(self, *args, **kwargs):
         return self.infer(*args, **kwargs)
+
+    def _infer_one(self, chw):
+        hwc = np.ascontiguousarray(chw.transpose(1, 2, 0))          # NPU 입력 = HWC
+        o = self.model.infer(hwc)                                   # image -> embedding (NPU 전부, 동기)
+        o = o[0] if isinstance(o, (list, tuple)) else o
+        return np.asarray(o).reshape(-1).astype(np.float32)
 
     def infer(self, image):
         return_torch = _HAS_TORCH and isinstance(image, torch.Tensor)
@@ -75,17 +92,24 @@ class MXQInferenceFull:
         arr = arr.astype(np.float32, copy=False)
         if arr.ndim == 3:
             arr = arr[None]
-        embs = []
-        for i in range(arr.shape[0]):
-            hwc = np.ascontiguousarray(arr[i].transpose(1, 2, 0))   # NPU 입력 = HWC
-            o = self.model.infer(hwc)                               # image -> embedding (NPU 전부)
-            o = o[0] if isinstance(o, (list, tuple)) else o
-            embs.append(np.asarray(o).reshape(-1).astype(np.float32))
+        B = arr.shape[0]
+        if self._pool is not None and B > 1:
+            # 1모델 + 스레드풀 동기 호출 (순서 보존). single 모드서 8코어 동시 활용.
+            embs = list(self._pool.map(self._infer_one, [arr[i] for i in range(B)]))
+        else:
+            embs = [self._infer_one(arr[i]) for i in range(B)]
         out = np.stack(embs, axis=0)                                # (B,1024)
         if return_torch:
             t = torch.from_numpy(out)
             return t.to(image.device) if image.is_cuda else t
         return out
+
+    def __del__(self):
+        try:
+            if getattr(self, "_pool", None) is not None:
+                self._pool.shutdown(wait=False)
+        except Exception:
+            pass
 
 
 class MXQInferenceHybrid:

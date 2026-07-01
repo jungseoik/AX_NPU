@@ -1,5 +1,7 @@
 # [full NPU] NPU 1장 — 코어모드 4종 × 1~16채널 순수추론 증가폭
 
+> **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_throughput_modes_correct.md`](NPU_throughput_modes_correct.md).
+
 NPU **1장(8코어)** 에서 코어모드 4종(single/multi/global4/global8) MXQ로 채널을 **1→16**까지
 늘리며 **순수추론(I)** 만 측정. 카드 내부 스케줄링(이미지당 코어 수 = 슬롯 수)이 채널 증가에
 따라 지연을 어떻게 키우는지 본다. (full NPU = image→embedding 전부 NPU, QKᵀ16bit, cos 0.99)

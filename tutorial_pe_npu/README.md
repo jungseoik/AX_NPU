@@ -233,11 +233,13 @@ python demo_text_classification.py --images images/*.jpg \
 import pe_npu
 import numpy as np
 
-model = pe_npu.MXQInferenceFull("/workspace/AX_NPU/pe_npu/out/pe_full.mxq")
+model = pe_npu.MXQInferenceFull("/workspace/AX_NPU/pe_npu/out/pe_full.mxq", num_threads=8)
 # image: 전처리된 (B,3,336,336) float32 numpy 또는 torch
 x = np.stack([pe_npu.preprocess_image(p) for p in paths], axis=0)
-emb = model.infer(x)   # (B, 1024) 비전 임베딩 (image→embedding 전부 NPU)
+emb = model.infer(x)   # (B, 1024) — 배치는 1모델+num_threads 스레드 sync로 8코어 활용(출력 정확)
 ```
+> 다채널 처리량/모드 선택(single·global4·global8)과 올바른 동시성 패턴: `../reports/performance/NPU_throughput_modes_correct.md`.
+> (⚠️ `infer_async`를 한 모델에 여러 건 동시 제출하면 출력이 깨짐 — `MXQInferenceFull`은 안전한 스레드 sync를 씀.)
 
 전처리는 `pe_npu.preprocess_image` (운영 `service.preprocess_image`와 동일:
 RGB -> resize 336 bilinear -> /255 -> normalize 0.5).

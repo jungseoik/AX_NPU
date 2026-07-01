@@ -1,5 +1,7 @@
 # full NPU vs hybrid — CPU attn_pool 병목 제거 (QKᵀ 16bit)
 
+> **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_throughput_modes_correct.md`](NPU_throughput_modes_correct.md).
+
 attn_pool의 QKᵀ matmul만 16bit로 올린 **full MXQ**(`--qk16`, image→embedding 전부 NPU)와,
 기존 **hybrid**(NPU trunk + CPU attn_pool)를 같은 서버·같은 입력으로 비교. CPU pool 병목이
 사라지는지 실측. (배경: `../vendor/mobilint_resolution_attn_pool.md`)
