@@ -1,0 +1,54 @@
+# vLLM(Mobilint NPU) OpenAI 호환 서빙 — docker compose.
+# 블로그의 GPU 구성을 NPU(vllm-mblt)로 치환: nvidia runtime/gpu reservation 대신 /dev/aries* 매핑.
+# 사용: (레포 루트에서) docker compose -f deploy/vllm/docker-compose.yml --env-file deploy/vllm/.env up -d
+services:
+  vllm-mblt:
+    build:
+      context: ../..                      # 레포 루트(= download/ 가 보이는 곳)
+      dockerfile: deploy/vllm/Dockerfile
+    image: ax-npu/vllm-mblt:latest
+    container_name: ${CONTAINER_NAME:-vllm_mblt}
+
+    # --- NPU 디바이스 매핑 (GPU 대신) ---
+    devices:
+      - "/dev/aries0:/dev/aries0"
+      - "/dev/aries1:/dev/aries1"
+      - "/dev/aries2:/dev/aries2"
+      - "/dev/aries3:/dev/aries3"
+      - "/dev/aries4:/dev/aries4"
+      - "/dev/aries5:/dev/aries5"
+      - "/dev/aries6:/dev/aries6"
+    # (카드가 7장 미만이면 없는 라인은 지울 것. dev_no로 특정 카드만 쓰게도 가능)
+
+    volumes:
+      - ${HF_CACHE_PATH:-~/.cache/huggingface}:/root/.cache/huggingface   # 모델 캐시 공유(재다운 방지)
+    ports:
+      - "${VLLM_PORT:-8000}:8000"
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}   # mobilint/ 모델 다운로드 (HF private/gated 대비)
+      - HF_TOKEN=${HF_TOKEN}
+      - TZ=Asia/Seoul
+    ipc: host
+    shm_size: "8gb"
+
+    # --- vLLM 실행 (모델/옵션 .env 주입) ---
+    # vllm serve <model> --trust-remote-code [--model-loader-extra-config {...}]
+    command: >
+      serve ${MODEL_NAME:-mobilint/Qwen3-VL-2B-Instruct}
+      --trust-remote-code
+      --served-model-name ${SERVED_NAME:-qwen3-vl}
+      --max-model-len ${MAX_MODEL_LEN:-8192}
+      --model-loader-extra-config ${EXTRA_CONFIG:-{"dev_no":0}}
+      --limit-mm-per-prompt.video 0
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests,sys; sys.exit(0 if requests.get('http://localhost:8000/health',timeout=5).ok else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s     # NPU 모델 로드 시간 대기 (VLM은 길 수 있음)
+
+networks:
+  default:
+    name: vllm-mblt-network

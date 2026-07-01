@@ -255,3 +255,5 @@ _dev/compile_test/
 tmp/
 scratchpad_repro/
 mobilint_reply/
+deploy/vllm/.env
+vllm-mblt/
