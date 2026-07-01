@@ -47,5 +47,7 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 | [mobilint_support_inquiry.md](vendor/mobilint_support_inquiry.md) | Mobilint 기술지원 문의 정리 |
 
 ## 🛠 scripts/ · assets/
-- `scripts/` — 벤치마크 재현 스크립트 (`bench_*.py`). 실행: `conda activate pe_npu_host` 후 해당 스크립트.
+- `scripts/` — 벤치마크 재현 스크립트. 실행: `conda activate pe_npu_host` 후 해당 스크립트.
+  - `*_full.py` / `bench_modes_threaded.py` / `bench_throughput_correct.py` / `profile_full_modes.py` = **현재(full NPU, AX_NPU 자기완결)**.
+  - `bench_multinpu.py` / `bench_scaling.py` / `bench_preprocess.py` / `profile_stages.py` = **[레거시] hybrid 시절 재현용, Product-AI-mono import 필요**(단독 실행 불가).
 - `assets/` — 벤치 산출물 (csv 원자료, png 차트).
