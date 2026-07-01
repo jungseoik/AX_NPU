@@ -31,6 +31,19 @@ RUN pip install --no-cache-dir --upgrade pip \
 # 검증: mblt-model-zoo 1.5.1 / mobilint-qb-runtime==1.2.0(PyPI 최신=1.2.0, 우리 네이티브 tar와 일치) /
 #       vllm==0.11.2(vllm-mblt가 핀). 버전 충돌 없음 확인됨.
 
+# --- vllm-mblt 0.1.0 버그 패치: VLM(Qwen3-VL) config는 vocab_size가 text_config 안에 있음 ---
+# mblt_worker의 self.model.config.vocab_size 가 AttributeError → text_config로 폴백.
+# (upstream 보고 대상. 텍스트 모델엔 영향 없음: top-level vocab_size 있으면 그대로 사용.)
+RUN python - <<'PY'
+p='/usr/local/lib/python3.11/site-packages/vllm_mblt/mblt_worker.py'
+s=open(p).read()
+old='self.model.config.vocab_size'
+new='(getattr(self.model.config, "vocab_size", None) or self.model.config.get_text_config().vocab_size)'
+n=s.count(old); s=s.replace(old,new); open(p,'w').write(s)
+print(f'[patch] vocab_size fallback applied to {n} site(s)')
+assert n>0, 'patch target not found — vllm-mblt 버전 변경 시 확인 필요'
+PY
+
 # 헬스체크용
 RUN pip install --no-cache-dir requests
 
