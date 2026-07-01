@@ -44,6 +44,11 @@ services:
       - ${SERVED_NAME:-qwen3-vl}
       - --max-model-len
       - "${MAX_MODEL_LEN:-8192}"
+      # (주의) --model-loader-extra-config 는 Qwen3-VL에서 dev_no/max_batch_size kwarg가
+      # from_pretrained로 넘어가 TypeError → 엔진 죽음. VLM은 config.json 레이아웃만 쓸 것.
+      # 텍스트 batch-compiled 모델에서만 필요 시 아래 추가:
+      #   - --model-loader-extra-config
+      #   - '{"dev_no":0}'
     restart: unless-stopped
 
     healthcheck:
