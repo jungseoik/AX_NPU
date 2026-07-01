@@ -42,11 +42,12 @@ print(r.choices[0].message.content)
 ## 모델 바꾸기
 `.env`의 `MODEL_NAME` 한 줄만 교체 → `docker compose ... up -d`. (텍스트: `mobilint/Llama-3.2-1B-Instruct` 등)
 
-## ⚠️ 버전 호환 주의 (빌드 전 확인)
-- `vllm-mblt`는 **`mblt-model-zoo[transformers]>=1.5.1`** 을 요구 → 이게 **qbruntime 1.2.0보다 최신 런타임**을 요구할 수 있다.
-  (우리 검증 조합은 mblt-model-zoo 1.3.1 + qbruntime 1.2.0.) 빌드/기동 시 런타임 버전 에러가 나면
-  **최신 qbruntime로 교체**해야 한다 → `download/`에 새 qbruntime tar 두고 Dockerfile `QBRUNTIME_TAR` 조정.
+## 버전 호환 (확인 완료 ✅)
+- `vllm-mblt 0.1.0` → `mblt-model-zoo[transformers]>=1.5.1` → **`mobilint-qb-runtime>=1.2.0`**.
+- PyPI `mobilint-qb-runtime` **최신 = 1.2.0** → `>=1.2.0`은 항상 1.2.0으로 해석 = **우리 네이티브 qbruntime tar(1.2.0)와 일치.** 충돌 없음.
+- Dockerfile은 `mblt-model-zoo==1.5.1` 핀(2.0.0도 qb-runtime 1.2.0 요구라 무방하나 vllm-mblt 검증 버전에 맞춤).
 - `vllm==0.11.2` 고정(vllm-mblt가 핀). Python 3.10~3.12.
+- 남은 실전 리스크는 **vllm 0.11.2 CPU 임포트**(CUDA 없는 환경) — 빌드/기동에서 확인. 문제 시 vllm CPU 빌드 경로로 조정.
 - 로컬 clone된 `vllm-mblt/`를 쓰려면 Dockerfile의 `pip install "vllm-mblt"` → `COPY vllm-mblt /src && pip install -e /src`로 교체.
 
 ## 벤치마크

@@ -26,7 +26,10 @@ ENV LD_LIBRARY_PATH=/opt/qbruntime/qbruntime/lib:/usr/local/lib:${LD_LIBRARY_PAT
 # torch는 CPU 빌드(플랫폼=cpu). vllm-mblt는 PyPI 배포본 사용(로컬 소스 쓰려면 -e 로 교체).
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir "torch" --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir "mblt-model-zoo[transformers]==1.5.1" \
     && pip install --no-cache-dir "vllm-mblt"
+# 검증: mblt-model-zoo 1.5.1 / mobilint-qb-runtime==1.2.0(PyPI 최신=1.2.0, 우리 네이티브 tar와 일치) /
+#       vllm==0.11.2(vllm-mblt가 핀). 버전 충돌 없음 확인됨.
 
 # 헬스체크용
 RUN pip install --no-cache-dir requests
