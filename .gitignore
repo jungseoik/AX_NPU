@@ -258,3 +258,4 @@ mobilint_reply/
 deploy/vllm/.env
 vllm-mblt/
 mblt-model-zoo/
+mblt-sdk-tutorial/
