@@ -31,15 +31,19 @@ services:
     ipc: host
     shm_size: "8gb"
 
-    # --- vLLM 실행 (모델/옵션 .env 주입) ---
-    # vllm serve <model> --trust-remote-code [--model-loader-extra-config {...}]
-    command: >
-      serve ${MODEL_NAME:-mobilint/Qwen3-VL-2B-Instruct}
-      --trust-remote-code
-      --served-model-name ${SERVED_NAME:-qwen3-vl}
-      --max-model-len ${MAX_MODEL_LEN:-8192}
-      --model-loader-extra-config ${EXTRA_CONFIG:-{"dev_no":0}}
-      --limit-mm-per-prompt.video 0
+    # --- vLLM 실행 (list 형식 — JSON 인자 quoting 문제 회피) ---
+    # 기본은 config.json의 런타임 레이아웃(core_mode 등)을 따른다. 특정 카드/코어모드로 override하려면
+    # 아래에 다음 두 줄을 추가(JSON은 반드시 작은따옴표로 감쌀 것):
+    #   - --model-loader-extra-config
+    #   - '{"dev_no":0,"core_mode":"global8","target_clusters":[0,1]}'
+    command:
+      - serve
+      - ${MODEL_NAME:-mobilint/Qwen3-VL-2B-Instruct}
+      - --trust-remote-code
+      - --served-model-name
+      - ${SERVED_NAME:-qwen3-vl}
+      - --max-model-len
+      - "${MAX_MODEL_LEN:-8192}"
     restart: unless-stopped
 
     healthcheck:
