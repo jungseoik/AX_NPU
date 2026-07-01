@@ -4,6 +4,7 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 
 > ★ **현재 상태: full NPU (image→embedding 전부 NPU, cos 0.99)**. attn_pool INT8 붕괴는
 > QKᵀ matmul 16bit로 해결됨 → [vendor/mobilint_resolution_attn_pool.md](vendor/mobilint_resolution_attn_pool.md).
+| [mobilint_inquiry_qwen3vl_batch.md](vendor/mobilint_inquiry_qwen3vl_batch.md) | Qwen3-VL-2B 배치(batch>1) NPU 서빙 요청 + vllm-mblt 버그 2건 (미발송 초안) |
 > 그 이전 hybrid(NPU trunk + CPU pool) 분석 문서들은 히스토리로 보존.
 
 ## 📊 performance/ — 성능 (지연·처리량·병렬화·컴파일)
