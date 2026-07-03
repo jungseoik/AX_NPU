@@ -68,7 +68,9 @@
 
 ## 5. 재현 정보 (요청 시)
 
-Docker(compose) + vllm-mblt 서빙 구성, 동시요청 부하테스트 스크립트, 크래시 로그 전문, 위 로컬 패치 diff는 필요하시면 바로 전달드리겠습니다.
+위 vocab_size 건은 별도 환경 없이 **공식 안내 경로 그대로** 재현됩니다:
+`vllm serve mobilint/Qwen3-VL-2B-Instruct --trust-remote-code` 로 기동 후 이미지 포함 요청 전송.
+필요하시면 **크래시 로그(traceback) 전문**, 저희가 적용한 **`text_config.vocab_size` 폴백 패치 diff**, 사용 중인 **버전 정보**(vllm-mblt / mblt-model-zoo / qbruntime)를 바로 전달드리겠습니다.
 
 바쁘신 와중에 확인 부탁드립니다. 감사합니다.
 
