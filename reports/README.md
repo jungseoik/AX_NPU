@@ -44,7 +44,7 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 |------|------|
 | [mobilint_resolution_attn_pool.md](vendor/mobilint_resolution_attn_pool.md) | ★ **[해결]** attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.99 |
 | [mobilint_inquiry_attn_pool.md](vendor/mobilint_inquiry_attn_pool.md) | attention pooling head INT8 붕괴 문의 (해결됨, 당시 기록 보존) |
-| [mobilint_inquiry_qwen3vl_batch.md](vendor/mobilint_inquiry_qwen3vl_batch.md) | Qwen3-VL-2B 배치(batch>1) NPU 서빙 요청 + vllm-mblt 버그 2건 (미발송 초안) |
+| [inquiries/qwen3vl_batch_serving/](vendor/inquiries/qwen3vl_batch_serving/README.md) | Qwen3-VL-2B 배치·모드별 서빙(vLLM) NPU 1장 동시요청 테스트 요청 + vllm-mblt 버그 2건 (미발송) |
 | [mobilint_support_inquiry.md](vendor/mobilint_support_inquiry.md) | Mobilint 기술지원 문의 정리 |
 
 ## 🛠 scripts/ · assets/
