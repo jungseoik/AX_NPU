@@ -60,6 +60,7 @@
 서빙 과정에서 발견한 부분이라 참고로 공유드립니다.
 
 - **`config.vocab_size` AttributeError** — `mblt_worker.py`의 `_make_cached_sampling_state`(및 `_pack_prompt_token_ids`)가 `self.model.config.vocab_size`에 접근하는데, `mobilint/Qwen3-VL-2B-Instruct`의 config는 top-level `vocab_size`가 없고 `text_config.vocab_size`(151936)에 있어 이미지 요청 시 EngineCore가 종료됩니다.
+  - 이 현상은 **공식 README에 안내된 경로 그대로**(`vllm serve mobilint/Qwen3-VL-2B-Instruct --trust-remote-code`)에서, 저희 쪽 수정 없이 재현됩니다. 문제의 접근은 `vllm-mblt` 원본 코드에 있고, 저희 Docker 패치는 이를 우회하기 위해 폴백을 덧댄 것입니다.
   - 참고로 `mblt-model-zoo`의 `utils/benchmark_utils.py`에는 이미 `config.vocab_size` → `text_config.vocab_size` 폴백 로직이 있어, `vllm-mblt`에도 동일하게 적용하면 될 것으로 보입니다. 저희는 우선 `text_config.vocab_size` 폴백으로 로컬 패치해 정상 구동 중입니다.
 
 ## 5. 재현 정보 (요청 시)
