@@ -54,10 +54,10 @@
 
 - **(A) 배치/모드별 MXQ 제공 (우선 희망)** — `Llama-3.2-1B-Instruct-Batch32`처럼 **batch>1로 컴파일된 `Qwen3-VL-2B` MXQ**(예: Batch 4/8/16), 가능하면 Q2에서 확인된 **core_mode 변형**까지 받을 수 있을까요? VLM에서 배치가 이미지 입력에 주는 제약과 권장 batch/정확도도 함께 안내 부탁드립니다.
 
-- **(B) 자체 컴파일용 "레시피" 제공 ((A)가 번거로우시면)** — 확인해보니 저희 **qbcompiler 1.1.2에 Qwen3-VL 파서와 패칭 클래스(`CachedQwen3VLTextRotaryEmbedding`, `Qwen3VLForConditionalGenerationWrapper`, deepstack 처리 등)가 이미 구현**돼 있어, `mblt-sdk-tutorial`의 Qwen2-VL 절차를 템플릿 삼아 **저희가 직접 컴파일을 시도**해보려 합니다. 다만 다음이 문서화돼 있지 않아 확인이 필요합니다:
-  - **① Qwen3-VL용 `CompileConfig` 레시피** — 어떤 레이어를 `activation16Bits`로 둘지, `equivalentTransformation`(QK/UD/SpinR1/SpinR2, vision의 HeadOutChRotation 등) 설정값. Qwen2-VL 튜토리얼의 값(`inputs_embeds/reshape`, `model_merger_fc2` 등)은 Qwen3-VL에 그대로 맞지 않을 것으로 보입니다.
-  - **② calibration 데이터 사양** — language/vision 각각 어떤 데이터·형식·개수를 권장하시는지. (저희는 COCO를 준비해 두었습니다.)
-  - **③ config 변환/패키징 규격** — `get_config.py`류에서 Qwen3-VL용으로 바꿔야 할 필드(model_type, mxq_path, core_mode/batch 지정 등)와 최종 배포본 config 형식.
+- **(B) 자체 컴파일용 "레시피" 제공 ((A)가 번거로우시면)** — 저희가 이미 어느 정도 진행해봤습니다. qbcompiler 1.1.2의 `qwen3vl` 파서/패칭 클래스를 이용해 **Qwen3-VL-2B 언어모델의 그래프 컴파일(HF→MBLT)을 실제로 성공**시켰습니다(원본 대비 오차 0.00%). 이 과정에서 `_deepstack_process`의 masked-scatter가 트레이싱되지 않는 문제를 확장에 포함된 `build_full_visual_embeds` + `patched_deepstack_process`를 직접 배선해 해결했는데, **이 배선 절차가 문서화돼 있지 않았습니다.** 남은 부분에서 아래 정보가 있으면 배치·모드별 MXQ를 저희가 직접 뽑을 수 있을 것 같습니다:
+  - **① Qwen3-VL용 `CompileConfig` 양자화 레시피 (가장 중요)** — MBLT→MXQ 시 어떤 레이어를 `activation16Bits`로 둘지, `equivalentTransformation`(QK/UD/SpinR1/SpinR2, vision의 HeadOutChRotation 등) 설정값. Qwen2-VL 튜토리얼의 값(`inputs_embeds/reshape`, `model_merger_fc2` 등)은 Qwen3-VL에 그대로 맞지 않을 것으로 보이며, 잘못 잡으면 (지난 attn_pool 건처럼) 양자화 정확도가 무너질 수 있어 정확한 값이 필요합니다.
+  - **② 비전 인코더/그래프 패치의 공식 배선 절차** — 언어모델의 deepstack처럼, 비전(`PatchedQwen3VLVisionBlock` 등) 및 전체 그래프에서 적용해야 할 패치·순서.
+  - **③ calibration 데이터 사양 + config 패키징 규격** — language/vision 각각 권장 데이터·형식·개수(저희는 COCO 준비됨), 그리고 배포용 config(model_type, mxq_path, core_mode/batch) 형식.
 
 **Q4. (관련) VLM에서 `--model-loader-extra-config` override가 실패하는데, 올바른 방법이 있나요?**
 `vllm-mblt` README(Runtime Layout Overrides)에는 `dev_no`/`core_mode` 등을 `--model-loader-extra-config`로 override할 수 있다고 안내돼 있으나 **예제가 텍스트 모델**뿐입니다. 저희가 이를 VLM(`mobilint/Qwen3-VL-2B-Instruct`)에 `'{"dev_no":0, "core_mode":...}'`로 적용했더니, 해당 kwarg가 그대로 `from_pretrained`를 거쳐 `Qwen3VLForConditionalGeneration.__init__() got unexpected keyword 'dev_no'` (TypeError)로 엔진이 종료됐습니다. **VLM에서도 이 override가 지원되는지, 지원된다면 올바른 지정 방법**을 알려주시면 감사하겠습니다. (Q3에서 모드별 MXQ를 받으면 이 부분은 필요 없어질 수도 있습니다.)
