@@ -35,12 +35,12 @@
 
 ## 2. 현재 상황 및 저희가 문서에서 확인한 내용
 
-먼저 관련 문서를 저희 나름대로 확인했고, 아래와 같이 이해했습니다. 이 이해가 Qwen3-VL에도 맞는지 확인 부탁드리는 것이 이번 문의의 핵심입니다.
+먼저 관련 문서를 저희 나름대로 확인했고, 아래와 같이 이해했습니다(확인한 문서 출처를 함께 적었습니다). 이 이해가 Qwen3-VL에도 맞는지 확인 부탁드리는 것이 이번 문의의 핵심입니다.
 
 - 배포된 `mobilint/Qwen3-VL-2B-Instruct`의 config는 **`max_batch_size=1`, `core_mode=global8`(text/vision) 고정**입니다. 그래서 vLLM에서 동시요청이 직렬로 큐잉됩니다(부하테스트 시 NPU 메모리 2.5GB 고정, 총지연은 요청 수에 선형으로 증가) → 동시요청이 늘면 목표 지연시간을 넘깁니다.
-- **`vllm-mblt` README(Runtime Tuning)** 확인: `--model-loader-extra-config`로 `core_mode`/`max_batch_size`를 override할 수 있고, `max_batch_size`는 vLLM `max_num_seqs`로 반영되는 것으로 이해했습니다. 다만 README는 실제 배치 실행을 **"batch-compiled MXQ"**(예: `mobilint/Llama-3.2-1B-Instruct-Batch32`)를 전제로 설명하고 있어, 저희는 **진짜 batch>1은 배치로 컴파일된 MXQ가 있어야 가능**하다고 이해했습니다.
-- **`docs/multicore.md`** 확인: ARIES는 4개 코어모드(Single/Multi/Global4/Global8)를 모두 지원하며, 코어모드는 컴파일 시 `inference_scheme`으로 결정(각 모드별 MXQ)되는 것으로 이해했습니다. 다만 문서 예제는 vision CNN(resnet50)이라 **VLM(비전+언어 디코더)에 그대로 적용되는지는 불명확**합니다.
-- **Qwen3-VL 컴파일 자료는 어디에도 없음**을 확인했습니다: `mblt-sdk-tutorial/compilation/vlm`은 **Qwen2-VL 전용**(language 디코더+vision 인코더 분리 컴파일 레시피 존재), `mblt-model-zoo`/`vllm-mblt`는 추론 런타임만 제공합니다. Qwen3-VL의 컴파일/배치 예제는 없습니다.
+- **`vllm-mblt` 레포**(github.com/mobilint/vllm-mblt) **README의 "Runtime Tuning"** 확인: `--model-loader-extra-config`로 `core_mode`/`max_batch_size`를 override할 수 있고, `max_batch_size`는 vLLM `max_num_seqs`로 반영되는 것으로 이해했습니다. 다만 README는 실제 배치 실행을 **"batch-compiled MXQ"**(예: `mobilint/Llama-3.2-1B-Instruct-Batch32`)를 전제로 설명하고 있어, 저희는 **진짜 batch>1은 배치로 컴파일된 MXQ가 있어야 가능**하다고 이해했습니다.
+- **Mobilint 공식 문서**(docs.mobilint.com)**의 Multicore 페이지**(v1.2/en/multicore) 확인: ARIES는 4개 코어모드(Single/Multi/Global4/Global8)를 모두 지원하며, 코어모드는 컴파일 시 `inference_scheme`으로 결정(각 모드별 MXQ)되는 것으로 이해했습니다. 다만 문서 예제는 vision CNN(resnet50)이라 **VLM(비전+언어 디코더)에 그대로 적용되는지는 불명확**합니다.
+- **Qwen3-VL 컴파일 자료는 어느 레포에서도 찾지 못했습니다**: **`mblt-sdk-tutorial` 레포**(github.com/mobilint/mblt-sdk-tutorial)**의 `compilation/vlm`**은 **Qwen2-VL 전용**(language 디코더+vision 인코더 분리 컴파일 레시피 존재)이고, **`mblt-model-zoo` 레포**(github.com/mobilint/mblt-model-zoo)와 **`vllm-mblt` 레포**는 추론 런타임만 제공합니다. 세 레포 모두 Qwen3-VL의 컴파일/배치 예제는 없었습니다.
 
 ## 3. 문의 사항
 
