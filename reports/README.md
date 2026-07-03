@@ -39,13 +39,18 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 |------|------|
 | [test_results.md](testing/test_results.md) | 컴파일/추론 테스트 결과 종합 |
 
-## 📨 vendor/ — Mobilint 커뮤니케이션
+## 📮 inquiries/ — Mobilint 문의서 (우리가 보내는 것)
+| 문서 | 내용 |
+|------|------|
+| [qwen3vl_batch_serving/](inquiries/qwen3vl_batch_serving/README.md) | ★ Qwen3-VL-2B 배치·코어모드 서빙(vLLM) NPU 1장 동시요청 테스트 요청 + vllm-mblt 버그 2건 (미발송) |
+| [attn_pool_inquiry.md](inquiries/attn_pool_inquiry.md) | attention pooling head INT8 붕괴 문의 (해결됨, 당시 기록 보존) |
+| [support_inquiry.md](inquiries/support_inquiry.md) | Mobilint 기술지원 문의 정리 |
+
+## 📨 vendor/ — Mobilint 응답·해결 기록 (받은 것)
 | 문서 | 내용 |
 |------|------|
 | [mobilint_resolution_attn_pool.md](vendor/mobilint_resolution_attn_pool.md) | ★ **[해결]** attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.99 |
-| [mobilint_inquiry_attn_pool.md](vendor/mobilint_inquiry_attn_pool.md) | attention pooling head INT8 붕괴 문의 (해결됨, 당시 기록 보존) |
-| [inquiries/qwen3vl_batch_serving/](vendor/inquiries/qwen3vl_batch_serving/README.md) | Qwen3-VL-2B 배치·모드별 서빙(vLLM) NPU 1장 동시요청 테스트 요청 + vllm-mblt 버그 2건 (미발송) |
-| [mobilint_support_inquiry.md](vendor/mobilint_support_inquiry.md) | Mobilint 기술지원 문의 정리 |
+| [mobilint_reply_email.md](vendor/mobilint_reply_email.md) | Mobilint 답장 이메일 원문 (attn_pool 건) |
 
 ## 🛠 scripts/ · assets/
 - `scripts/` — 벤치마크 재현 스크립트. 실행: `conda activate pe_npu_host` 후 해당 스크립트.
