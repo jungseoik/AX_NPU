@@ -63,15 +63,15 @@
 
 서빙 과정에서 발견한 부분이라 참고로 공유드립니다.
 
-- **`config.vocab_size` AttributeError** — `mblt_worker.py`의 `_make_cached_sampling_state`(및 `_pack_prompt_token_ids`)가 `self.model.config.vocab_size`에 접근하는데, `mobilint/Qwen3-VL-2B-Instruct`의 config는 top-level `vocab_size`가 없고 `text_config.vocab_size`(151936)에 있어 이미지 요청 시 EngineCore가 종료됩니다.
-  - 이 현상은 **`mobilint/vllm-mblt` 레포(github.com/mobilint/vllm-mblt) README의 "Serve a VLM Model" 안내 경로 그대로**(`vllm serve mobilint/Qwen3-VL-2B-Instruct --trust-remote-code`)에서, 저희 쪽 수정 없이 재현됩니다. 문제의 접근은 `vllm-mblt` 원본 코드(`vllm_mblt/mblt_worker.py`)에 있고, 저희 Docker 패치는 이를 우회하기 위해 폴백을 덧댄 것입니다.
-  - 참고로 `mblt-model-zoo`의 `utils/benchmark_utils.py`에는 이미 `config.vocab_size` → `text_config.vocab_size` 폴백 로직이 있어, `vllm-mblt`에도 동일하게 적용하면 될 것으로 보입니다. 저희는 우선 `text_config.vocab_size` 폴백으로 로컬 패치해 정상 구동 중입니다.
+- **`config.vocab_size` AttributeError** — `mblt_worker.py`의 `_make_cached_sampling_state`(및 `_pack_prompt_token_ids`)가 `self.model.config.vocab_size`에 접근하는데, `mobilint/Qwen3-VL-2B-Instruct`의 config는 top-level `vocab_size`가 없고 `text_config.vocab_size`(151936)에 있어 이미지 요청 처리 중 EngineCore가 종료됩니다.
+  - 저희는 이 크래시를 **`vllm-mblt`로 Qwen3-VL 서빙 구성을 진행하던 중** 만났고, `text_config.vocab_size` 폴백으로 로컬 패치해 정상 구동 중입니다.
+  - 문제의 접근은 `mobilint/vllm-mblt` 레포(github.com/mobilint/vllm-mblt)의 **원본 코드(`vllm_mblt/mblt_worker.py`)** 에 있고 배포 config에 top-level `vocab_size`가 없는 구조이므로, README "Serve a VLM Model"의 기본 명령(`vllm serve mobilint/Qwen3-VL-2B-Instruct --trust-remote-code`)으로 이미지 요청을 보내도 **동일하게 발생할 것으로 판단**됩니다.
+  - 참고로 `mblt-model-zoo`의 `utils/benchmark_utils.py`에는 이미 `config.vocab_size` → `text_config.vocab_size` 폴백 로직이 있어, `vllm-mblt`에도 동일하게 적용하면 될 것으로 보입니다.
 
 ## 5. 재현 정보 (요청 시)
 
-위 vocab_size 건은 별도 환경 없이 **공식 안내 경로 그대로** 재현됩니다:
-`vllm serve mobilint/Qwen3-VL-2B-Instruct --trust-remote-code` 로 기동 후 이미지 포함 요청 전송.
-필요하시면 **크래시 로그(traceback) 전문**, 저희가 적용한 **`text_config.vocab_size` 폴백 패치 diff**, 사용 중인 **버전 정보**(vllm-mblt / mblt-model-zoo / qbruntime)를 바로 전달드리겠습니다.
+필요하시면 저희가 겪은 **크래시 로그(traceback) 전문**, 적용한 **`text_config.vocab_size` 폴백 패치 diff**, 사용 중인 **버전 정보**(vllm-mblt / mblt-model-zoo / qbruntime)를 바로 전달드리겠습니다.
+(참고: 저희가 확보한 로그는 Docker 기반 서빙 구성에서 발생한 것이며, 필요하시면 순정 `vllm serve` 명령으로도 재현해 로그를 준비해 드리겠습니다.)
 
 바쁘신 와중에 확인 부탁드립니다. 감사합니다.
 

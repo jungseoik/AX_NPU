@@ -81,8 +81,10 @@
    단 실배치는 batch-compiled MXQ 필요.)
 
 ## 6. 재현 정보 (요청 시)
-- vocab_size 건은 공식 경로(`vllm serve mobilint/Qwen3-VL-2B-Instruct --trust-remote-code` + 이미지 요청)에서 수정 없이 재현.
-- 크래시 로그(traceback) 전문, `text_config.vocab_size` 폴백 패치 diff, 버전 정보(vllm-mblt/mblt-model-zoo/qbruntime) 제공 가능.
-- (커스텀 Docker 구성·부하테스트 스크립트는 우리 것이라 재현엔 불필요 — 요청 시에만.)
+- ⚠️ 정직성 주의: vocab_size 크래시는 **우리 Docker 서빙 구성 중 실제로 만남**(그래서 Dockerfile에 폴백 패치 존재).
+  다만 **순정 `vllm serve` bare 명령으로 처음부터 돌려 raw traceback을 캡처한 기록은 없음** → 메일엔 "공식 명령으로도
+  동일 발생할 것으로 판단"(코드·config 근거 추론)으로 서술. 단정("수정 없이 재현") 금지. NPU 반납으로 지금 bare 재현 불가.
+- 제공 가능: (Docker 기반)크래시 로그, `text_config.vocab_size` 폴백 패치 diff, 버전 정보(vllm-mblt/mblt-model-zoo/qbruntime).
+- (커스텀 Docker 구성·부하테스트 스크립트는 우리 것이라 재현엔 불필요 — 요청 시에만. NPU 확보되면 bare 재현 로그 준비 가능.)
 
 *작성 2026-07. 관련: attn_pool 문의(해결됨 → ../../vendor/mobilint_resolution_attn_pool.md)와 별개 — 이건 Qwen3-VL 서빙 배치 건.*
