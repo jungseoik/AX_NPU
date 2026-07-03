@@ -29,35 +29,33 @@
 | global8   | 1 / 4 / 8 | ? | ? | ? | ? | ? | 8코어/추론 → 단건 latency 최소 |
 > 셀 = (총지연 ms / 처리량 req·img per s). max_batch>1은 batch-compiled MXQ가 있어야 측정 가능.
 
-## 3. 현재 막힌 지점 (실측)
+## 3. 현재 상황 + 문서에서 확인한 것 (문의 전 자체 검증 완료)
 - 배포 `mobilint/Qwen3-VL-2B-Instruct`의 config: **`max_batch_size=1`, `core_mode=global8`(text/vision), target_clusters [0,1]**.
   → vLLM `max_num_seqs=1` → **동시요청 직렬 큐잉**(부하테스트: NPU mem 2.5GB 고정, 총지연 채널수에 선형).
-- **모드/배치를 실행 중 바꿀 수 없음**:
-  - `--model-loader-extra-config '{"core_mode":...,"max_batch_size":N}'` → dev_no/kwarg가 `from_pretrained`로
-    전달되어 `TypeError: Qwen3VLForConditionalGeneration.__init__() got unexpected keyword 'dev_no'` → 엔진 크래시.
-  - 배치는 애초에 **MXQ 컴파일 시 결정**되는 값이라 실행 중 조정 불가로 이해하고 있습니다.
-- **공식 문서·튜토리얼 확인**: `mblt-sdk-tutorial/compilation/vlm`은 **Qwen2-VL 전용**(RoPE 패치 등), **Qwen3-VL
-  컴파일·배치 예제는 없음**. `mblt-model-zoo`/`vllm-mblt`는 추론(런타임)만. → **Qwen3-VL 배치/모드 컴파일 방법이 없어 문의**드립니다.
+- **vllm-mblt README (Runtime Tuning) 확인** — ⚠️ 여기가 처음 오해했던 부분:
+  - `--model-loader-extra-config '{"max_batch_size":N}'` override는 **존재함**(`resolve_model_max_batch_size` → scheduler
+    `max_num_seqs`로 반영, `mblt_platform.py`). "override 경로 없음"은 **틀린 서술이었음**.
+  - 단, README는 실제 배치 실행을 **"batch-compiled MXQ"** 전제로 설명(`Llama-3.2-1B-Instruct-Batch32` 예시, README 174-191).
+    → **batch=1 MXQ에 override만 줘서는 NPU 실배치 안 됨. 진짜 batch>1 = 배치 컴파일된 MXQ 필요** (이 결론은 유지·오히려 근거 강화).
+  - `core_mode`도 extra-config override 문서화됨(README 137,160). 단 **예제가 텍스트 모델뿐** → VLM 적용 시 dev_no가
+    `from_pretrained`로 새어 upstream `Qwen3VLForConditionalGeneration.__init__` TypeError(크래시). → Q4.
+- **docs/multicore.md 확인**: ARIES=4모드(Single/Multi/Global4/Global8) 전부 지원, core_mode=컴파일 시 `inference_scheme`
+  (모드별 별도 MXQ). 단 예제가 vision CNN(resnet50)이라 **VLM(언어 디코더 포함)에 4모드 다 되는지는 불명** → Q2.
+- **Qwen3-VL 컴파일 자료 부재 확인**: `mblt-sdk-tutorial/compilation/vlm`은 **Qwen2-VL 전용**(language+vision 분리 컴파일
+  레시피 있음), `mblt-model-zoo`/`vllm-mblt`는 추론 런타임만. Qwen3-VL 컴파일/배치 예제는 없음. → Q3.
 
 ---
 
 ## 4. 문의 사항
 
-### Q1. `max_batch_size`가 vLLM에서 정확히 무엇을 의미하나요? (개념 확인 — 제일 먼저)
-- 저희가 표의 축을 잘못 잡으면 측정이 헛수고라 이걸 먼저 확실히 하고 싶습니다.
-- MXQ의 `max_batch_size=N` 이 vLLM 관점에서 **어느 쪽**인가요?
-  - **(a) 동시요청 흡수** — vLLM 연속배칭(`max_num_seqs=N`)에서 **서로 다른 HTTP 요청 N개**를 한 번의 NPU
-    추론으로 묶어 처리(= 진짜 동시요청 처리량 증가), 아니면
-  - **(b) 요청 내부 배치(멀티스레드/슬롯)** — 한 요청 안의 batch 차원(예: 이미지 N장)을 병렬로 도는 것이고
-    서로 다른 요청 간 동시성과는 무관.
-- 즉 **"NPU 1장 동시요청 N개"** 를 늘리려면 어떤 knob이 답인가요?
-  `max_batch_size` 컴파일인지, 아니면 `core_mode`를 single(코어1/추론=슬롯 다수)로 두는 것인지 —
-  **동시요청을 늘리는 올바른 방법**을 알려주시면 감사하겠습니다.
+### Q1. (확인) Qwen3-VL 동시요청 증가 = batch-compiled MXQ 필요, 맞나?
+- 문서 이해: batch=1 MXQ에 `--model-loader-extra-config '{"max_batch_size":N}'`을 줘도 스케줄러 `max_num_seqs`만
+  오를 뿐 NPU 실배치는 안 되고, **동시요청 실질 증가엔 batch로 컴파일된 Qwen3-VL MXQ**(`Llama-...-Batch32`류)가 필요.
+- 이 이해가 맞는지 확인 + batch 없이 `core_mode=single`(코어별 슬롯)으로 동시성 얻는 방식이 VLM에도 유효한지.
 
-### Q2. Qwen3-VL-2B는 어떤 core_mode로 컴파일/제공이 가능한가요? (가능 범위 확인)
-- 저희는 single/multi/global4/global8 4종을 다 비교하고 싶은데, **Qwen3-VL(=language 파트 포함 VLM)** 이
-  실제로 이 4종 모두로 컴파일 가능한 모델인지 자체가 확실치 않습니다(비전인코더 계열은 4종 다 됐던 경험 있음).
-- **제공/컴파일 가능한 core_mode 목록**과, 모드별 특성(단건 latency vs 동시요청 처리량 트레이드오프)을 알려주세요.
+### Q2. (확인) Qwen3-VL(VLM)도 4개 코어모드 전부 컴파일 가능한가?
+- 문서 이해: ARIES=4모드 지원, core_mode=컴파일 시 `inference_scheme`. 단 예제가 vision CNN이라 **VLM(언어 디코더)이
+  single/multi/global4/global8 다 되는지 불명**(배포본 global8만). 제공/컴파일 가능 범위 + 모드별 특성 문의.
 
 ### Q3-A. 배치/모드별 Qwen3-VL-2B MXQ 제공 — 우선 희망
 - `Llama-3.2-1B-Instruct-Batch32`처럼, **batch>1로 컴파일된 `Qwen3-VL-2B` MXQ**(예: Batch 4/8/16)를 주실 수 있을까요?
@@ -78,9 +76,13 @@
    `from_pretrained` 거쳐 upstream `Qwen3VLForConditionalGeneration.__init__`까지 새어 `unexpected keyword 'dev_no'`.
    원인: vllm-mblt 화이트리스트(dev_no/core_mode/target_clusters)를 텍스트 모델은 config property로 흡수하나, VLM 최상위
    config엔 그 property가 없음(vision/text sub-config에만). **→ VLM에서 로드시 레이아웃 override 올바른 방법이 뭔지 질문**(Q4).
-   (참고: `max_batch_size`는 화이트리스트에 아예 없음 → 배치는 실행중 조절 불가, 컴파일 값 확정.)
+   (참고: `dev_no`/`core_mode`는 load_model 화이트리스트(→from_pretrained)로 감. `max_batch_size`는 그 화이트리스트엔
+   없지만 `mblt_platform.resolve_model_max_batch_size`가 extra-config에서 읽어 scheduler `max_num_seqs`로 반영 = override 자체는 됨.
+   단 실배치는 batch-compiled MXQ 필요.)
 
 ## 6. 재현 정보 (요청 시)
-- Docker(compose)+vllm-mblt 서빙 구성, 720p 이미지 동시요청 부하테스트 스크립트, 크래시 로그 전문 제공 가능.
+- vocab_size 건은 공식 경로(`vllm serve mobilint/Qwen3-VL-2B-Instruct --trust-remote-code` + 이미지 요청)에서 수정 없이 재현.
+- 크래시 로그(traceback) 전문, `text_config.vocab_size` 폴백 패치 diff, 버전 정보(vllm-mblt/mblt-model-zoo/qbruntime) 제공 가능.
+- (커스텀 Docker 구성·부하테스트 스크립트는 우리 것이라 재현엔 불필요 — 요청 시에만.)
 
 *작성 2026-07. 관련: attn_pool 문의(해결됨 → ../../vendor/mobilint_resolution_attn_pool.md)와 별개 — 이건 Qwen3-VL 서빙 배치 건.*
