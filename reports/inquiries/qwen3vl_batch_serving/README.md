@@ -69,11 +69,16 @@
   **② Qwen3-VL 컴파일 코드/레시피**(vision+language, RoPE/그래프 패치, batch_size 지정, 패키징 규격)를 받을 수 있을까요?
 - 참고: 저희 qbcompiler 1.1.2에 `qwen3vl` 파서는 있으나, Qwen2-VL 튜토리얼의 전용 자산을 Qwen3-VL로 옮기는 방법이 문서화돼 있지 않습니다.
 
-## 5. (겸사) vllm-mblt 0.1.0 버그 2건 — Qwen3-VL 서빙 중 확인
-1. **`config.vocab_size` AttributeError**: `mblt_worker._make_cached_sampling_state`가 `self.model.config.vocab_size`
-   접근 → `MobilintQwen3VLConfig`는 vocab_size가 `text_config`에 있어 이미지 요청 시 EngineCore 크래시.
-   (임시로 `text_config.vocab_size` 폴백 패치 사용 중.)
-2. **`--model-loader-extra-config` TypeError** (위 3): VLM에서 런타임 레이아웃(core_mode/dev_no) override 방법을 알려주세요.
+## 5. vllm-mblt 0.1.0 — Qwen3-VL 서빙 중 확인한 것 (성격 다름, 구분)
+1. **[확인된 버그] `config.vocab_size` AttributeError**: `mblt_worker._make_cached_sampling_state`(+`_pack_prompt_token_ids`)가
+   `self.model.config.vocab_size` **직접 접근**. 배포 config는 top-level vocab_size 없음(=None), `text_config.vocab_size`(151936)에 있음 →
+   이미지 요청 시 EngineCore 크래시. **근거**: `mblt-model-zoo/utils/benchmark_utils.py`엔 이미 `text_config.vocab_size` 폴백
+   헬퍼(`_resolve_config_vocab_size`)+테스트가 있는데 vllm-mblt엔 미적용. → 우리가 폴백 패치해 구동 중(리포트 시 diff 첨부).
+2. **[질문 — 버그로 단정 X] `--model-loader-extra-config` TypeError**: 로드시 core_mode/dev_no override 시도 → kwarg가
+   `from_pretrained` 거쳐 upstream `Qwen3VLForConditionalGeneration.__init__`까지 새어 `unexpected keyword 'dev_no'`.
+   원인: vllm-mblt 화이트리스트(dev_no/core_mode/target_clusters)를 텍스트 모델은 config property로 흡수하나, VLM 최상위
+   config엔 그 property가 없음(vision/text sub-config에만). **→ VLM에서 로드시 레이아웃 override 올바른 방법이 뭔지 질문**(Q4).
+   (참고: `max_batch_size`는 화이트리스트에 아예 없음 → 배치는 실행중 조절 불가, 컴파일 값 확정.)
 
 ## 6. 재현 정보 (요청 시)
 - Docker(compose)+vllm-mblt 서빙 구성, 720p 이미지 동시요청 부하테스트 스크립트, 크래시 로그 전문 제공 가능.
