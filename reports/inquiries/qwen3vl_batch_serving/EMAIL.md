@@ -54,7 +54,10 @@
 
 - **(A) 배치/모드별 MXQ 제공 (우선 희망)** — `Llama-3.2-1B-Instruct-Batch32`처럼 **batch>1로 컴파일된 `Qwen3-VL-2B` MXQ**(예: Batch 4/8/16), 가능하면 Q2에서 확인된 **core_mode 변형**까지 받을 수 있을까요? VLM에서 배치가 이미지 입력에 주는 제약과 권장 batch/정확도도 함께 안내 부탁드립니다.
 
-- **(B) 자체 컴파일용 자료 제공 ((A)가 번거로우시면)** — 저희가 직접 배치·모드별로 컴파일할 수 있도록 **① calibration 데이터셋(또는 생성 스크립트)** 과 **② Qwen3-VL 컴파일 코드/레시피**(vision+language, RoPE/그래프 패치, batch_size 지정, 패키징 규격)를 받을 수 있을까요? (저희 qbcompiler 1.1.2에 `qwen3vl` 파서는 있으나, Qwen2-VL 튜토리얼 자산을 Qwen3-VL로 옮기는 방법이 문서화돼 있지 않습니다.)
+- **(B) 자체 컴파일용 "레시피" 제공 ((A)가 번거로우시면)** — 확인해보니 저희 **qbcompiler 1.1.2에 Qwen3-VL 파서와 패칭 클래스(`CachedQwen3VLTextRotaryEmbedding`, `Qwen3VLForConditionalGenerationWrapper`, deepstack 처리 등)가 이미 구현**돼 있어, `mblt-sdk-tutorial`의 Qwen2-VL 절차를 템플릿 삼아 **저희가 직접 컴파일을 시도**해보려 합니다. 다만 다음이 문서화돼 있지 않아 확인이 필요합니다:
+  - **① Qwen3-VL용 `CompileConfig` 레시피** — 어떤 레이어를 `activation16Bits`로 둘지, `equivalentTransformation`(QK/UD/SpinR1/SpinR2, vision의 HeadOutChRotation 등) 설정값. Qwen2-VL 튜토리얼의 값(`inputs_embeds/reshape`, `model_merger_fc2` 등)은 Qwen3-VL에 그대로 맞지 않을 것으로 보입니다.
+  - **② calibration 데이터 사양** — language/vision 각각 어떤 데이터·형식·개수를 권장하시는지. (저희는 COCO를 준비해 두었습니다.)
+  - **③ config 변환/패키징 규격** — `get_config.py`류에서 Qwen3-VL용으로 바꿔야 할 필드(model_type, mxq_path, core_mode/batch 지정 등)와 최종 배포본 config 형식.
 
 **Q4. (관련) VLM에서 `--model-loader-extra-config` override가 실패하는데, 올바른 방법이 있나요?**
 `vllm-mblt` README(Runtime Layout Overrides)에는 `dev_no`/`core_mode` 등을 `--model-loader-extra-config`로 override할 수 있다고 안내돼 있으나 **예제가 텍스트 모델**뿐입니다. 저희가 이를 VLM(`mobilint/Qwen3-VL-2B-Instruct`)에 `'{"dev_no":0, "core_mode":...}'`로 적용했더니, 해당 kwarg가 그대로 `from_pretrained`를 거쳐 `Qwen3VLForConditionalGeneration.__init__() got unexpected keyword 'dev_no'` (TypeError)로 엔진이 종료됐습니다. **VLM에서도 이 override가 지원되는지, 지원된다면 올바른 지정 방법**을 알려주시면 감사하겠습니다. (Q3에서 모드별 MXQ를 받으면 이 부분은 필요 없어질 수도 있습니다.)

@@ -62,10 +62,12 @@
 - 가능하면 **Q2에서 확인된 core_mode 변형**도 선택 가능한 형태(또는 각 모드 MXQ)면 위 테이블을 그대로 측정할 수 있습니다.
 - VLM에서 배치가 이미지 입력에 주는 제약(현재 "초기 1이미지" 등)과 권장 batch/정확도도 함께 안내 부탁드립니다.
 
-### Q3-B. 자체 컴파일용 데이터셋+코드 제공 — (A)가 번거로우면
-- 저희가 직접 `Qwen3-VL-2B`를 **배치·모드별로 컴파일**할 수 있도록 **① calibration 데이터셋(또는 생성 스크립트)**
-  **② Qwen3-VL 컴파일 코드/레시피**(vision+language, RoPE/그래프 패치, batch_size 지정, 패키징 규격)를 받을 수 있을까요?
-- 참고: 저희 qbcompiler 1.1.2에 `qwen3vl` 파서는 있으나, Qwen2-VL 튜토리얼의 전용 자산을 Qwen3-VL로 옮기는 방법이 문서화돼 있지 않습니다.
+### Q3-B. 자체 컴파일 "레시피" 제공 — (A)가 번거로우면
+- **발견**: qbcompiler 1.1.2에 Qwen3-VL 파서+패칭 클래스(`CachedQwen3VLTextRotaryEmbedding`, `Qwen3VLForConditionalGenerationWrapper`,
+  deepstack 처리) 이미 구현됨 → Qwen2-VL 튜토리얼 템플릿으로 **자체 컴파일 시도 예정**. 문서화 안 된 것만 요청:
+  - ① **CompileConfig 레시피**(activation16Bits 레이어, equivalentTransformation QK/UD/Spin/HeadOutChRotation) — Qwen2-VL 값 그대로 안 맞음.
+  - ② calib 데이터 사양(language/vision 형식·개수; 우리는 COCO 준비됨).
+  - ③ config 변환/패키징 규격(model_type, mxq_path, core_mode/batch 지정, 배포본 config 형식).
 
 ## 5. vllm-mblt 0.1.0 — Qwen3-VL 서빙 중 확인한 것 (성격 다름, 구분)
 1. **[확인된 버그 — 직접 재현 완료]** `config.vocab_size` AttributeError. 트리거는 **이미지가 아니라 `top_k <= 0`**(예: -1/0).
