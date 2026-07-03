@@ -22,15 +22,28 @@ qbcompiler 1.1.2 / **transformers 4.57.1**(튜토리얼 핀; 5.12.1이면 모델
      이 함수들은 qbcompiler 안 어디에서도 호출되지 않음 = **사용자가 배선해야 하는 미문서화 레시피**.
    → ✅ MBLT 컴파일 + 검증 통과 (**num_large_mape 0.00%, num_max_err 0**). 26.4s. MBLT 1587MB(2블록).
 
-## 남은 것 (전체 배포용 MXQ까지)
-- 언어모델 **전체 28블록** 컴파일(현재 2블록 스모크) — CPU라 수 시간 예상.
-- **비전 인코더** 컴파일 — Qwen3-VL vision 패치(`PatchedQwen3VLVisionBlock`, `PatchedPatchMerger`,
-  `VisionModelForQwen3VL`) 배선 필요(언어와 유사한 역설계 예상).
-- **MBLT→MXQ 양자화** — `mxq_compile`에 calib(COCO 준비됨) + **`CompileConfig` 레시피**.
-  ⚠️ **여기가 진짜 미지수**: Qwen2-VL은 `activation16Bits: ["inputs_embeds/reshape"]`(language),
-  `["model_merger_fc2"]`(vision) + equivalentTransformation(QK/UD/SpinR1/SpinR2, HeadOutChRotation)를 씀.
-  **Qwen3-VL용 16bit 레이어·transformation 값은 문서에 없음.** 잘못 잡으면 attn_pool 때처럼 양자화 붕괴 위험.
-- config 패키징(model_type=mobilint-qwen3_vl, mxq_path, core_mode/batch) + 배포 MXQ와 정확도/거동 비교.
+## 전체 컴파일 결과 (2026-07-03, "끝까지" 밀어본 결과)
+3. **언어모델 전체 28블록 컴파일**: ✅ **오차 0** (num_ops=799, num_large_mape 0.00%, num_max_err 0.00%).
+   90.9s, MBLT 6.5GB. → **언어 그래프는 완전히 우리가 컴파일 가능.**
+4. **비전 인코더 전체 컴파일**: ⚠️ 그래프 생성·직렬화는 되나 **검증 불일치 81.53%**(128/157 op).
+   `VisionModelForQwen3VL`(deepstack merger 포함) forward가 tuple `(hidden, deepstack_list[3])`을 반환하는데,
+   출력 메타/deepstack merger 배선이 맞지 않아 수치가 안 맞음. 언어의 deepstack처럼 **비전 전용 배선 레시피가 더 필요**.
+5. **MBLT→MXQ 양자화**: 착수 불가 지점 도달 — 두 벽:
+   - (a) **calib 형식**: Qwen3-VL 언어 그래프는 입력 6개(inputs_embeds/attention_mask/position_ids/cache_position/
+     deepstack_visual_embeds/visual_pos_masks) + `past_key_values`(DynamicCache) placeholder. multi-input calib
+     디렉토리 형식은 있으나(sample_N/입력별 npy), 디코더+캐시 그래프의 calib 생성 절차가 미문서.
+   - (b) **`CompileConfig` 레시피**: Qwen2-VL은 `activation16Bits ["inputs_embeds/reshape"]`(language),
+     `["model_merger_fc2"]`(vision) + equivalentTransformation(QK/UD/SpinR1/SpinR2, HeadOutChRotation).
+     **Qwen3-VL용 값은 문서에 없음.** 잘못 잡으면 attn_pool(cos 0.46) 때처럼 양자화 붕괴 → 공정한 비교 불가.
+
+## 정리 (배포 MXQ 비교까지 가려면)
+| 단계 | 우리 상태 |
+|------|-----------|
+| 언어 HF→MBLT (그래프) | ✅ 오차 0, 전체 28블록 |
+| 비전 HF→MBLT (그래프) | ⚠️ 81% 불일치, 비전 배선 레시피 필요 |
+| MBLT→MXQ (양자화) | ⛔ calib 절차 + activation16Bits 레시피 미문서 |
+| 배포 MXQ와 비교 | ⛔ 위가 막혀 공정 비교 불가 |
+→ **딱 Q3-B에서 요청하는 ①양자화 레시피 ②비전/그래프 패치 배선만 받으면 완주 가능.**
 
 ## 시사점 (→ Q3-B)
 - **그래프 컴파일은 우리가 할 수 있음이 실증됨**(deepstack 레시피 역설계 성공, 오차 0).
