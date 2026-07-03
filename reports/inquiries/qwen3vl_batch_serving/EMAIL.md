@@ -59,19 +59,36 @@
 **Q4. (관련) VLM에서 `--model-loader-extra-config` override가 실패하는데, 올바른 방법이 있나요?**
 `vllm-mblt` README(Runtime Layout Overrides)에는 `dev_no`/`core_mode` 등을 `--model-loader-extra-config`로 override할 수 있다고 안내돼 있으나 **예제가 텍스트 모델**뿐입니다. 저희가 이를 VLM(`mobilint/Qwen3-VL-2B-Instruct`)에 `'{"dev_no":0, "core_mode":...}'`로 적용했더니, 해당 kwarg가 그대로 `from_pretrained`를 거쳐 `Qwen3VLForConditionalGeneration.__init__() got unexpected keyword 'dev_no'` (TypeError)로 엔진이 종료됐습니다. **VLM에서도 이 override가 지원되는지, 지원된다면 올바른 지정 방법**을 알려주시면 감사하겠습니다. (Q3에서 모드별 MXQ를 받으면 이 부분은 필요 없어질 수도 있습니다.)
 
-## 4. (참고 공유) vllm-mblt 0.1.0 — Qwen3-VL 서빙 중 확인한 수정 필요 지점
+## 4. (참고 공유) vllm-mblt 0.1.0 — `config.vocab_size` AttributeError 버그
 
-서빙 과정에서 발견한 부분이라 참고로 공유드립니다.
+서빙 검증 중 확인한 버그로, **순정 `vllm-mblt 0.1.0` + 공식 README 명령으로 저희가 직접 재현**했습니다.
 
-- **`config.vocab_size` AttributeError** — `mblt_worker.py`의 `_make_cached_sampling_state`(및 `_pack_prompt_token_ids`)가 `self.model.config.vocab_size`에 접근하는데, `mobilint/Qwen3-VL-2B-Instruct`의 config는 top-level `vocab_size`가 없고 `text_config.vocab_size`(151936)에 있어 이미지 요청 처리 중 EngineCore가 종료됩니다.
-  - 저희는 이 크래시를 **`vllm-mblt`로 Qwen3-VL 서빙 구성을 진행하던 중** 만났고, `text_config.vocab_size` 폴백으로 로컬 패치해 정상 구동 중입니다.
-  - 문제의 접근은 `mobilint/vllm-mblt` 레포(github.com/mobilint/vllm-mblt)의 **원본 코드(`vllm_mblt/mblt_worker.py`)** 에 있고 배포 config에 top-level `vocab_size`가 없는 구조이므로, README "Serve a VLM Model"의 기본 명령(`vllm serve mobilint/Qwen3-VL-2B-Instruct --trust-remote-code`)으로 이미지 요청을 보내도 **동일하게 발생할 것으로 판단**됩니다.
-  - 참고로 `mblt-model-zoo`의 `utils/benchmark_utils.py`에는 이미 `config.vocab_size` → `text_config.vocab_size` 폴백 로직이 있어, `vllm-mblt`에도 동일하게 적용하면 될 것으로 보입니다.
+- **증상**: `mblt_worker.py`의 `_make_cached_sampling_state`가 `top_k` 정규화 시
+  `sampling_params.top_k if top_k > 0 else self.model.config.vocab_size` 로 `vocab_size`에 접근합니다.
+  `mobilint/Qwen3-VL-2B-Instruct`의 config에는 top-level `vocab_size`가 없고 `text_config.vocab_size`(151936)에만 있어,
+  **`top_k <= 0`(top_k 비활성, 예: `top_k=-1` 또는 `0`) 파라미터로 요청하면** 아래 오류로 EngineCore가 종료됩니다.
+  ```
+  File ".../vllm_mblt/mblt_worker.py", line 1445, in _make_cached_sampling_state
+      else self.model.config.vocab_size
+  AttributeError: 'MobilintQwen3VLConfig' object has no attribute 'vocab_size'
+  ```
+- **재현 방법**(수정 없는 순정 vllm-mblt 0.1.0, README "Serve a VLM Model" 경로 그대로):
+  1. `vllm serve mobilint/Qwen3-VL-2B-Instruct --trust-remote-code`
+  2. `top_k: -1`을 포함한 요청 전송(텍스트만으로도 재현) → EngineCore 종료.
+  - 참고: **기본 top_k(모델 config 기본값 20) 요청은 텍스트·이미지 모두 정상**입니다. `top_k`를 끄는(≤0) 요청에서만 발생합니다.
+- **수정**: `getattr(config, "vocab_size", None) or config.get_text_config().vocab_size` 폴백으로 해결됩니다.
+  이미 `mblt-model-zoo`의 `utils/benchmark_utils.py`에 동일 폴백(`_resolve_config_vocab_size`)이 있어 `vllm-mblt`에도 적용하면 될 것으로 보입니다.
+  저희는 이 폴백을 로컬 패치해 정상 구동 중이며, **패치 후 `top_k=-1` 요청 정상 동작까지 확인**했습니다.
 
-## 5. 재현 정보 (요청 시)
+## 5. 테스트 환경
 
-필요하시면 저희가 겪은 **크래시 로그(traceback) 전문**, 적용한 **`text_config.vocab_size` 폴백 패치 diff**, 사용 중인 **버전 정보**(vllm-mblt / mblt-model-zoo / qbruntime)를 바로 전달드리겠습니다.
-(참고: 저희가 확보한 로그는 Docker 기반 서빙 구성에서 발생한 것이며, 필요하시면 순정 `vllm serve` 명령으로도 재현해 로그를 준비해 드리겠습니다.)
+- **OS**: Ubuntu 22.04.1 LTS (kernel 6.5.0-41-generic)
+- **CPU**: Intel Xeon Gold 6526Y ×2 (총 64 threads), RAM 188GB
+- **NPU**: Mobilint **ARIES ×7**(`/dev/aries0~6`, PCIe), **driver 1.13.0 / firmware 1.2.5**, 카드당 16GB
+- **SW**: `vllm==0.11.2` / `vllm-mblt==0.1.0` / `mblt-model-zoo[transformers]==1.5.1` / `mobilint-qb-runtime==1.2.0` / Python 3.11
+- **Model**: `mobilint/Qwen3-VL-2B-Instruct`
+
+필요하시면 위 vocab_size 건의 **크래시 로그(traceback) 전문**과 적용한 **폴백 패치 diff**를 바로 전달드리겠습니다.
 
 바쁘신 와중에 확인 부탁드립니다. 감사합니다.
 

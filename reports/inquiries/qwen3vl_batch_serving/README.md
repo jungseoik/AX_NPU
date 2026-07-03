@@ -68,10 +68,12 @@
 - 참고: 저희 qbcompiler 1.1.2에 `qwen3vl` 파서는 있으나, Qwen2-VL 튜토리얼의 전용 자산을 Qwen3-VL로 옮기는 방법이 문서화돼 있지 않습니다.
 
 ## 5. vllm-mblt 0.1.0 — Qwen3-VL 서빙 중 확인한 것 (성격 다름, 구분)
-1. **[확인된 버그] `config.vocab_size` AttributeError**: `mblt_worker._make_cached_sampling_state`(+`_pack_prompt_token_ids`)가
-   `self.model.config.vocab_size` **직접 접근**. 배포 config는 top-level vocab_size 없음(=None), `text_config.vocab_size`(151936)에 있음 →
-   이미지 요청 시 EngineCore 크래시. **근거**: `mblt-model-zoo/utils/benchmark_utils.py`엔 이미 `text_config.vocab_size` 폴백
-   헬퍼(`_resolve_config_vocab_size`)+테스트가 있는데 vllm-mblt엔 미적용. → 우리가 폴백 패치해 구동 중(리포트 시 diff 첨부).
+1. **[확인된 버그 — 직접 재현 완료]** `config.vocab_size` AttributeError. 트리거는 **이미지가 아니라 `top_k <= 0`**(예: -1/0).
+   `_make_cached_sampling_state`가 `top_k = top_k if top_k>0 else self.model.config.vocab_size`로 접근 → VLM config엔
+   top-level vocab_size 없음(text_config에 151936만) → `AttributeError: 'MobilintQwen3VLConfig' object has no attribute 'vocab_size'`
+   로 EngineCore 종료. **2026-07-03 순정 vllm-mblt 0.1.0 + 공식 README 명령으로 실측 재현** (기본 top_k=20은 텍스트·이미지
+   모두 정상, top_k=-1이면 텍스트만으로도 크래시, 패치 후 top_k=-1 정상). 상세: `repro_vocab_size.md`.
+   근거: `mblt-model-zoo/utils/benchmark_utils.py`에 이미 `_resolve_config_vocab_size` 폴백+테스트 존재, vllm-mblt엔 미적용.
 2. **[질문 — 버그로 단정 X] `--model-loader-extra-config` TypeError**: 로드시 core_mode/dev_no override 시도 → kwarg가
    `from_pretrained` 거쳐 upstream `Qwen3VLForConditionalGeneration.__init__`까지 새어 `unexpected keyword 'dev_no'`.
    원인: vllm-mblt 화이트리스트(dev_no/core_mode/target_clusters)를 텍스트 모델은 config property로 흡수하나, VLM 최상위
@@ -80,11 +82,10 @@
    없지만 `mblt_platform.resolve_model_max_batch_size`가 extra-config에서 읽어 scheduler `max_num_seqs`로 반영 = override 자체는 됨.
    단 실배치는 batch-compiled MXQ 필요.)
 
-## 6. 재현 정보 (요청 시)
-- ⚠️ 정직성 주의: vocab_size 크래시는 **우리 Docker 서빙 구성 중 실제로 만남**(그래서 Dockerfile에 폴백 패치 존재).
-  다만 **순정 `vllm serve` bare 명령으로 처음부터 돌려 raw traceback을 캡처한 기록은 없음** → 메일엔 "공식 명령으로도
-  동일 발생할 것으로 판단"(코드·config 근거 추론)으로 서술. 단정("수정 없이 재현") 금지. NPU 반납으로 지금 bare 재현 불가.
-- 제공 가능: (Docker 기반)크래시 로그, `text_config.vocab_size` 폴백 패치 diff, 버전 정보(vllm-mblt/mblt-model-zoo/qbruntime).
-- (커스텀 Docker 구성·부하테스트 스크립트는 우리 것이라 재현엔 불필요 — 요청 시에만. NPU 확보되면 bare 재현 로그 준비 가능.)
+## 6. 테스트 환경 / 재현
+- 환경: Ubuntu 22.04.1(k6.5.0-41) / Xeon Gold 6526Y ×2(64T) / RAM 188G / **ARIES ×7**(driver 1.13.0, fw 1.2.5, 16G/카드)
+  / vllm 0.11.2 · vllm-mblt 0.1.0 · mblt-model-zoo 1.5.1 · qb-runtime 1.2.0 · py3.11 / model `mobilint/Qwen3-VL-2B-Instruct`.
+- vocab_size 건은 **2026-07-03 순정 vllm-mblt 0.1.0 + 공식 명령으로 직접 재현·수정검증 완료** → `repro_vocab_size.md`(로그 근거).
+- 제공 가능: traceback 전문, 폴백 패치 diff.
 
 *작성 2026-07. 관련: attn_pool 문의(해결됨 → ../../vendor/mobilint_resolution_attn_pool.md)와 별개 — 이건 Qwen3-VL 서빙 배치 건.*

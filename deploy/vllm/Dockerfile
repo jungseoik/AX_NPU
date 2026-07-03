@@ -32,8 +32,10 @@ RUN pip install --no-cache-dir --upgrade pip \
 #       vllm==0.11.2(vllm-mblt가 핀). 버전 충돌 없음 확인됨.
 
 # --- vllm-mblt 0.1.0 버그 패치: VLM(Qwen3-VL) config는 vocab_size가 text_config 안에 있음 ---
-# mblt_worker의 self.model.config.vocab_size 가 AttributeError → text_config로 폴백.
-# (upstream 보고 대상. 텍스트 모델엔 영향 없음: top-level vocab_size 있으면 그대로 사용.)
+# mblt_worker._make_cached_sampling_state가 top_k<=0 요청 시 self.model.config.vocab_size 접근 →
+# VLM config엔 top-level vocab_size 없어 AttributeError로 EngineCore 종료(2026-07-03 순정 재현 확인).
+# → text_config 폴백. (upstream 보고 대상. 텍스트 모델엔 영향 없음: top-level vocab_size 있으면 그대로 사용.)
+# 상세 재현: reports/inquiries/qwen3vl_batch_serving/repro_vocab_size.md
 RUN python - <<'PY'
 p='/usr/local/lib/python3.11/site-packages/vllm_mblt/mblt_worker.py'
 s=open(p).read()
