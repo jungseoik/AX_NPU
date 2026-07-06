@@ -20,6 +20,8 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 | [NPU_pipeline_stage_latency.md](performance/NPU_pipeline_stage_latency.md) | _detect 파이프라인 단계별(전처리/NPU/pool/event) + e2e 지연, 채널 스윕(1~16) |
 | [NPU_coremode_pipeline_e2e.md](performance/NPU_coremode_pipeline_e2e.md) | **종합**: 코어모드 3종 × 단계별 × 채널(최대 56=7×8) — NPU 병목 어디서 커지는지 |
 | [NPU_preprocess_parallel.md](performance/NPU_preprocess_parallel.md) | 고채널 병목인 CPU 전처리 병렬화 (스레드/멀티프로세스) |
+| [NPU_preprocess_cv2_e2e.md](performance/NPU_preprocess_cv2_e2e.md) | 전처리 최적화 의사결정(e2e): 비용 원천=resize, torchvision→cv2 전환(56ch −25%·CPU↓, 정확도 0.99→0.97 opt-in) |
+| [NPU_preprocess_uint8_offload.md](performance/NPU_preprocess_uint8_offload.md) | 전처리 NPU 오프로드(uint8 입력) 실험: normalize는 폴딩되나 resize 불가라 이득 없음(정확도 0.99 유지) |
 | [NPU_poolhead_batch_nogain.md](performance/NPU_poolhead_batch_nogain.md) | CPU pool head 배치/스레드 최적화가 무효한 이유 (실측) |
 | [compile_benchmark.md](performance/compile_benchmark.md) | 컴파일 시간 GPU vs CPU |
 
