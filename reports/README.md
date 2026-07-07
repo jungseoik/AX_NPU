@@ -23,6 +23,7 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 | [NPU_preprocess_cv2_e2e.md](performance/NPU_preprocess_cv2_e2e.md) | 전처리 최적화 의사결정(e2e): 비용 원천=resize, torchvision→cv2 전환(56ch −25%·CPU↓, 정확도 0.99→0.97 opt-in) |
 | [NPU_preprocess_uint8_offload.md](performance/NPU_preprocess_uint8_offload.md) | 전처리 NPU 오프로드(uint8 입력) 실험: normalize는 폴딩되나 resize 불가라 이득 없음(정확도 0.99 유지) |
 | [NPU_poolhead_batch_nogain.md](performance/NPU_poolhead_batch_nogain.md) | CPU pool head 배치/스레드 최적화가 무효한 이유 (실측) |
+| [NPU_yolo11_coremode_batch.md](performance/NPU_yolo11_coremode_batch.md) | ★ [YOLO11] 컴파일(패치0)·코어모드×배치 1→64 지연·mAP(INT8 vs fp32) |
 | [compile_benchmark.md](performance/compile_benchmark.md) | 컴파일 시간 GPU vs CPU |
 
 ## 🔢 quantization/ — 양자화
