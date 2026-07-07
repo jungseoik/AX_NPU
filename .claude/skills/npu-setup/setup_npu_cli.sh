@@ -120,4 +120,4 @@ case "$MODE" in
 esac
 
 say "\n완료. NPU 상태가 안 뜨면: ① 카드 물리 장착 ② sudo modprobe aries ③ 펌웨어 'aries_flash_firmware status'."
-say "추론(Python)까지 하려면: bash setup/setup_conda_host.sh 후 tutorial_pe_npu/README.md 참고."
+say "추론(Python)까지 하려면: bash setup/setup_conda_host.sh 후 tutorial/pe_npu/README.md 참고."

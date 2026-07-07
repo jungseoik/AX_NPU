@@ -17,7 +17,7 @@ import qbruntime
 from pe_npu import preprocess_image, load_pe, MXQInferenceHybrid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-IMAGES = sorted(glob.glob(os.path.join(HERE, "..", "tutorial_pe_npu", "images", "*.jpg")))
+IMAGES = sorted(glob.glob(os.path.join(HERE, "..", "tutorial/pe_npu", "images", "*.jpg")))
 
 
 def cos(a, b):
@@ -54,7 +54,7 @@ def main():
     if not specs:
         raise SystemExit("사용: python reports/bench_quant.py <mxq>:<label> ...")
     if not IMAGES:
-        raise SystemExit("측정 이미지 없음 (tutorial_pe_npu/images). download_images.py 먼저.")
+        raise SystemExit("측정 이미지 없음 (tutorial/pe_npu/images). download_images.py 먼저.")
 
     x = np.stack([preprocess_image(p) for p in IMAGES], axis=0)  # (N,3,336,336)
     x_hwc = np.transpose(x[0], (1, 2, 0)).copy()                 # latency용 단건 HWC

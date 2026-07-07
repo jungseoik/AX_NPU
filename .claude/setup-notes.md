@@ -59,7 +59,7 @@ docker exec mblt_compiler pip install /workspace/AX_NPU/download/qbcompiler-1.1.
 docker exec -w /workspace/AX_NPU/_dev/compile_test mblt_compiler bash -lc 'python model_compile.py \
   --onnx-path ./resnet50.onnx --calib-data-path ./calib_images --save-path ./resnet50.mxq'
 
-# 커스텀 모델 PE-Core-L14-336 → 상세는 tutorial_pe_npu/README.md (python -m pe_npu.compile)
+# 커스텀 모델 PE-Core-L14-336 → 상세는 tutorial/pe_npu/README.md (python -m pe_npu.compile)
 ```
 
 ### 컴파일 검증 결과 (구 `_dev/compile_test/` — gitignore된 로컬 스크래치, 현재 제거됨. ResNet50 동작검증 기록만 남김)

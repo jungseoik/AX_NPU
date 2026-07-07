@@ -15,7 +15,7 @@
 import argparse, glob, os, sys
 import numpy as np, torch
 import open_clip
-sys.path.insert(0, os.path.abspath(".."))
+sys.path.insert(0, os.path.abspath("../.."))
 import pe_npu
 from pe_npu import load_pe, preprocess_image
 

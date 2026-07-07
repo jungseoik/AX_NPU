@@ -3,7 +3,7 @@
 모델 바꾸려면 --mxq 만 변경 (11n/11m/11l …). env: pe_npu_host (qbruntime)."""
 import argparse, os, sys, time
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from yolo_npu import YOLONPU
 
 

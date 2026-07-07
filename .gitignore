@@ -233,8 +233,8 @@ pe_onnx_export/calib_imagenet/
 [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-*/
 **/*.npy
 **/__pycache__/
-tutorial_pe_npu/images/
-tutorial_pe_npu/out/
+tutorial/pe_npu/images/
+tutorial/pe_npu/out/
 
 # 참조용 외부 레포 (추적 제외)
 Product-AI-mono/
@@ -248,7 +248,7 @@ download/
 *.whl
 *.tar.gz
 pe_npu/out/
-tutorial_pe_npu/images/
+tutorial/pe_npu/images/
 _dev/compile_test/
 
 # 임시 결과물(주석 영상 등)

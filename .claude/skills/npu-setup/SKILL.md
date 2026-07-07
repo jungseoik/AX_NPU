@@ -81,7 +81,7 @@ sudo bash .claude/skills/npu-setup/setup_npu_cli.sh
 
 `mobilint-cli status`까지 됐으면 NPU 자체는 준비 완료. 모델 추론(Python)까지 하려면:
 - `bash setup/setup_conda_host.sh` (conda env + qbruntime + torch/einops/timm/huggingface_hub)
-- 그 다음 추론은 두 가지 방식 중 선택 (`tutorial_pe_npu/README.md`):
+- 그 다음 추론은 두 가지 방식 중 선택 (`tutorial/pe_npu/README.md`):
   - **옵션 B (빠름, 권장)**: 컴파일러 없이 HF에서 미리 컴파일된 자산을 받아 추론.
     `pe_npu.MXQInferenceFull.from_hf()` → `PIA-SPACE-LAB/MXQ_NPU`에서 `pe_full.mxq` 자동 다운로드
     (image→embedding 전부 NPU). NPU + qbruntime + 인터넷만 있으면 됨 (qbcompiler·원본 가중치 불필요).

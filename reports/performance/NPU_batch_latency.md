@@ -148,7 +148,7 @@ python -m pe_npu.compile --mode compile --save ./pe_npu/out/pe_feat.mxq --feat-o
 #   --scheme multi|global4|global8 로 다른 모드 컴파일 (단, 위 결과상 throughput엔 single이 최선)
 
 # 배치 latency / 멀티코어 측정
-tutorial_pe_npu/multicore_benchmark.ipynb   # 동기 vs async vs 멀티스레딩 + 그래프
+tutorial/pe_npu/multicore_benchmark.ipynb   # 동기 vs async vs 멀티스레딩 + 그래프
 ```
 
 측정 환경: conda `pe_npu_host`(Python 3.11) + ARIES `/dev/aries0`, async 파이프라인, 각 6회 최선값.

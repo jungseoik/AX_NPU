@@ -61,10 +61,10 @@ fi
 echo "=============================================="
 if [ "$FAILED" -eq 0 ]; then
   echo "모든 필수 점검 통과. 다음 단계로 진행하세요:"
-  echo "  1) 예제 이미지 다운로드:  (tutorial_pe_npu) python download_images.py"
+  echo "  1) 예제 이미지 다운로드:  (tutorial/pe_npu) python download_images.py"
   echo "  2) hybrid 추론 + 정확도 데모:"
-  echo "     (tutorial_pe_npu) python demo_inference.py    # 평균 cos >= 0.99 기대"
-  echo "  자세한 전 과정: tutorial_pe_npu/README.md"
+  echo "     (tutorial/pe_npu) python demo_inference.py    # 평균 cos >= 0.99 기대"
+  echo "  자세한 전 과정: tutorial/pe_npu/README.md"
 else
   echo "일부 점검 실패. 위 [FAIL] 항목을 먼저 해결하세요. (setup-notes.md 추론 환경 절차 참고)"
 fi

@@ -18,9 +18,9 @@ import sys
 import numpy as np
 import torch
 
-# tutorial_pe_npu/ 의 부모(AX_NPU/AX_NPU)를 import 경로에 추가 -> import pe_npu 가능
+# tutorial/pe_npu/ 의 부모(AX_NPU/AX_NPU)를 import 경로에 추가 -> import pe_npu 가능
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.normpath(os.path.join(HERE, "..")))
+sys.path.insert(0, os.path.normpath(os.path.join(HERE, "..", "..")))
 
 from pe_npu import preprocess_image, load_pe, MXQInferenceFull
 from pe_npu.inference import DEFAULT_FULL_MXQ

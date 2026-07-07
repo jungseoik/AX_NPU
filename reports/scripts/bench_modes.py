@@ -16,8 +16,8 @@ MODES = ["single", "multi", "global4", "global8"]
 sys.path.insert(0, "/home/gpuadmin/AX_NPU")
 from pe_npu import preprocess_image
 
-chw = preprocess_image(glob.glob("/home/gpuadmin/AX_NPU/tutorial_pe_npu/images/*.jpg")[0]) \
-      if glob.glob("/home/gpuadmin/AX_NPU/tutorial_pe_npu/images/*.jpg") \
+chw = preprocess_image(glob.glob("/home/gpuadmin/AX_NPU/tutorial/pe_npu/images/*.jpg")[0]) \
+      if glob.glob("/home/gpuadmin/AX_NPU/tutorial/pe_npu/images/*.jpg") \
       else np.random.randn(3, 336, 336).astype(np.float32)
 X = np.ascontiguousarray(np.asarray(chw).transpose(1, 2, 0).astype(np.float32))
 

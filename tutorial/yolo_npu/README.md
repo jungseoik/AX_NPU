@@ -63,12 +63,12 @@ python -m yolo_npu.compile --model yolo11n --schemes single --out ./yolo_out
 | multi | — | ~12 (열세) | 비권장 |
 
 - 카드당 동시 병렬 = 코어 배분이 한계(single 8-way). 더 필요하면 **카드 추가**.
-- 상세 실측: `../reports/performance/NPU_yolo11_coremode_batch.md`.
+- 상세 실측: `../../reports/performance/NPU_yolo11_coremode_batch.md`.
 
 ## 4. 정확도 검증 (mAP, COCO val2017)
 
 우리가 컴파일한 NPU MXQ(INT8) vs fp32(onnxruntime) — **동일 val2017 300장, 동일 전처리/후처리**로
-pycocotools 평가. `../reports/scripts/eval_yolo_map.py` 재현. 상세: `../reports/performance/NPU_yolo11_coremode_batch.md`.
+pycocotools 평가. `../../reports/scripts/eval_yolo_map.py` 재현. 상세: `../../reports/performance/NPU_yolo11_coremode_batch.md`.
 
 | yolo11m | mAP@0.5:0.95 | mAP@0.5 |
 |---|---|---|

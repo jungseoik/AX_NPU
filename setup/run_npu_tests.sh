@@ -11,7 +11,7 @@ set -e
 ROOT=/home/gpuadmin/Repo/seoik/AX_NPU
 IMG=mobilint/qbcompiler:1.1-cuda12.8.1-ubuntu22.04
 LDLIB=/tmp/qbruntime_aries2-v4_v1.2.0_amd64/qbruntime/qbruntime/lib
-TUT=/workspace/AX_NPU/tutorial_pe_npu               # 컨테이너 내부 경로
+TUT=/workspace/AX_NPU/tutorial/pe_npu               # 컨테이너 내부 경로
 
 step() { echo; echo "==================== $1 ===================="; }
 

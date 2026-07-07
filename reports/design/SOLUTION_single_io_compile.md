@@ -81,7 +81,7 @@ CPU(float)로 분리하면 **pth 대비 cos 0.9972** 달성. (full-NPU는 0.46)
 python -m pe_npu.compile --mode compile --save ./pe_npu/out/pe_feat.mxq --feat-only \
   --calib-data-path ./pe_npu/calib_coco_hwc --calib-output 1 --device gpu
 # 2) 추론: NPU feat → CPU pool/proj (pe_npu.MXQInferenceHybrid: visual._pool + visual.proj, float)
-#    데모: tutorial_pe_npu/demo_inference.py
+#    데모: tutorial/pe_npu/demo_inference.py
 #    결과: pth_full vs hybrid cos = 0.997 (4장 [0.995,0.999,0.998,0.997])
 ```
 
