@@ -88,8 +88,9 @@ bash setup/setup_conda_host.sh && conda activate pe_npu_host
 #     --calib-data-path <calib_hwc> --device cpu    # full NPU(권장). 기본 cpu, GPU면 --device gpu
 #   # 셋업: .claude/setup-notes.md 방법 A(conda)/B(docker). --scheme 등은 --help
 
-# B) 가져와 쓰기 (컴파일러 불필요)
-python -c "import pe_npu, numpy as np; m=pe_npu.MXQInferenceFull.from_hf(); \
+# B) 가져와 쓰기 (컴파일러 불필요) — 예제 이미지부터 받고(gitignore라 최초 1회) 실행
+python tutorial/pe_npu/download_images.py
+python -c "import pe_npu; m=pe_npu.MXQInferenceFull.load(scheme='single'); \
   print(m.infer(pe_npu.preprocess_image('tutorial/pe_npu/images/cat1.jpg')[None]).shape)"
 ```
 

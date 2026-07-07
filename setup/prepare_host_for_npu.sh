@@ -11,7 +11,8 @@
 
 set -e
 
-DRIVER_TAR=/home/gpuadmin/Repo/seoik/AX_NPU/AX_NPU/download/mobilint-aries2-driver_v1.13.tar.gz
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # 레포 루트 동적 (<repo>/setup/)
+DRIVER_TAR="$(cd "$HERE/.." && pwd)/download/mobilint-aries2-driver_v1.13.tar.gz"
 BUILD_DIR=/tmp/aries-driver-build
 
 echo "================ Mobilint 드라이버 설치 (tar 빌드) ================"

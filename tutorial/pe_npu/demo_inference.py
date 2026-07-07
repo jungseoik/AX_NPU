@@ -18,7 +18,7 @@ import sys
 import numpy as np
 import torch
 
-# tutorial/pe_npu/ 의 부모(AX_NPU/AX_NPU)를 import 경로에 추가 -> import pe_npu 가능
+# tutorial/pe_npu/ 의 부모(레포 루트)를 import 경로에 추가 -> import pe_npu 가능
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.normpath(os.path.join(HERE, "..", "..")))
 

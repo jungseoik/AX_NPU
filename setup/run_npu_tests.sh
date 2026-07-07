@@ -8,10 +8,10 @@
 #   (docker 명령을 쓰므로 docker 권한 필요. sudo 불필요하면 그대로, 필요하면 sudo로)
 
 set -e
-ROOT=/home/gpuadmin/Repo/seoik/AX_NPU
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # 레포 루트 동적 (<repo>/setup/)
 IMG=mobilint/qbcompiler:1.1-cuda12.8.1-ubuntu22.04
 LDLIB=/tmp/qbruntime_aries2-v4_v1.2.0_amd64/qbruntime/qbruntime/lib
-TUT=/workspace/AX_NPU/tutorial/pe_npu               # 컨테이너 내부 경로
+TUT=/workspace/tutorial/pe_npu                      # 컨테이너 내부 경로(ROOT→/workspace 마운트)
 
 step() { echo; echo "==================== $1 ===================="; }
 
@@ -31,8 +31,8 @@ docker run -dit $GPU_OPT --ipc=host --name mblt_compiler \
   --device /dev/aries0:/dev/aries0 \
   -v "$ROOT":/workspace -w /workspace "$IMG" /bin/bash
 echo "  컴파일러/런타임 설치..."
-docker exec mblt_compiler pip install -q /workspace/AX_NPU/download/qbcompiler-1.1.2+aries2-py3-none-any.whl
-docker exec mblt_compiler bash -lc 'cd /tmp && tar xzf /workspace/AX_NPU/download/qbruntime_aries2-v4_v1.2.0_amd64.tar.gz && pip install -q /tmp/qbruntime_aries2-v4_v1.2.0_amd64/qbruntime/qbruntime/python/*cp310*.whl'
+docker exec mblt_compiler pip install -q /workspace/download/qbcompiler-1.1.2+aries2-py3-none-any.whl
+docker exec mblt_compiler bash -lc 'cd /tmp && tar xzf /workspace/download/qbruntime_aries2-v4_v1.2.0_amd64.tar.gz && pip install -q /tmp/qbruntime_aries2-v4_v1.2.0_amd64/qbruntime/qbruntime/python/*cp310*.whl'
 docker exec mblt_compiler pip install -q onnxruntime
 
 step "[2/3] hybrid 추론 데모 (NPU trunk + CPU pool) + 원본 PyTorch 대비 정확도"

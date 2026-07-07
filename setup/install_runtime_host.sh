@@ -11,7 +11,8 @@
 # 사용: sudo bash install_runtime_host.sh
 
 set -e
-DL=/home/gpuadmin/Repo/seoik/AX_NPU/AX_NPU/download
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # 레포 루트 동적 (<repo>/setup/)
+DL="$(cd "$HERE/.." && pwd)/download"
 TAR=$DL/qbruntime_aries2-v4_v1.2.0_amd64.tar.gz
 RT=$DL/qbruntime_aries2-v4_v1.2.0_amd64
 

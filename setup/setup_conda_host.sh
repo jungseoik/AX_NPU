@@ -13,7 +13,9 @@
 set -e
 ENV="${1:-pe_npu_host}"
 PYVER="${2:-3.11}"
-DL=/home/gpuadmin/Repo/seoik/AX_NPU/AX_NPU/download
+# 레포 루트 동적 탐색 (이 스크립트: <repo>/setup/) — 어디에 clone하든 동작
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DL="$(cd "$HERE/.." && pwd)/download"
 RT="$DL/qbruntime_aries2-v4_v1.2.0_amd64"
 
 # qbruntime wheel은 cp{버전} 매칭 필요 (3.11→cp311)
@@ -32,6 +34,8 @@ conda run -n "$ENV" pip install -q torch torchvision --index-url https://downloa
 conda run -n "$ENV" pip install -q einops timm huggingface_hub
 conda run -n "$ENV" pip install -q open_clip_torch   # 텍스트 분류 데모(즉석 텍스트 인코딩, CLIP BPE 토크나이저)
 conda run -n "$ENV" pip install -q matplotlib jupyter ipykernel   # 노트북 튜토리얼용
+conda run -n "$ENV" pip install -q opencv-python-headless scipy   # YOLO 검출(cv2) + ByteTrack 추적(scipy)
+# (선택) YOLO mAP 검증까지 하려면: pip install onnxruntime pycocotools
 
 # (선택) Qwen3-VL 등 VLM 추론을 같은 env에서 쓰려면 WITH_VLM=1 로 실행.
 #   mblt-model-zoo는 1.3.1로 핀(런타임 1.2.0 호환), transformers는 4.57(Qwen3-VL 지원)으로 올린다.
@@ -51,9 +55,9 @@ else
 fi
 
 echo "====================================================="
-echo "완료. 호스트 conda에서 추론:"
+echo "완료. 호스트 conda에서 추론 (레포 루트에서 실행):"
 echo "  conda activate $ENV"
-echo "  cd /home/gpuadmin/Repo/seoik/AX_NPU/AX_NPU"
 echo "  python tutorial/pe_npu/download_images.py"
-echo "  python tutorial/pe_npu/demo_inference.py     # 원본 대비 cos 0.997"
-echo "  # 코드: import pe_npu; m=pe_npu.MXQInferenceHybrid(); m.infer(x)"
+echo "  python tutorial/pe_npu/demo_inference.py     # PE-Core, 원본 대비 cos 0.99 (full NPU)"
+echo "  # PE 코드:   import pe_npu;  m=pe_npu.MXQInferenceFull.load(scheme='single');  m.infer(x)"
+echo "  # YOLO 코드: from yolo_npu import YOLONPU; d=YOLONPU.load('yolo11m','single'); d('img.jpg')"
