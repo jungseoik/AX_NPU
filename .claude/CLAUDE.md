@@ -1,7 +1,12 @@
 # AX_NPU 프로젝트
 
-Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코더**를 NPU로 추론.
+Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추론.
 호스트: Ubuntu + NPU 장착 서버. 이 레포는 NPU 있는 여러 서버로 옮겨다니며 쓰는 것을 전제로 한다.
+
+**다루는 모델 (워크스트림, 상세는 아래 문서 라우팅):**
+- **PE-Core-L14-336 비전인코더** — 메인. 이미지→임베딩, 직접 컴파일(5패치)+full NPU. 패키지 `pe_npu/`.
+- **YOLO11 객체탐지** — 이미지→bbox, 직접 컴파일(패치 0). 패키지 `yolo_npu/`.
+- **Qwen3-VL(멀티모달 LLM)** — 이미지+프롬프트→텍스트, Mobilint MXQ 가져와 씀(포팅 불필요).
 
 > 아래 결과(cos 0.997 등)를 **검증했던 테스트 환경** 스펙: Ubuntu / Core Ultra 9 285K(24T) / RTX PRO 6000 / NPU `/dev/aries0`.
 > 이건 그 당시 한 서버에서 기록한 값일 뿐, 현재 작업 중인 서버 스펙과 다를 수 있다(CPU/GPU 유무/NPU 개수/OS). 실제 스펙은 각 서버에서 직접 확인할 것.
@@ -49,6 +54,7 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 **PE-Core-L14-336 비전인코
 
 - **따라하기**(설치~컴파일~추론, 옵션 A/B): `tutorial/pe_npu/README.md`
 - **Qwen3-VL(멀티모달 LLM) 추론**: `tutorial/pe_npu/README_VLM_qwen3.md` + `demo_vlm_qwen3.ipynb` + 헬퍼 `tutorial/pe_npu/vlm_npu.py` + skill `.claude/skills/qwen3-vl/`. 이미지+프롬프트→텍스트. PE-Core와 별개로, Mobilint가 올린 `mobilint/Qwen3-VL-*` MXQ를 표준 HF API(`AutoModelForImageTextToText`+`mblt-model-zoo`)로 그대로 가져와 씀(포팅 불필요). **코어모드=global8**(8코어 전부, 단일스트림 latency 최적화, max_batch_size=1). 설치 핀: `mblt-model-zoo==1.3.1` + `transformers>=4.57`. 출처: `mobilint-runtime-gui` 백엔드
+- **YOLO11 객체탐지 (컴파일~추론)**: `tutorial/yolo_npu/README.md` + `demo_yolo11_npu.ipynb` + 패키지 `yolo_npu/`(detect/compile). PE와 달리 **패치 0개**로 컴파일(표준 CNN, `yolo_decode_include`). 모델은 **mxq만 바꾸면**(11n/m/l). 단일/지정/`device_ids="auto"` 멀티카드 + `detect_batch`(출력 무결성 검증됨). mAP(11m INT8 0.53=fp32의 96%)·4모드×배치·1~7장 스케일링(64ch 198→1072 img/s): `reports/performance/NPU_yolo11_coremode_batch.md`
 - **신규 서버 NPU 세팅**: `.claude/skills/npu-setup/` (clone 후 `mobilint-cli status`까지)
 - **분석/원리** (전체 인덱스는 `reports/README.md`):
   - `reports/vendor/mobilint_resolution_attn_pool.md` — ★ attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.99
