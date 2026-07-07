@@ -39,11 +39,12 @@ HF에 올려두면(옵션 B) 다른 사람은 그냥 받아 쓰면 된다.
 conda activate pe_npu_host
 python -c "
 import numpy as np, pe_npu
-m = pe_npu.MXQInferenceFull.from_hf()            # PIA-SPACE-LAB/MXQ_NPU에서 pe_full.mxq 자동 다운로드
+m = pe_npu.MXQInferenceFull.load(scheme='single')  # 로컬 있으면 사용→없으면 HF→그래도 없으면 컴파일 안내
 x = pe_npu.preprocess_image('tutorial/pe_npu/images/cat1.jpg')
 print(m.infer(x[None]).shape)                    # (1, 1024)
 "
 ```
+> **기본 진입점 `load()`**: 로컬 mxq → HF `<scheme>/pe_full.mxq` → (없으면) 컴파일 안내. (HF 강제는 `from_hf(scheme=)`.) YOLO `YOLONPU.load()`와 대칭.
 > 옵션 B는 NPU(`/dev/aries0`) + qbruntime + 인터넷(최초 1회 HF 다운로드)만 필요하다. full NPU라 torch도 불필요.
 > 직접 만든 자산을 HF에 올리려면: `python setup/upload_assets_to_hf.py` (pe_full.mxq 업로드).
 > (레거시 hybrid를 쓰려면 `MXQInferenceHybrid.from_hf()` + `--legacy` 업로드.)

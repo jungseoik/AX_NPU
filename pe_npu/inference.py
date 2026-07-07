@@ -77,6 +77,29 @@ class MXQInferenceFull:
         full = assets.ensure_full_mxq(repo_id=repo, revision=revision, scheme=scheme)
         return cls(full_mxq_path=full, device_id=device_id, num_threads=num_threads)
 
+    @classmethod
+    def load(cls, scheme: str = "single", local_mxq: str = None, repo_id: str = None,
+             revision: str = None, device_id: int = 0, num_threads: int = 8):
+        """**기본 로더**: 로컬 mxq 있으면 사용 → 없으면 HF에서 다운로드 → 그래도 없으면 컴파일 안내.
+
+        생성자(로컬만)와 from_hf(HF만)를 합친 편의 진입점 (YOLONPU.load와 대칭).
+        """
+        from . import assets
+        cand = local_mxq or DEFAULT_FULL_MXQ
+        if cand and os.path.exists(cand):
+            mxq = cand
+        else:
+            try:
+                mxq = assets.ensure_full_mxq(repo_id=repo_id or assets.HF_REPO,
+                                             revision=revision, scheme=scheme)
+            except Exception as e:
+                raise FileNotFoundError(
+                    f"HF에 {scheme}/pe_full.mxq가 없습니다 ({type(e).__name__}). 직접 컴파일하세요:\n"
+                    f"  python -m pe_npu.compile --mode compile --save {DEFAULT_FULL_MXQ} "
+                    f"--qk16 --scheme {scheme} --calib-data-path <calib_hwc> --device cpu"
+                ) from e
+        return cls(full_mxq_path=mxq, device_id=device_id, num_threads=num_threads)
+
     def __call__(self, *args, **kwargs):
         return self.infer(*args, **kwargs)
 
