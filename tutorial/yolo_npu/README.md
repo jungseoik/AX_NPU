@@ -118,7 +118,24 @@ pycocotools 평가. `../../reports/scripts/eval_yolo_map.py` 재현. 상세: `..
 
 → INT8로 fp32 대비 **~96% mAP 유지** (INT8 검출기 전형 손실 범위). calib = COCO val2017 200장(PE와 동일 방침).
 
-## 5. 파이프라인 요약
+## 5. 객체 추적 (ByteTrack, 자체 경량)
+
+검출은 NPU, 추적(칼만+IoU+헝가리안)은 CPU. `yolo_npu/track.py`(의존성 numpy+scipy).
+
+```python
+from yolo_npu import YOLONPU, ByteTrack, draw_tracks
+det = YOLONPU("yolo11m_single.mxq"); trk = ByteTrack(fps=30)
+# 프레임 루프:
+boxes  = det(frame)                          # [(x1,y1,x2,y2,conf,cls),...]
+tracks = trk.update(boxes)                   # [(x1,y1,x2,y2,track_id,conf,cls),...]
+vis    = draw_tracks(frame, tracks, det.names)
+```
+- 데모(공개 샘플 영상→track ID 영상): `demo_track_yolo11_npu.ipynb` / `demo_track_yolo11_npu.py`.
+- 실측: 596프레임 people 영상 **25 fps@1카드**(검출+추적+영상IO), 사람별 ID 유지 확인.
+- ByteTrack 2단계 매칭(고신뢰→저신뢰)으로 가림에 강함. 파라미터 `track_thresh/match_thresh/track_buffer/fps`.
+- 외형(ReID) 기반이 필요하면 ReID CNN도 NPU 컴파일해 붙일 수 있음(YOLO와 동일 흐름).
+
+## 6. 파이프라인 요약
 
 ```
 이미지(BGR) → [letterbox 640 + RGB + /255] → NPU(image→(1,8400,84)) → [conf필터+NMS+좌표역변환] → bbox

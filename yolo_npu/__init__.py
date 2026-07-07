@@ -14,5 +14,14 @@ yolo_npu — YOLO(11) 계열을 Mobilint ARIES NPU로 추론/컴파일.
 from .detect import (YOLONPU, detect_npu_devices, preprocess, postprocess,
                      letterbox, COCO_NAMES, IMG_SIZE)
 
+
+def __getattr__(name):
+    # 지연 import: track은 scipy 필요 → 없는 환경서도 detect는 되게
+    if name in ("ByteTrack", "draw_tracks"):
+        from . import track
+        return getattr(track, name)
+    raise AttributeError(f"module 'yolo_npu' has no attribute {name!r}")
+
+
 __all__ = ["YOLONPU", "detect_npu_devices", "preprocess", "postprocess",
-           "letterbox", "COCO_NAMES", "IMG_SIZE"]
+           "letterbox", "COCO_NAMES", "IMG_SIZE", "ByteTrack", "draw_tracks"]
