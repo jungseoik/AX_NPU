@@ -80,14 +80,15 @@ class MXQInferenceFull:
     @classmethod
     def load(cls, scheme: str = "single", local_mxq: str = None, repo_id: str = None,
              revision: str = None, device_id: int = 0, num_threads: int = 8):
-        """**기본 로더**: 로컬 mxq 있으면 사용 → 없으면 HF에서 다운로드 → 그래도 없으면 컴파일 안내.
+        """**기본 로더**: local_mxq 지정 시 사용 → 없으면 HF `<scheme>/pe_full.mxq` → 없으면 컴파일 안내.
 
-        생성자(로컬만)와 from_hf(HF만)를 합친 편의 진입점 (YOLONPU.load와 대칭).
+        생성자(로컬만)와 from_hf(HF만)를 합친 편의 진입점 (YOLONPU.load와 동일 규칙).
+        local_mxq를 안 주면 항상 scheme에 맞는 HF 자산을 받는다 — 로컬 기본경로를 scheme 무시하고
+        자동 사용하지 않는다(잘못된 모드 방지). 로컬 파일을 쓰려면 local_mxq로 명시할 것.
         """
         from . import assets
-        cand = local_mxq or DEFAULT_FULL_MXQ
-        if cand and os.path.exists(cand):
-            mxq = cand
+        if local_mxq and os.path.exists(local_mxq):
+            mxq = local_mxq
         else:
             try:
                 mxq = assets.ensure_full_mxq(repo_id=repo_id or assets.HF_REPO,
