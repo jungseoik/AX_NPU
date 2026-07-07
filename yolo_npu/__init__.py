@@ -11,6 +11,8 @@ yolo_npu — YOLO(11) 계열을 Mobilint ARIES NPU로 추론/컴파일.
     det = YOLONPU("yolo11m_single.mxq")
     boxes = det("street.jpg"); det.draw("street.jpg", boxes, "out.jpg")
 """
-from .detect import YOLONPU, preprocess, postprocess, letterbox, COCO_NAMES, IMG_SIZE
+from .detect import (YOLONPU, detect_npu_devices, preprocess, postprocess,
+                     letterbox, COCO_NAMES, IMG_SIZE)
 
-__all__ = ["YOLONPU", "preprocess", "postprocess", "letterbox", "COCO_NAMES", "IMG_SIZE"]
+__all__ = ["YOLONPU", "detect_npu_devices", "preprocess", "postprocess",
+           "letterbox", "COCO_NAMES", "IMG_SIZE"]

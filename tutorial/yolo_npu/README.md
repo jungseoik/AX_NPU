@@ -28,6 +28,37 @@ for x1,y1,x2,y2,cf,c in boxes:
 - `conf_thres`/`iou_thres`로 임계값 조정. `names`로 커스텀 클래스명.
 - 데모: `demo_yolo11_npu.ipynb`(인라인 시각화) / `demo_yolo11_npu.py`(스크립트).
 
+### 멀티카드 (NPU 여러 장) — 배치 분산
+
+```python
+from yolo_npu import YOLONPU, detect_npu_devices
+
+# ① 단일 카드 (기본)                      aries0
+det = YOLONPU("yolo11m_single.mxq")
+# ② 특정 카드 지정                         aries0,1 만
+det = YOLONPU("yolo11m_single.mxq", device_ids=[0, 1])
+# ③ 장착된 NPU 전부 자동 사용
+det = YOLONPU("yolo11m_single.mxq", device_ids="auto")
+print(detect_npu_devices())              # [0,1,2,...] 감지된 카드
+
+# 배치(이미지 리스트)는 detect_batch — 카드 라운드로빈 + 카드당 8스레드 동기 infer
+results = det.detect_batch([img1, img2, ...])   # [[det...], [det...], ...] (입력 순서 보존)
+```
+- 단일 이미지는 `det(img)`, 다수 이미지는 `det.detect_batch([...])`. 카드가 많을수록 배치 처리량↑.
+- 검증: 2장 분산 결과가 단일카드와 **동일**(라운드로빈이 출력 안 깨뜨림). `"auto"`가 `/dev/aries*` 전부 사용.
+
+### 멀티카드 스케일링 (YOLO11m, 배치 64, NPU-only)
+
+| 카드 | 지연 | 처리량 | 1장 대비 |
+|---|--:|--:|--:|
+| 1 | 323 ms | 198 img/s | 1.00x |
+| **2** | **177 ms** | **362 img/s** | **1.83x** |
+| 4 | 74 ms | 859 img/s | 4.34x |
+| 7 | 60 ms | 1072 img/s | 5.42x |
+
+> 순수 NPU 추론은 카드 수에 거의 비례. 단, **e2e(전처리+NMS 포함)는 고배치에서 CPU 전처리가 병목**
+> (7장 e2e 312ms ≈ CPU 전처리 지배) → 전처리 병렬화가 다음 최적화 포인트(PE와 동일). 상세: `../../reports/performance/NPU_yolo11_coremode_batch.md`.
+
 ## 2. 옵션 A — 직접 컴파일 (4 코어모드)
 
 ### 2-1. 컴파일 환경 (torch 2.7.1 매칭 필수 — qbcompiler mmc ABI)

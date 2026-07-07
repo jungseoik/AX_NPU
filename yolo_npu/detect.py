@@ -100,17 +100,57 @@ def postprocess(out, r, pad, conf_thres=0.25, iou_thres=0.45):
     return det
 
 
-class YOLONPU:
-    """YOLO NPU 추론기. mxq만 바꾸면 11n/11m/11l 등 동일하게 동작."""
+def detect_npu_devices():
+    """장착된 NPU device id 목록(`/dev/ariesN`)을 정렬해 반환. 없으면 빈 리스트."""
+    import glob
+    ids = []
+    for p in glob.glob("/dev/aries*"):
+        s = os.path.basename(p)[len("aries"):]
+        if s.isdigit():
+            ids.append(int(s))
+    return sorted(ids)
 
-    def __init__(self, mxq_path, device_id=0, conf_thres=0.25, iou_thres=0.45, names=None):
+
+class YOLONPU:
+    """YOLO NPU 추론기. mxq만 바꾸면 11n/11m/11l 등 동일하게 동작. 단일/멀티카드 지원.
+
+    카드 선택 (device_ids):
+      - None(기본) → 단일 카드(device_id).           예) YOLONPU("y.mxq")               # aries0
+      - 리스트     → 지정 카드들.                      예) YOLONPU("y.mxq", device_ids=[0,1])
+      - "auto"     → 장착된 NPU 전부 자동 사용.        예) YOLONPU("y.mxq", device_ids="auto")
+
+    배치는 detect_batch([img,...])로: 카드 라운드로빈 + 멀티스레드 동기 infer(카드·코어 전부 활용).
+    (주의: qbruntime async multi-in-flight는 출력이 깨져 쓰지 않는다 — PE와 동일 방침.)
+    """
+
+    def __init__(self, mxq_path, device_id=0, device_ids=None, num_threads=8,
+                 conf_thres=0.25, iou_thres=0.45, names=None):
         import qbruntime  # 지연 import: 컴파일 env(qbruntime 없음)에서도 전처리 유틸 재사용 가능
-        self.acc = qbruntime.Accelerator(device_id)
-        self.model = qbruntime.Model(mxq_path)
-        self.model.launch(self.acc)
+        if device_ids == "auto":
+            ids = detect_npu_devices()
+            if not ids:
+                raise RuntimeError("NPU(/dev/aries*)를 찾지 못했습니다.")
+        elif device_ids is None:
+            ids = [device_id]
+        else:
+            ids = list(device_ids)
+        self.device_ids = ids
+        self.accs, self.models = [], []
+        for d in ids:
+            acc = qbruntime.Accelerator(d)
+            m = qbruntime.Model(mxq_path)
+            m.launch(acc)
+            self.accs.append(acc)
+            self.models.append(m)
+        self.n = len(self.models)
         self.conf_thres = conf_thres
         self.iou_thres = iou_thres
         self.names = names or COCO_NAMES
+        from concurrent.futures import ThreadPoolExecutor
+        self._pool = ThreadPoolExecutor(max_workers=max(1, num_threads) * self.n)
+
+    def __len__(self):
+        return self.n
 
     def _read(self, image):
         if isinstance(image, str):
@@ -120,14 +160,32 @@ class YOLONPU:
             return img
         return image  # 이미 BGR ndarray
 
+    def _infer(self, m, x):
+        o = m.infer(x)
+        return o[0] if isinstance(o, (list, tuple)) else o
+
     def __call__(self, image, conf_thres=None, iou_thres=None):
+        """단일 이미지 → detections (첫 카드 사용)."""
         img = self._read(image)
         x, r, pad = preprocess(img, IMG_SIZE)
-        o = self.model.infer(x)
-        o = o[0] if isinstance(o, (list, tuple)) else o
+        o = self._infer(self.models[0], x)
         return postprocess(o, r, pad,
                            conf_thres if conf_thres is not None else self.conf_thres,
                            iou_thres if iou_thres is not None else self.iou_thres)
+
+    def detect_batch(self, images, conf_thres=None, iou_thres=None):
+        """이미지 리스트 → detections 리스트(입력 순서 보존).
+        카드 라운드로빈 + 스레드 동기 infer로 전 카드·코어 활용."""
+        ct = conf_thres if conf_thres is not None else self.conf_thres
+        it = iou_thres if iou_thres is not None else self.iou_thres
+        pre = [preprocess(self._read(im), IMG_SIZE) for im in images]   # CPU 전처리
+
+        def run(i):
+            x, r, pad = pre[i]
+            o = self._infer(self.models[i % self.n], x)                 # 카드 i%n
+            return postprocess(o, r, pad, ct, it)
+
+        return list(self._pool.map(run, range(len(images))))            # 순서 보존
 
     def draw(self, image, detections, save_path=None):
         """detections를 이미지에 그려 반환(BGR ndarray). save_path 주면 저장."""
@@ -146,3 +204,15 @@ class YOLONPU:
         if save_path:
             cv2.imwrite(save_path, img)
         return img
+
+    def __del__(self):
+        try:
+            if getattr(self, "_pool", None) is not None:
+                self._pool.shutdown(wait=False)
+            for m in getattr(self, "models", []):
+                try:
+                    m.dispose()
+                except Exception:
+                    pass
+        except Exception:
+            pass
