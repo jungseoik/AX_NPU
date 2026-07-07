@@ -149,6 +149,21 @@ class YOLONPU:
         from concurrent.futures import ThreadPoolExecutor
         self._pool = ThreadPoolExecutor(max_workers=max(1, num_threads) * self.n)
 
+    @classmethod
+    def from_hf(cls, model="yolo11m", scheme="single", repo_id=None, revision=None,
+                device_id=0, device_ids=None, num_threads=8,
+                conf_thres=0.25, iou_thres=0.45, names=None):
+        """HF에서 미리 컴파일된 YOLO MXQ를 받아 추론기 구성 (qbruntime만 필요).
+
+        model : yolo11n|yolo11m|yolo11l …    scheme: single|multi|global4|global8
+        device_ids: None(단일)|리스트|"auto"(전체). PE의 from_hf(scheme=)와 대칭.
+        """
+        from . import assets
+        mxq = assets.ensure_yolo_mxq(model=model, scheme=scheme,
+                                     repo_id=repo_id or assets.HF_REPO, revision=revision)
+        return cls(mxq, device_id=device_id, device_ids=device_ids, num_threads=num_threads,
+                   conf_thres=conf_thres, iou_thres=iou_thres, names=names)
+
     def __len__(self):
         return self.n
 

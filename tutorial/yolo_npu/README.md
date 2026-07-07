@@ -18,12 +18,21 @@ ARIES NPU에서 **YOLO11**(객체 탐지)을 추론한다. **모델(11n/11m/11l/
 ```python
 from yolo_npu import YOLONPU
 
+# 로컬 mxq (직접 컴파일한 것)
 det = YOLONPU("yolo11m_single.mxq")           # ← 모델 바꾸려면 이 경로만 변경
+# 또는 HF에서 가져오기 (qbruntime만 있으면 됨, 컴파일러 불필요)
+det = YOLONPU.from_hf(model="yolo11m", scheme="single")            # 단일 카드
+det = YOLONPU.from_hf(model="yolo11m", scheme="single", device_ids="auto")  # 멀티카드
+
 boxes = det("street.jpg")                     # [(x1,y1,x2,y2,conf,cls_id), ...]
 det.draw("street.jpg", boxes, "out.jpg")      # bbox 그려 저장
 for x1,y1,x2,y2,cf,c in boxes:
     print(det.names[c], round(cf,2), (int(x1),int(y1),int(x2),int(y2)))
 ```
+
+> **HF 배포 구조** (PE와 같은 repo `PIA-SPACE-LAB/MXQ_NPU` 안 `yolo/` 하위, PE `<scheme>/pe_full.mxq` 패턴에 모델 레벨 추가):
+> `yolo/<model>/<scheme>/<model>.mxq` (+ `CALIBRATION.md`) + `yolo/<model>/<model>.onnx`.
+> `from_hf(model=, scheme=)`로 선택. 업로드: `setup/upload_yolo_to_hf.py`.
 - 입력: 이미지 경로 또는 BGR numpy(cv2). 내부에서 letterbox 640 + RGB + /255 처리.
 - `conf_thres`/`iou_thres`로 임계값 조정. `names`로 커스텀 클래스명.
 - 데모: `demo_yolo11_npu.ipynb`(인라인 시각화) / `demo_yolo11_npu.py`(스크립트).
