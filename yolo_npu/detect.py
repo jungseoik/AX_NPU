@@ -164,6 +164,32 @@ class YOLONPU:
         return cls(mxq, device_id=device_id, device_ids=device_ids, num_threads=num_threads,
                    conf_thres=conf_thres, iou_thres=iou_thres, names=names)
 
+    @classmethod
+    def load(cls, model="yolo11m", scheme="single", local_mxq=None, repo_id=None, revision=None,
+             device_id=0, device_ids=None, num_threads=8,
+             conf_thres=0.25, iou_thres=0.45, names=None):
+        """**기본 로더**: 로컬 mxq 있으면 사용 → 없으면 HF에서 다운로드 → 그래도 없으면 컴파일 안내.
+
+        운영/빠른 시작 권장 진입점. HF `PIA-SPACE-LAB/MXQ_NPU/yolo/<model>/<scheme>/`를 먼저 읽고,
+        업로드 안 된 모델/설정이면 직접 컴파일 명령을 안내한다.
+        """
+        from . import assets
+        if local_mxq and os.path.exists(local_mxq):
+            mxq = local_mxq
+        else:
+            try:
+                mxq = assets.ensure_yolo_mxq(model=model, scheme=scheme,
+                                             repo_id=repo_id or assets.HF_REPO, revision=revision)
+            except Exception as e:
+                raise FileNotFoundError(
+                    f"HF에 {model}/{scheme} MXQ가 없습니다 ({type(e).__name__}). 직접 컴파일하세요:\n"
+                    f"  python -m yolo_npu.compile --model {model} --schemes {scheme} "
+                    f"--calib <coco/val2017> --calib-num 200 --out ./yolo_out\n"
+                    f"  그 뒤: YOLONPU.load('{model}', '{scheme}', local_mxq='yolo_out/{model}_{scheme}.mxq')"
+                ) from e
+        return cls(mxq, device_id=device_id, device_ids=device_ids, num_threads=num_threads,
+                   conf_thres=conf_thres, iou_thres=iou_thres, names=names)
+
     def __len__(self):
         return self.n
 

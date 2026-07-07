@@ -3,8 +3,10 @@
 ARIES NPU에서 **YOLO11**(객체 탐지)을 추론한다. **모델(11n/11m/11l/…)은 mxq 경로만 바꾸면**
 동일 코드로 동작한다 (전처리·후처리 동일). 패키지 = **`yolo_npu/`**.
 
-- 추론: 이미지 → NPU → bbox. `YOLONPU("yolo11m_single.mxq")` 한 줄.
-- 컴파일: ultralytics 모델 → ONNX → 4 코어모드 MXQ. `python -m yolo_npu.compile`.
+- **기본 동작: HF 먼저 → 없으면 컴파일.** `YOLONPU.load("yolo11m","single")` — HF
+  `PIA-SPACE-LAB/MXQ_NPU/yolo/`에서 미리 컴파일된 MXQ를 받아 바로 추론(qbruntime만 필요).
+  HF에 없는 모델/설정이면 직접 컴파일(§2)로 안내된다.
+- 모델(11n/11m/11l)·코어모드는 **인자만 바꾸면** 동일 코드로 동작.
 - PE(비전인코더)와 달리 **YOLO는 패치 없이 그대로 컴파일된다** (표준 CNN 검출기).
 
 > **PE 대비 요점**: PE-Core는 ViT+RoPE라 단일입출력 컴파일에 5개 모델 패치가 필요했지만,
@@ -13,16 +15,17 @@ ARIES NPU에서 **YOLO11**(객체 탐지)을 추론한다. **모델(11n/11m/11l/
 
 ---
 
-## 1. 옵션 B — 이미 만든 MXQ로 추론만 (qbruntime만 필요)
+## 1. 기본 사용법 — HF에서 가져와 추론 (없으면 컴파일)
 
 ```python
 from yolo_npu import YOLONPU
 
-# 로컬 mxq (직접 컴파일한 것)
-det = YOLONPU("yolo11m_single.mxq")           # ← 모델 바꾸려면 이 경로만 변경
-# 또는 HF에서 가져오기 (qbruntime만 있으면 됨, 컴파일러 불필요)
-det = YOLONPU.from_hf(model="yolo11m", scheme="single")            # 단일 카드
-det = YOLONPU.from_hf(model="yolo11m", scheme="single", device_ids="auto")  # 멀티카드
+# ★ 기본: HF 먼저 읽고(있으면 다운로드) → 없으면 컴파일 명령 안내. qbruntime만 필요.
+det = YOLONPU.load("yolo11m", "single")                       # 단일 카드
+det = YOLONPU.load("yolo11l", "global4", device_ids="auto")   # 멀티카드
+# (로컬에서 직접 컴파일한 mxq를 쓰려면)
+det = YOLONPU.load("yolo11m", "single", local_mxq="yolo_out/yolo11m_single.mxq")
+# (원한다면 HF 강제)  det = YOLONPU.from_hf(model="yolo11m", scheme="single")
 
 boxes = det("street.jpg")                     # [(x1,y1,x2,y2,conf,cls_id), ...]
 det.draw("street.jpg", boxes, "out.jpg")      # bbox 그려 저장
@@ -30,9 +33,9 @@ for x1,y1,x2,y2,cf,c in boxes:
     print(det.names[c], round(cf,2), (int(x1),int(y1),int(x2),int(y2)))
 ```
 
+> `load()` 우선순위: **`local_mxq`(지정 시) → HF `yolo/<model>/<scheme>/<model>.mxq` → (없으면) 컴파일 명령 안내.**
 > **HF 배포 구조** (PE와 같은 repo `PIA-SPACE-LAB/MXQ_NPU` 안 `yolo/` 하위, PE `<scheme>/pe_full.mxq` 패턴에 모델 레벨 추가):
-> `yolo/<model>/<scheme>/<model>.mxq` (+ `CALIBRATION.md`) + `yolo/<model>/<model>.onnx`.
-> `from_hf(model=, scheme=)`로 선택. 업로드: `setup/upload_yolo_to_hf.py`.
+> `yolo/<model>/<scheme>/<model>.mxq` (+ `CALIBRATION.md`) + `yolo/<model>/<model>.onnx`. 업로드: `setup/upload_yolo_to_hf.py`.
 - 입력: 이미지 경로 또는 BGR numpy(cv2). 내부에서 letterbox 640 + RGB + /255 처리.
 - `conf_thres`/`iou_thres`로 임계값 조정. `names`로 커스텀 클래스명.
 - 데모: `demo_yolo11_npu.ipynb`(인라인 시각화) / `demo_yolo11_npu.py`(스크립트).
@@ -68,7 +71,7 @@ results = det.detect_batch([img1, img2, ...])   # [[det...], [det...], ...] (입
 > 순수 NPU 추론은 카드 수에 거의 비례. 단, **e2e(전처리+NMS 포함)는 고배치에서 CPU 전처리가 병목**
 > (7장 e2e 312ms ≈ CPU 전처리 지배) → 전처리 병렬화가 다음 최적화 포인트(PE와 동일). 상세: `../../reports/performance/NPU_yolo11_coremode_batch.md`.
 
-## 2. 옵션 A — 직접 컴파일 (4 코어모드)
+## 2. 직접 컴파일 (HF에 없는 모델/설정일 때) — 4 코어모드
 
 ### 2-1. 컴파일 환경 (torch 2.7.1 매칭 필수 — qbcompiler mmc ABI)
 ```bash
