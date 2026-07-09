@@ -234,10 +234,12 @@ python demo_text_classification.py --images images/*.jpg \
 import pe_npu
 import numpy as np
 
-model = pe_npu.MXQInferenceFull("/workspace/pe_npu/out/pe_full.mxq", num_threads=8)
+model = pe_npu.MXQInferenceFull.load(scheme="global4")               # 단일 카드(기본 global4)
+# 멀티카드: device_ids="auto"(전 카드) 또는 [0,1]. 카드당 1모델+코어모드별 슬롯×카드로 배치 자동 분산.
+# model = pe_npu.MXQInferenceFull.load(scheme="global4", device_ids="auto")
 # image: 전처리된 (B,3,336,336) float32 numpy 또는 torch
 x = np.stack([pe_npu.preprocess_image(p) for p in paths], axis=0)
-emb = model.infer(x)   # (B, 1024) — 배치는 1모델+num_threads 스레드 sync로 8코어 활용(출력 정확)
+emb = model.infer(x)   # (B, 1024) — B장을 카드에 라운드로빈 + 코어 슬롯 채워 병렬(출력 cos 1.0, 순서 보존)
 ```
 > 다채널 처리량/모드 선택(single·global4·global8)과 올바른 동시성 패턴: `../../reports/performance/NPU_throughput_modes_correct.md`.
 > (⚠️ `infer_async`를 한 모델에 여러 건 동시 제출하면 출력이 깨짐 — `MXQInferenceFull`은 안전한 스레드 sync를 씀.)

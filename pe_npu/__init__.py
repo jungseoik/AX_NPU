@@ -31,12 +31,13 @@ __all__ = [
     "PoolWrapper",
     "MXQInferenceFull",
     "MXQInferenceHybrid",
+    "detect_npu_devices",
 ]
 
 
 def __getattr__(name):
     # 지연 import: qbruntime(NPU 런타임) 미설치 환경에서도 import pe_npu가 성공하도록.
-    if name in ("MXQInferenceFull", "MXQInferenceHybrid"):
+    if name in ("MXQInferenceFull", "MXQInferenceHybrid", "detect_npu_devices"):
         from . import inference
         return getattr(inference, name)
     raise AttributeError(f"module 'pe_npu' has no attribute {name!r}")

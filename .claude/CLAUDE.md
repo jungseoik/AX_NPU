@@ -18,12 +18,12 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - **레거시 hybrid**(NPU trunk + CPU attn_pool, cos 0.997)는 `MXQInferenceHybrid`로 유지(비교/하위호환). full이 CPU pool 병목 제거 → `reports/performance/NPU_full_vs_hybrid.md`.
 - **자기완결(self-contained)**: PE 모델 코드는 `pe_npu/pe_vendor/`에 vendor 복사 → 외부 레포(Product-AI-mono) 의존 없음. 가중치만 HF `facebook/PE-Core-L14-336` 자동 다운로드.
 - 핵심 패키지 = **`pe_npu/`**.
-- **멀티카드**: NPU 여러 대면 채널 라운드로빈 분산으로 처리량↑(7대=56코어, full NPU 재측정 `reports/performance/NPU_multicard_62ch_full.md`). full NPU면 고채널 병목은 CPU 전처리만 남음(`reports/performance/NPU_preprocess_parallel.md`). 추론기는 단일 카드(`device_id`)용 → 카드마다 하나씩.
+- **멀티카드**: `MXQInferenceFull`이 단일/멀티 통합 — `device_id`(단일) / `device_ids=[..]`(지정) / `device_ids="auto"`(전 카드). 카드당 1모델 + **코어모드별 슬롯(single8/global4:2/global8:1)×카드** 스레드풀로 배치 자동 분산(출력 cos 1.0). 7대=56코어(`reports/performance/NPU_multicard_62ch_full.md`), 고채널 병목은 CPU 전처리(`reports/performance/NPU_preprocess_parallel.md`).
 
 ## ★ 다채널 동시성 (반드시 지킬 것 — 안 그러면 출력 깨짐)
 
 - **한 모델에 `infer_async` 여러 건 동시 제출 = 출력 깨짐**(async 파이프라인 1개 공유, N=1만 안전 → 첫 건만 맞고 나머지 0/garbage). **latency 측정엔 쓸 수 있어도 실제 출력엔 절대 쓰지 말 것.**
-- **정확+고속 패턴 = 카드당 1모델 + 멀티스레드 동기 `infer()`.** 런타임이 동시 sync 호출을 코어에 안전 분배 → 출력 정확(cos 1.0) + 8코어 활용. `MXQInferenceFull(num_threads=8)`이 배치 추론에 내장. (multi-model 인스턴스는 처리량 동일·메모리만 낭비 → 불필요.)
+- **정확+고속 패턴 = 카드당 1모델 + 멀티스레드 동기 `infer()`.** 런타임이 동시 sync 호출을 코어에 안전 분배 → 출력 정확(cos 1.0). `MXQInferenceFull`이 코어모드별 슬롯(single8/global4:2/global8:1)×카드로 스레드풀 자동 구성 → 배치 주면 알아서 병렬. (multi-model 인스턴스는 처리량 동일·메모리만 낭비 → 불필요.)
 - **모드 선택**(1카드 실측, 출력검증): 처리량=**global4(16 img/s)**/single, 단건 저지연=**global8(71ms)**, multi 비권장. **8장/62채널**: 카드당 1모델+8스레드, global4 기준 ≈130 img/s → ~0.5s.
 - 상세·재현: **`reports/performance/NPU_throughput_modes_correct.md`** (동시성 패턴 규명 + 모드선택 확정).
 

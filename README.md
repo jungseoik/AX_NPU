@@ -20,9 +20,10 @@ CLIP ViT-L/14) 비전인코더를 NPU로 추론하는 작업 공간. 원본 Tens
   - 레거시 **hybrid**(NPU trunk + CPU attn_pool, cos 0.997)는 `MXQInferenceHybrid`로 유지. full이
     CPU pool 병목을 제거한다 → `reports/performance/NPU_full_vs_hybrid.md`.
 - 핵심 패키지 = **`pe_npu/`** (`python -m pe_npu.compile`, `import pe_npu`).
-- **멀티카드/다채널**: 채널을 카드에 라운드로빈 분산(7대=56코어, `reports/performance/NPU_multicard_62ch_full.md`).
-  ⚠️ **동시성 주의**: 한 모델에 `infer_async` 여러 건은 출력이 깨진다 — **카드당 1모델 + 멀티스레드 동기 `infer()`**
-  (`MXQInferenceFull(num_threads=8)`)를 쓸 것. 모드/패턴 확정: `reports/performance/NPU_throughput_modes_correct.md`.
+- **멀티카드/다채널**: `MXQInferenceFull`이 단일/멀티 통합 — `device_ids="auto"`(전 카드) 또는 `[0,1]`,
+  기본은 `device_id`(단일). 카드당 1모델 + **코어모드별 슬롯×카드** 스레드풀로 배치 자동 분산(출력 cos 1.0).
+  ⚠️ `infer_async` 여러 건은 출력 깨짐 → 동기 `infer()`만. 7대=56코어(`reports/performance/NPU_multicard_62ch_full.md`),
+  패턴 확정: `reports/performance/NPU_throughput_modes_correct.md`.
 
 ## 추론 2가지 방식
 
