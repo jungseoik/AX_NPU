@@ -2,7 +2,7 @@
 name: mblt-model-zoo
 description: Use this skill when working in the Mobilint Model Zoo repository. It covers the repo layout, common edit patterns for vision model wrappers, transformers and MeloTTS extras, CLI entry points, and safe validation strategies when Mobilint NPU hardware or downloaded models may be unavailable.
 paths:
-  - "**"
+  - "mblt-model-zoo/**"
 ---
 
 # Mobilint Model Zoo

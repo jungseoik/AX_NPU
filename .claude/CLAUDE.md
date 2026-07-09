@@ -75,4 +75,9 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
 
 ## Skill
 
-`.claude/skills/npu-setup`(신규 서버 세팅), `.claude/skills/qwen3-vl`(Qwen3-VL VLM 추론 코드 작성), `mblt-model-zoo.md` / `mblt-sdk-tutorial.md`(해당 레포 작업 규칙).
+전부 `.claude/skills/<이름>/SKILL.md` 구조(팀 공유, git 추적).
+
+- `npu-setup` — 신규 서버 NPU 환경 세팅(clone → `mobilint-cli status`까지).
+- `qwen3-vl` — Qwen3-VL VLM(이미지+프롬프트→텍스트) 추론 코드 작성.
+- `yolo-npu` — YOLO11 객체탐지(이미지→bbox, +ByteTrack 추적) 추론 코드 작성(`yolo_npu/`).
+- `mblt-model-zoo` / `mblt-sdk-tutorial` — **서브모듈**(`mblt-model-zoo/`, `mblt-sdk-tutorial/`) 작업용. `paths:`가 각 서브모듈 서브트리로 스코프돼 그 안에서 파일을 만질 때만 발동(각 Mobilint 레포 작업 규칙). 서브모듈 동기화: `git submodule update --init`.

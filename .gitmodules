@@ -1,0 +1,6 @@
+[submodule "mblt-model-zoo"]
+	path = mblt-model-zoo
+	url = https://github.com/mobilint/mblt-model-zoo.git
+[submodule "mblt-sdk-tutorial"]
+	path = mblt-sdk-tutorial
+	url = https://github.com/mobilint/mblt-sdk-tutorial.git

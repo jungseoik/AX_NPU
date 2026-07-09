@@ -2,7 +2,7 @@
 name: mblt-sdk-tutorial
 description: Use this skill when working in the Mobilint SDK tutorial repository. It covers the documentation-first tutorial layout, paired compilation and runtime examples, bilingual README maintenance, and safe validation in environments that may lack Mobilint hardware or proprietary SDK dependencies.
 paths:
-  - "**"
+  - "mblt-sdk-tutorial/**"
 ---
 
 # Mobilint SDK Tutorial
