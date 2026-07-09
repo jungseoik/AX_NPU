@@ -32,7 +32,7 @@ det.draw("street.jpg", boxes, "out.jpg")     # 시각화 저장
 batch = det.detect_batch([img1, img2, ...])  # 배치(출력 무결성 검증됨)
 ```
 
-- **모델**: `yolo11n | yolo11m | yolo11l …` — 이름만 바꾸면 동일 코드(=다른 mxq).
+- **모델**: `yolo11n | yolo11s | yolo11m | yolo11l …` — 이름만 바꾸면 동일 코드(=다른 mxq).
 - **코어모드(scheme)**: `single | multi | global4 | global8` (PE와 동일 개념, 출력 동일·속도만 차이).
 - **카드 선택(`device_ids`)**: `None`(단일) | 리스트 `[0,1]` | `"auto"`(전체). PE `from_hf(scheme=)`와 대칭.
 - 유틸: `preprocess` / `postprocess` / `letterbox` / `COCO_NAMES` / `IMG_SIZE`도 export.

@@ -5,10 +5,11 @@ HF repo 구조 (PE와 같은 repo `PIA-SPACE-LAB/MXQ_NPU` 안 `yolo/` 하위):
   yolo/
     yolo11n/<scheme>/yolo11n.mxq + CALIBRATION.md   # scheme = single/multi/global4/global8
     yolo11n/yolo11n.onnx                             # fp32 원본(재검증/재컴파일용)
+    yolo11s/<scheme>/yolo11s.mxq + ...
     yolo11m/<scheme>/yolo11m.mxq + ...
     yolo11l/<scheme>/yolo11l.mxq + ...
 
-모델(yolo11n/m/l)·코어모드(scheme)를 골라 당겨 쓴다:
+모델(yolo11n/s/m/l)·코어모드(scheme)를 골라 당겨 쓴다:
   YOLONPU.from_hf(model="yolo11m", scheme="single")           # 단일 카드
   YOLONPU.from_hf(model="yolo11m", scheme="single", device_ids="auto")   # 멀티카드
 """

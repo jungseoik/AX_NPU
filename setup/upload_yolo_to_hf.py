@@ -20,7 +20,7 @@ import os
 
 DEFAULT_REPO = "PIA-SPACE-LAB/MXQ_NPU"
 PREFIX = "yolo"
-ALL_MODELS = ["yolo11n", "yolo11m", "yolo11l"]
+ALL_MODELS = ["yolo11n", "yolo11s", "yolo11m", "yolo11l"]
 ALL_SCHEMES = ["single", "multi", "global4", "global8"]
 
 
