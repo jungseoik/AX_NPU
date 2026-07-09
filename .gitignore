@@ -264,3 +264,7 @@ mblt-sdk-tutorial/
 scratch_yolo/
 yolo_out/
 *.pt
+
+# 트래킹 데모 출력 영상 (생성물)
+*.mp4
+track_out.mp4
