@@ -2,6 +2,12 @@
 
 > **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_throughput_modes_correct.md`](NPU_throughput_modes_correct.md).
 
+> **[업데이트] 통합 `MXQInferenceFull`(sync 멀티스레드, 출력검증) 62채널 실측** — `pe_npu` 통합 추론기가
+> 단일/멀티카드(`device_ids="auto"`) + 코어모드별 슬롯 자동을 내장. **서로 다른 val2017 62장**으로 검증:
+> 순수추론 62ch = **1카드 3891ms → 7카드 622ms (~6.3x)**, **cos(멀티 62 vs 단일 62)=1.000000**(출력 정확,
+> garbage 아님). 즉 아래 async latency(같은 이미지)와 달리 **다른 이미지에서도 출력 정확**함이 확인됨.
+> 재현: `../scripts/bench_pe_multicard_full.py`. 채널 스윕: 1→121ms, 8→125, 16→246, 32→372, 56→502, 62→622(7카드).
+
 `NPU_multicard_62ch_benchmark.md`(당시 hybrid: NPU trunk만 측정, CPU pool 별도)의 **full NPU 판**.
 **동일 테스트 구조**로, 이번엔 추론 단계 I가 **full NPU MXQ(trunk + attn_pool, QKᵀ16bit) = image→embedding
 전부 NPU**다. 배치로 N채널이 한꺼번에 들어올 때 7대(56코어)에 분산, 1→62채널 1채널씩 측정.
