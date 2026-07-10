@@ -1,10 +1,10 @@
-# [비포·hybrid] PE-NPU 파이프라인 단계별 지연 + e2e (single 모드, 채널 스윕)
+# [hybrid · before] PE-NPU 파이프라인 단계별 지연 + e2e (single 모드, 채널 스윕)
 
 > **[UPDATE 2026-06]** 이 문서는 **hybrid 시절**(NPU trunk + **CPU pool**) single 모드 측정이다.
 > 여기서 "고채널 병목 = CPU단(전처리+pool)"이라 한 그 **Pool(CPU attn_pool) 단계는 이후
 > QKᵀ 16bit → full NPU**로 **제거**됐다(attn_pool도 NPU). full NPU 동일 측정(같은 채널 스윕):
-> [`NPU_full_pipeline_e2e.md`](NPU_full_pipeline_e2e.md)(4모드) · 직접 비포/애프터 한 표:
-> [`NPU_full_vs_hybrid.md`](NPU_full_vs_hybrid.md). 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md).
+> [`NPU_pe_pipeline_e2e_full.md`](NPU_pe_pipeline_e2e_full.md)(4모드) · 직접 비포/애프터 한 표:
+> [`NPU_pe_hybrid_vs_full.md`](NPU_pe_hybrid_vs_full.md). 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md).
 
 이미지 리스트(N채널)가 동시에 들어올 때 `service._detect` 파이프라인을 단계별로 쪼개
 각 단계 지연과 end-to-end(e2e)를 실측. (당시 hybrid 구성, 7×ARIES 서버 GPU 없음, CPU+NPU.)
@@ -34,7 +34,7 @@
 | 14 | 194.5 | 317.8 | 154.3 | 36.3 | **702.8** | 50.2 |
 | 16 | 221.1 | 350.8 | 165.3 | 40.4 | **777.6** | 48.6 |
 
-![pipeline stage latency](../assets/npu_pipeline_stage.png)
+![pipeline stage latency](../assets/npu_pe_stage_latency_hybrid.png)
 
 ## 2. 단계별 특성
 
@@ -57,7 +57,7 @@
 | 우선순위 | 방향 | 효과/근거 |
 |---|---|---|
 | **1 (저채널 실시간)** | **global8 MXQ로 컴파일** | trunk **285→70ms** (`NPU_coremode_benchmark.md`). 2~4ch e2e ~334→~120ms. single=throughput, global8=latency |
-| **2 (고채널)** | **전처리 멀티프로세스** | CPU resize 선형병목 완화(6x, `NPU_preprocess_parallel.md`). `ParallelPreprocessor(mode=process)` |
+| **2 (고채널)** | **전처리 멀티프로세스** | CPU resize 선형병목 완화(6x, `NPU_preprocess_1_parallel.md`). `ParallelPreprocessor(mode=process)` |
 | **3 (고채널)** | **pool head 배치/스레드** | 7ch+ pool 직렬(75~165ms) 완화 (단 CPU 경합 주의) |
 | **4** | **파이프라이닝** | 다음 배치 전처리를 현재 NPU 추론과 오버랩 → 전처리 숨김 |
 | — | NPU 배치입력 | ❌ 불가(single MXQ는 1호출 1장) → 카드별 async가 정답 |
@@ -71,5 +71,5 @@
 conda activate pe_npu_host
 python ../scripts/profile_stages.py     # 단계별 P/T/Pool/E + e2e, 채널 스윕
 ```
-- 원자료: `../assets/npu_pipeline_stage.csv` · 차트: `../assets/npu_pipeline_stage.png` · 스크립트: `../scripts/profile_stages.py`
-- 관련: [`NPU_coremode_benchmark.md`](NPU_coremode_benchmark.md)(코어모드 latency), [`NPU_multicard_62ch_benchmark.md`](NPU_multicard_62ch_benchmark.md)(멀티카드), [`NPU_preprocess_parallel.md`](NPU_preprocess_parallel.md)(전처리 병렬)
+- 원자료: `../assets/npu_pe_stage_latency_hybrid.csv` · 차트: `../assets/npu_pe_stage_latency_hybrid.png` · 스크립트: `../scripts/profile_stages.py`
+- 관련: [`NPU_coremode_benchmark.md`](NPU_coremode_benchmark.md)(코어모드 latency), [`NPU_pe_multicard_62ch_hybrid.md`](NPU_pe_multicard_62ch_hybrid.md)(멀티카드), [`NPU_preprocess_1_parallel.md`](NPU_preprocess_1_parallel.md)(전처리 병렬)

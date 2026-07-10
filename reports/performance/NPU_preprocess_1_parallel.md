@@ -1,6 +1,6 @@
-# 전처리(Preprocess) 병렬화 벤치마크 — 단일 vs 스레드 vs 멀티프로세스
+# [전처리 ① 병렬화] 전처리(Preprocess) 병렬화 벤치마크 — 단일 vs 스레드 vs 멀티프로세스
 
-멀티카드 벤치(`NPU_multicard_62ch_benchmark.md`)에서 **고채널의 진짜 병목이 전처리(CPU)**
+멀티카드 벤치(`NPU_pe_multicard_62ch_hybrid.md`)에서 **고채널의 진짜 병목이 전처리(CPU)**
 임이 드러났다(56채널 기준 전처리 ≫ 추론). 그 전처리를 병렬화해 얼마나 줄어드는지 1→62채널로 측정.
 
 - 전처리 = 4K 원본(3836×2146) → resize 336 + normalize 0.5 → HWC float32 (모델 입력)
@@ -24,7 +24,7 @@
 - **작은 배치(≤4채널)는 프로세스가 오히려 느림** — 워커 dispatch + 결과 IPC(장당 1.3MB) 오버헤드. **크로스오버 ≈ 7채널**.
 - 채널당 비용이 7채널부터 급감(워커가 코어에 1:1 분산되기 시작).
 
-![preprocess parallel](../assets/npu_preprocess_parallel.png)
+![preprocess parallel](../assets/npu_preprocess_1_parallel.png)
 
 ### 전체 배치시간에 미치는 효과 (56채널, 전처리+추론)
 | | 전처리 | + NPU 추론(7대) | 합계 |
@@ -112,7 +112,7 @@ baseline / threads / process (ms, median), process speedup(×baseline), process 
 ## 5. 재현
 ```bash
 conda activate pe_npu_host
-python ../scripts/bench_preprocess.py     # 1→62채널, baseline/threads/process → ../assets/npu_preprocess_parallel.csv
+python ../scripts/bench_preprocess.py     # 1→62채널, baseline/threads/process → ../assets/npu_preprocess_1_parallel.csv
 ```
-- 원자료: `../assets/npu_preprocess_parallel.csv` · 차트: `../assets/npu_preprocess_parallel.png` · 스크립트: `../scripts/bench_preprocess.py`
+- 원자료: `../assets/npu_preprocess_1_parallel.csv` · 차트: `../assets/npu_preprocess_1_parallel.png` · 스크립트: `../scripts/bench_preprocess.py`
 - 입력: 실제 4K 프레임. baseline 절대값은 torch 스레드 컨텍스트에 따라 멀티카드 리포트와 다소 차이날 수 있으나, **상대 가속비**가 결론.

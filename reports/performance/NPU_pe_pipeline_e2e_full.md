@@ -1,8 +1,8 @@
-# [애프터] full NPU 코어모드 × 채널 스윕 단계별 e2e — CPU attn_pool 병목 제거
+# [full · after] 코어모드 × 채널 스윕 단계별 e2e — CPU attn_pool 병목 제거
 
-> **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_throughput_modes_correct.md`](NPU_throughput_modes_correct.md).
+> **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_pe_throughput_modes_full.md`](NPU_pe_throughput_modes_full.md).
 
-`NPU_coremode_pipeline_e2e.md`(hybrid: `P→T(NPU trunk)→Pool(CPU attn_pool)→E`, 고채널 CPU 병목)의
+`NPU_pe_pipeline_e2e_hybrid.md`(hybrid: `P→T(NPU trunk)→Pool(CPU attn_pool)→E`, 고채널 CPU 병목)의
 **애프터판**. attn_pool의 QKᵀ matmul만 16bit로 올린 **full NPU**(image→embedding 전부 NPU)에서
 같은 채널 스윕을 다시 측정. **Pool(CPU) 단계가 사라졌다.** (원인·해결: `../vendor/mobilint_resolution_attn_pool.md`)
 
@@ -38,7 +38,7 @@
 | 28 | 761/372/**1133** | 535/246/**781** | 1029/281/**1310** |
 | 56 | 882/525/**1406** | 728/491/**1219** | 896/561/**1456** |
 
-> hybrid 시절(`NPU_coremode_pipeline_e2e.md`)에는 여기 `Pool(CPU attn_pool)` 단계가 추가로 붙어
+> hybrid 시절(`NPU_pe_pipeline_e2e_hybrid.md`)에는 여기 `Pool(CPU attn_pool)` 단계가 추가로 붙어
 > 고채널에서 e2e의 큰 비중을 차지했다. full NPU에는 그 단계가 **아예 없다**.
 
 ## 3. 비포/애프터 — 병목 변화
@@ -51,7 +51,7 @@
 | 의존성 | torch + pe_vendor(CPU 연산) | qbruntime만 (CPU 연산 없음) |
 | 정확도 | cos 0.997 | cos 0.99 |
 
-→ **이제 유일하게 남은 CPU 병목은 전처리(P)뿐**이다(`NPU_preprocess_parallel.md`로 병렬화 가능).
+→ **이제 유일하게 남은 CPU 병목은 전처리(P)뿐**이다(`NPU_preprocess_1_parallel.md`로 병렬화 가능).
 attn_pool은 NPU로 흡수되어 코어모드(global4/global8) 최적화가 e2e에 그대로 반영된다.
 
 ## 4. 모드 선택 가이드 (full NPU)
@@ -70,6 +70,6 @@ python ../../scratchpad_repro/profile_full_modes.py \
   single:<single.mxq> multi:<multi.mxq> global4:<g4.mxq> global8:<g8.mxq>
 ```
 - 모드별 MXQ: `python -m pe_npu.compile --mode compile --save pe_full_<mode>.mxq --qk16 --scheme <mode> --calib-data-path <calib_hwc>`
-- 관련: [`NPU_coremode_pipeline_e2e.md`](NPU_coremode_pipeline_e2e.md)(비포·hybrid), [`NPU_full_vs_hybrid.md`](NPU_full_vs_hybrid.md), [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md)
+- 관련: [`NPU_pe_pipeline_e2e_hybrid.md`](NPU_pe_pipeline_e2e_hybrid.md)(비포·hybrid), [`NPU_pe_hybrid_vs_full.md`](NPU_pe_hybrid_vs_full.md), [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md)
 
 *작성 2026-06. full NPU(QKᵀ 16bit) 4모드 동일 COCO calib, cos 0.99 (COCO holdout 0.9905 / 도메인 0.9889). 7×ARIES2 실측 (COCO 자산). 레이턴시는 calib 무관.*

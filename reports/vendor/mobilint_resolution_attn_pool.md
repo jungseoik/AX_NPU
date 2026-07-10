@@ -69,7 +69,7 @@ python -m pe_npu.compile --mode compile --save out/pe_full.mxq \
 | head 단독 INT8 (수정 전, 참고) | 0.69 | — |
 | head 단독 QKᵀ16bit (수정 후, 참고) | 0.998 | — |
 
-→ **CPU attn_pool 우회가 더 이상 불필요.** 고채널 CPU 병목(attn_pool) 제거. (벤치: `../performance/NPU_full_vs_hybrid.md`)
+→ **CPU attn_pool 우회가 더 이상 불필요.** 고채널 CPU 병목(attn_pool) 제거. (벤치: `../performance/NPU_pe_hybrid_vs_full.md`)
 
 ## 참고 자료
 - 문의 원본: `mobilint_inquiry_attn_pool.md`

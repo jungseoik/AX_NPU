@@ -1,6 +1,6 @@
 """full NPU 단계별 채널 스윕 (애프터 벤치, pe_npu_host, 7카드 async).
 
-기존 NPU_coremode_pipeline_e2e.md(hybrid: P→T(NPU trunk)→Pool(CPU attn_pool)→E)의 애프터판.
+기존 NPU_pe_pipeline_e2e_hybrid.md(hybrid: P→T(NPU trunk)→Pool(CPU attn_pool)→E)의 애프터판.
 full NPU는 Pool 단계가 없다: [P]전처리(CPU) → [N]image→embedding(NPU 전부).
 
 실행: python profile_full_modes.py <mode1>:<mxq1> <mode2>:<mxq2> ...

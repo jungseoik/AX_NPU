@@ -1,4 +1,4 @@
-# [hybrid 시절] pool head 배치화는 이득 없음 (음성 결과, 실측)
+# [hybrid · before] pool head 배치화는 이득 없음 (음성 결과, 실측)
 
 > **[UPDATE 2026-06]** 이 문서는 **hybrid 시절 CPU pool head**에 대한 것. 이후 attn_pool의 QKᵀ를
 > 16bit로 올려 **full NPU**(attn_pool도 NPU, cos 0.99)가 되면서 **CPU pool head 자체가 사라졌다** →
@@ -45,5 +45,5 @@
 
 ## 연관
 
-- `reports/performance/NPU_multicard_62ch_benchmark.md` — 멀티카드 분산 (이 pool head가 도는 맥락)
-- `reports/performance/NPU_preprocess_parallel.md` — 고채널 CPU 병목(전처리)
+- `reports/performance/NPU_pe_multicard_62ch_hybrid.md` — 멀티카드 분산 (이 pool head가 도는 맥락)
+- `reports/performance/NPU_preprocess_1_parallel.md` — 고채널 CPU 병목(전처리)

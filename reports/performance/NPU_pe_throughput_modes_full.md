@@ -1,4 +1,4 @@
-# [full NPU] 다채널 처리량 — 올바른 동시성 패턴 & 모드 선택 (출력검증)
+# [full · after] 다채널 처리량 — 올바른 동시성 패턴 & 모드 선택 (출력검증)
 
 **목표**: 여러 다른 이미지를 NPU로 가장 빠르게 처리하는 코어모드/패턴. **출력이 정확한 것만** 채택.
 
@@ -25,7 +25,7 @@
 
 ## 2. 코어모드 비교 (올바른 패턴, 1카드, 다른 이미지 32장)
 
-![모드별 처리량·단건지연](../assets/npu_throughput_modes_correct.png)
+![모드별 처리량·단건지연](../assets/npu_pe_throughput_modes_full.png)
 
 | 모드 | 처리량 img/s | 단건지연 ms | 출력검증 | 용도 |
 |------|---:|---:|:---:|------|
@@ -51,10 +51,10 @@ conda activate pe_npu_host
 python ../scripts/bench_throughput_correct.py 1 32     # 패턴 비교(단일/1모델8스레드/8모델8스레드)
 python ../scripts/bench_modes_threaded.py 1 32 8       # 모드 비교(1모델+8스레드, 출력검증)
 ```
-- 원자료: `bench_modes_threaded.json`. 관련: [`NPU_1card_coremode_16ch.md`](NPU_1card_coremode_16ch.md)(모드별 채널 증가, latency), [`NPU_multicard_62ch_full.md`](NPU_multicard_62ch_full.md)(멀티카드).
+- 원자료: `bench_modes_threaded.json`. 관련: [`NPU_pe_1card_coremode_full.md`](NPU_pe_1card_coremode_full.md)(모드별 채널 증가, latency), [`NPU_pe_multicard_62ch_full.md`](NPU_pe_multicard_62ch_full.md)(멀티카드).
 
-> **주의**: 본 문서 외의 `NPU_multicard_62ch_full`, `NPU_1card_coremode_16ch`, `NPU_full_pipeline_e2e`,
-> `NPU_full_vs_hybrid`는 `infer_async`(같은 이미지)로 **latency만** 측정했다 — 시간 수치는 유효하나
+> **주의**: 본 문서 외의 `NPU_multicard_62ch_full`, `NPU_pe_1card_coremode_full`, `NPU_full_pipeline_e2e`,
+> `NPU_pe_hybrid_vs_full`는 `infer_async`(같은 이미지)로 **latency만** 측정했다 — 시간 수치는 유효하나
 > **출력 정확성은 미검증**(서로 다른 이미지면 async는 깨짐). 실제 다채널 정확 처리는 본 문서의 패턴을 쓸 것.
 
 *작성 2026-07. full NPU(QKᵀ16bit) 1카드(aries1) 실측, 서로 다른 이미지 32장, median 아님(단일 배치 wall-clock), 출력 cos 1.0 검증.*

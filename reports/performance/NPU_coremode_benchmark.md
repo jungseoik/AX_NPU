@@ -88,4 +88,4 @@ python -m pe_npu.compile --mode compile --save pe_feat_<mode>.mxq --feat-only --
 python ../scripts/bench_modes.py     # 4모드 × 채널 지연 + 메모리 → ../assets/npu_coremode_modes.json
 ```
 - 원자료: `../assets/npu_coremode_modes.json` · 차트: `../assets/npu_coremode_modes.png` · 스크립트: `../scripts/bench_modes.py`
-- 관련: [`NPU_multicard_62ch_benchmark.md`](NPU_multicard_62ch_benchmark.md)(single 모드 62채널), [`NPU_batch_latency.md`](NPU_batch_latency.md)(단일카드 모드 비교, 이전 환경)
+- 관련: [`NPU_pe_multicard_62ch_hybrid.md`](NPU_pe_multicard_62ch_hybrid.md)(single 모드 62채널), [`NPU_batch_latency.md`](NPU_batch_latency.md)(단일카드 모드 비교, 이전 환경)

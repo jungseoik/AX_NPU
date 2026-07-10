@@ -1,6 +1,6 @@
-# full NPU vs hybrid — CPU attn_pool 병목 제거 (QKᵀ 16bit)
+# [hybrid vs full] full NPU vs hybrid — CPU attn_pool 병목 제거 (QKᵀ 16bit)
 
-> **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_throughput_modes_correct.md`](NPU_throughput_modes_correct.md).
+> **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_pe_throughput_modes_full.md`](NPU_pe_throughput_modes_full.md).
 
 attn_pool의 QKᵀ matmul만 16bit로 올린 **full MXQ**(`--qk16`, image→embedding 전부 NPU)와,
 기존 **hybrid**(NPU trunk + CPU attn_pool)를 같은 서버·같은 입력으로 비교. CPU pool 병목이
@@ -45,7 +45,7 @@ attn_pool의 QKᵀ matmul만 16bit로 올린 **full MXQ**(`--qk16`, image→embe
    - pool head 가중치(`pe_pool_head.pt`) 배포 불필요 → `pe_full.mxq` 하나로 끝.
    - CPU가 약하거나 동시성이 높은 환경일수록 hybrid의 CPU pool 병목이 더 크므로 full 이득이 더 커진다.
 
-> 참고: 본 측정의 CPU pool(56ch 159ms)은 이전 hybrid 단독 측정(`NPU_coremode_pipeline_e2e.md`,
+> 참고: 본 측정의 CPU pool(56ch 159ms)은 이전 hybrid 단독 측정(`NPU_pe_pipeline_e2e_hybrid.md`,
 > 584ms)과 절대값이 다르다(서버 부하/측정 시점 차이). 상대 비교(full이 pool 단계를 제거)는
 > 동일 런 back-to-back 측정이라 유효하다.
 
@@ -59,6 +59,6 @@ conda activate pe_npu_host
 python reports/scripts/bench_full_vs_hybrid.py pe_npu/out/pe_full.mxq
 ```
 - 관련: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md)(원인·해결),
-  [`NPU_coremode_pipeline_e2e.md`](NPU_coremode_pipeline_e2e.md)(hybrid 시절 CPU 병목 분석)
+  [`NPU_pe_pipeline_e2e_hybrid.md`](NPU_pe_pipeline_e2e_hybrid.md)(hybrid 시절 CPU 병목 분석)
 
 *작성 2026-06. full MXQ = QKᵀ 16bit override, 원본 대비 cos 0.99 (COCO holdout 0.9905 / 도메인 0.9889). 7×ARIES2 실측 (COCO 자산).*

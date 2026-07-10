@@ -6,7 +6,7 @@
   3) multicard: 장착된 NPU 전 카드에 라운드로빈 분산 (async)
 
 코어(한 장 안 8코어)는 async로 자동 병렬, 카드(여러 장)는 라운드로빈으로 직접 분산.
-상세 실측: ../../reports/performance/NPU_multicard_62ch_benchmark.md
+상세 실측: ../../reports/performance/NPU_pe_multicard_62ch_hybrid.md
 
 실행:
   conda activate pe_npu_host

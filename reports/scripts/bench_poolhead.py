@@ -1,6 +1,6 @@
 """pool head(attn_pool+proj) CPU 레이턴시: per-item loop(현재) vs batch.
 
-배경/결론은 reports/NPU_poolhead_batch_nogain.md 참조. NPU 불필요(순수 CPU).
+배경/결론은 reports/NPU_pe_poolhead_nogain_hybrid.md 참조. NPU 불필요(순수 CPU).
 실행: python reports/bench_poolhead.py
 """
 import os, sys, time

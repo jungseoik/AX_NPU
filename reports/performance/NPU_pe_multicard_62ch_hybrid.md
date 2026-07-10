@@ -1,4 +1,4 @@
-# PE-Core-L14-336 멀티카드(7×ARIES) 멀티채널 배치 지연시간 벤치마크
+# [hybrid · before] PE-Core-L14-336 멀티카드(7×ARIES) 멀티채널 배치 지연시간 벤치마크
 
 배치로 N채널(N장)이 **한꺼번에** 들어올 때, NPU 7대(각 8코어 = 총 56코어)에 분산 추론하여
 **배치 전체가 끝나는 데 걸리는 시간**과 채널당 실효 지연을 1→62채널까지 1채널씩 측정한 결과.
@@ -11,7 +11,7 @@
 | **I 순수추론** | 모델 input → output. INT8 feat MXQ(24 transformer block) | NPU trunk (7대 분산) |
 
 > **[UPDATE 2026-06]** 이 문서는 **hybrid 시절**(I=NPU trunk만, CPU pool head 별도) 측정이다.
-> 현재 full NPU(attn_pool도 NPU)로 **동일 테스트 재실측**: [`NPU_multicard_62ch_full.md`](NPU_multicard_62ch_full.md)
+> 현재 full NPU(attn_pool도 NPU)로 **동일 테스트 재실측**: [`NPU_pe_multicard_62ch_full.md`](NPU_pe_multicard_62ch_full.md)
 > — attn_pool을 NPU에 올렸는데도 I(추론)는 거의 동일(56ch 525≈519ms, head 추가비용 ≈0).
 > 추론 정확도는 원본 PE 대비 cos 0.9987로 검증됨(`../design/SOLUTION_single_io_compile.md`).
 
@@ -38,7 +38,7 @@
 - **고채널에서는 전처리(CPU)가 추론보다 더 큰 병목.** 4K→336 resize가 채널당 ~18~20ms(단일 스레드)라 56채널 전처리 1131ms > 추론 519ms.
   → 전처리를 멀티프로세스/멀티스레드로 병렬화하면 전체 처리시간을 크게 더 줄일 수 있다(미적용, 개선 여지).
 
-![multicard benchmark](../assets/npu_multicard_62ch.png)
+![multicard benchmark](../assets/npu_pe_multicard_62ch_hybrid.png)
 
 ---
 
@@ -151,8 +151,8 @@ P=전처리(ms) / I=순수추론(ms) / Total=P+I / I/ch=추론 채널당(ms) / i
 
 ```bash
 conda activate pe_npu_host          # qbruntime(cp311) + CPU torch + 모듈 deps
-python ../scripts/bench_multinpu.py            # 1→62채널 스윕 (P/I 분리), → ../assets/npu_multicard_62ch.csv
+python ../scripts/bench_multinpu.py            # 1→62채널 스윕 (P/I 분리), → ../assets/npu_pe_multicard_62ch_hybrid.csv
 python ../scripts/bench_scaling.py             # 1/2/4/7대 스케일링
 ```
 - 자산: MXQ/pool head = HF `PIA-SPACE-LAB/MXQ_NPU` 자동 다운로드. 입력 = 실제 4K 프레임.
-- 원자료: `../assets/npu_multicard_62ch.csv` · 차트: `../assets/npu_multicard_62ch.png` · 스크립트: `../scripts/bench_multinpu.py`, `../scripts/bench_scaling.py`
+- 원자료: `../assets/npu_pe_multicard_62ch_hybrid.csv` · 차트: `../assets/npu_pe_multicard_62ch_hybrid.png` · 스크립트: `../scripts/bench_multinpu.py`, `../scripts/bench_scaling.py`

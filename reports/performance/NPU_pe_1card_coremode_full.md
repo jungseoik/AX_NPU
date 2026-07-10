@@ -1,6 +1,6 @@
-# [full NPU] NPU 1장 — 코어모드 4종 × 1~16채널 순수추론 증가폭
+# [full · after] NPU 1장 — 코어모드 4종 × 1~16채널 순수추론 증가폭
 
-> **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_throughput_modes_correct.md`](NPU_throughput_modes_correct.md).
+> **[출력 정확성 주의]** 이 문서의 수치는 `infer_async`(같은 이미지)로 측정한 **latency**다 — 시간은 유효하나, `infer_async` multi-in-flight는 서로 다른 이미지에서 출력이 깨진다(N=1만 안전). **정확한 다채널 처리 패턴(1모델+멀티스레드 sync)과 출력검증 처리량**은 → [`NPU_pe_throughput_modes_full.md`](NPU_pe_throughput_modes_full.md).
 
 NPU **1장(8코어)** 에서 코어모드 4종(single/multi/global4/global8) MXQ로 채널을 **1→16**까지
 늘리며 **순수추론(I)** 만 측정. 카드 내부 스케줄링(이미지당 코어 수 = 슬롯 수)이 채널 증가에
@@ -32,7 +32,7 @@ NPU **1장(8코어)** 에서 코어모드 4종(single/multi/global4/global8) MXQ
 | 15 | 976.5 | 3094.8 | **976.1** | 1049.5 |
 | 16 | 1028.5 | 3127.2 | **980.7** | 1119.5 |
 
-![1-card coremode 1~16ch](../assets/npu_1card_coremode_16ch.png)
+![1-card coremode 1~16ch](../assets/npu_pe_1card_coremode_full.png)
 
 ---
 
@@ -54,7 +54,7 @@ NPU **1장(8코어)** 에서 코어모드 4종(single/multi/global4/global8) MXQ
 | 전 구간 | multi 비권장 | 항상 최악 |
 
 > 핵심: **1장에서 단건 지연을 줄이려면 global8(71ms), 8채널 이상 배치 처리량이면 global4/single.**
-> (여러 장 분산 시엔 single+async가 카드당 8슬롯을 꽉 채워 throughput 최선 → `NPU_multicard_62ch_full.md`.)
+> (여러 장 분산 시엔 single+async가 카드당 8슬롯을 꽉 채워 throughput 최선 → `NPU_pe_multicard_62ch_full.md`.)
 
 ---
 
@@ -64,6 +64,6 @@ conda activate pe_npu_host
 python ../scripts/bench_1card_modes.py 1      # device 1장, 4모드 × 1~16채널 순수추론
 ```
 - MXQ = HF `PIA-SPACE-LAB/MXQ_NPU` `<mode>/pe_full.mxq` 자동 다운로드. 원자료: `bench_1card_modes.json`.
-- 관련: [`NPU_coremode_benchmark.md`](NPU_coremode_benchmark.md)(다채널·메모리), [`NPU_full_pipeline_e2e.md`](NPU_full_pipeline_e2e.md)(7장 단계별)
+- 관련: [`NPU_coremode_benchmark.md`](NPU_coremode_benchmark.md)(다채널·메모리), [`NPU_pe_pipeline_e2e_full.md`](NPU_pe_pipeline_e2e_full.md)(7장 단계별)
 
 *작성 2026-06. full NPU(QKᵀ16bit) 1장(aries1) 실측, median of 5.*

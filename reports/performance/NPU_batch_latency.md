@@ -4,7 +4,7 @@
 실측한 결과. "배치 N장이 동시에 들어오면 다 끝나는 데 얼마 걸리나"에 대한 근거 자료다.
 
 모든 수치는 NPU trunk(24 transformer block, INT8 feat MXQ) 기준이며, async 파이프라인의 최선값이다.
-(당시 hybrid: attn_pool head는 CPU float, 장당 약 2ms. 현재 full NPU에선 attn_pool도 NPU로 흡수 — `NPU_full_pipeline_e2e.md`.)
+(당시 hybrid: attn_pool head는 CPU float, 장당 약 2ms. 현재 full NPU에선 attn_pool도 NPU로 흡수 — `NPU_pe_pipeline_e2e_full.md`.)
 
 ---
 

@@ -1,14 +1,14 @@
-# 전처리 최적화 의사결정 — e2e 기준, 리소스 원천, cv2 전환 (다채널)
+# [전처리 ③ 채택: cv2] 전처리 최적화 의사결정 — e2e 기준, 리소스 원천, cv2 전환 (다채널)
 
 > **결론**: CPU 전처리의 실제 비용은 **resize**(normalize·dtype 아님). resize는 NPU로 못 넘기므로
-> (→ `NPU_preprocess_uint8_offload.md`), CPU에서 **torchvision → cv2(INTER_LINEAR)** 로 바꿔 줄였다.
+> (→ `NPU_preprocess_2_uint8_offload.md`), CPU에서 **torchvision → cv2(INTER_LINEAR)** 로 바꿔 줄였다.
 > 다채널 e2e(전처리+NPU)에서 **56ch 736→552ms(-25%) + CPU ~26코어→~5코어**. 정확도는 0.99→0.97로
 > 소폭 저하(antialias 차이)라 **cv2는 opt-in(`PE_NPU_RESIZE=cv2`), 기본은 torchvision**.
 > 전처리-추론 파이프라이닝은 고채널서 -8ms뿐이라 **미채택**.
 > (적용 위치는 Product-AI-mono `pe_npu` 서비스. 본 문서는 그 근거를 AX_NPU 지식베이스에 남긴 것. 실측 2026-06.)
 
 PE 추론 서비스 전처리: `cv_bgr2rgb` → `ROI 크롭` → **resize 336 + normalize** → NPU. 병렬화 일반은
-`NPU_preprocess_parallel.md`, uint8 오프로드 실험은 `NPU_preprocess_uint8_offload.md` 참고.
+`NPU_preprocess_1_parallel.md`, uint8 오프로드 실험은 `NPU_preprocess_2_uint8_offload.md` 참고.
 
 ---
 
@@ -26,7 +26,7 @@ PE 추론 서비스 전처리: `cv_bgr2rgb` → `ROI 크롭` → **resize 336 + 
 → **720p e2e는 NPU-bound**(NPU 303ms ≫ 전처리 109ms). 저채널에선 전처리가 병목도 아니다.
 
 ### 리소스 원천 = resize (normalize/BGR 아님)
-- **normalize(÷255, mean/std)는 작은 336×336 출력에 가하는 벡터연산이라 ~6ms로 저렴.** (uint8로 NPU에 폴딩해도 이득 ~0 — `NPU_preprocess_uint8_offload.md`에서 실증.)
+- **normalize(÷255, mean/std)는 작은 336×336 출력에 가하는 벡터연산이라 ~6ms로 저렴.** (uint8로 NPU에 폴딩해도 이득 ~0 — `NPU_preprocess_2_uint8_offload.md`에서 실증.)
 - **진짜 비용은 resize**(원본 해상도 픽셀을 읽어 336으로 축소). 해상도에 비례:
   | N=56 전처리(현행 torchvision) | 720p | 1080p | 4K |
   |---|--:|--:|--:|
@@ -110,7 +110,7 @@ PE 추론 서비스 전처리: `cv_bgr2rgb` → `ROI 크롭` → **resize 336 + 
 | resize 백엔드 | **cv2 INTER_LINEAR opt-in** (`PE_NPU_RESIZE=cv2`), 기본 torchvision | 속도+CPU 이득 크나 정확도 0.97이라 기본은 보수적(0.99) 유지 |
 | 기본 워커 | **16** | 스위트스폿(>16 효용 미미) |
 | resize-skip 가드 | 적용 | 입력이 이미 336이면 resize 생략(정확도 무영향) |
-| uint8 NPU 오프로드 | 미채택 | normalize는 싸고 resize는 NPU 불가 → 이득 없음(`NPU_preprocess_uint8_offload.md`) |
+| uint8 NPU 오프로드 | 미채택 | normalize는 싸고 resize는 NPU 불가 → 이득 없음(`NPU_preprocess_2_uint8_offload.md`) |
 | 파이프라이닝 | 미채택 | 고채널서 -8ms, 복잡도 대비 무의미 |
 
 ### env (Product-AI-mono `pe_npu`)

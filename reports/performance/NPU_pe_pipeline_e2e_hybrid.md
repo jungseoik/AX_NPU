@@ -1,8 +1,8 @@
-# [비포·hybrid] 코어모드 × 파이프라인 단계별 지연 × 채널(최대 56) — 종합
+# [hybrid · before] 코어모드 × 파이프라인 단계별 지연 × 채널(최대 56) — 종합
 
 > **[UPDATE 2026-06]** 이 문서는 **hybrid 시절**(NPU trunk + **CPU attn_pool**, cos 0.997)의 벤치마크다.
 > 여기서 분석한 `Pool(CPU attn_pool)` 병목은 이후 **QKᵀ 16bit → full NPU**(attn_pool도 NPU, cos 0.99)로
-> **제거**되었다. 현재 구성의 동일 측정: [`NPU_full_pipeline_e2e.md`](NPU_full_pipeline_e2e.md).
+> **제거**되었다. 현재 구성의 동일 측정: [`NPU_pe_pipeline_e2e_full.md`](NPU_pe_pipeline_e2e_full.md).
 > 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md).
 
 `service._detect` 파이프라인을 단계별로 쪼개, **3개 코어모드 MXQ**로 **채널 1~56(=7카드×8코어 최대배치)**
@@ -12,7 +12,7 @@
 - `Pool` = **attention pooling head(attn_pool)** — NPU INT8서 깨져 CPU float로 둔 부분(채널별 직렬).
 - 측정: median of 5, 실제 영상 프레임. 모드는 컴파일 시 결정(`pe_npu.compile --scheme`).
 
-![coremode x pipeline](../assets/npu_coremode_pipeline.png)
+![coremode x pipeline](../assets/npu_pe_pipeline_e2e_hybrid.png)
 
 ## 1. NPU trunk 단계 — 모드별 (ms)
 
@@ -83,7 +83,7 @@
 |------|------|-----------|
 | **≤7 (실시간)** | single이면 NPU trunk(286). | **global8 MXQ**(trunk 71) → e2e 474→270ms |
 | **8~14** | global8은 8ch서 2배. | **global4**(trunk ~127 평탄) |
-| **고채널~최대(56)** | **CPU(전처리 802 + attn_pool 584)** — 모드 무관 | **① 전처리 멀티프로세스**(6x, `NPU_preprocess_parallel.md`) **② attn_pool 배치/스레드** |
+| **고채널~최대(56)** | **CPU(전처리 802 + attn_pool 584)** — 모드 무관 | **① 전처리 멀티프로세스**(6x, `NPU_preprocess_1_parallel.md`) **② attn_pool 배치/스레드** |
 
 **핵심:**
 1. **저채널 NPU 병목 → global8/global4로 해소.** 56ch에선 모드 무관(수렴).
@@ -95,5 +95,5 @@
 conda activate pe_npu_host
 python ../scripts/profile_stages.py --mxq <mode>.mxq --label <mode>   # 모드별 단계 P/T/Pool/E + e2e
 ```
-- 원자료: `../assets/npu_coremode_pipeline.csv` · 차트: `../assets/npu_coremode_pipeline.png` · 스크립트: `../scripts/profile_stages.py`
-- 관련: [`NPU_coremode_benchmark.md`](NPU_coremode_benchmark.md)(모드 latency·메모리), [`NPU_pipeline_stage_latency.md`](NPU_pipeline_stage_latency.md)(single 단계), [`NPU_preprocess_parallel.md`](NPU_preprocess_parallel.md)
+- 원자료: `../assets/npu_pe_pipeline_e2e_hybrid.csv` · 차트: `../assets/npu_pe_pipeline_e2e_hybrid.png` · 스크립트: `../scripts/profile_stages.py`
+- 관련: [`NPU_coremode_benchmark.md`](NPU_coremode_benchmark.md)(모드 latency·메모리), [`NPU_pe_stage_latency_hybrid.md`](NPU_pe_stage_latency_hybrid.md)(single 단계), [`NPU_preprocess_1_parallel.md`](NPU_preprocess_1_parallel.md)
