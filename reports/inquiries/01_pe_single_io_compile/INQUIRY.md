@@ -6,7 +6,7 @@
 > MXQ 컴파일에 성공**했다 — **Mobilint/SDK 패치 불필요**.
 > 정확도 핵심 이슈는 attn_pool이 NPU INT8에서 깨지는 것(full-NPU cos 0.46)이었고, attn_pool/proj head만
 > **CPU float(hybrid)** 로 돌려 **원본 대비 cos 0.9987** 달성.
-> 상세: [`../design/SOLUTION_single_io_compile.md`](../design/SOLUTION_single_io_compile.md).
+> 상세: [`../../design/SOLUTION_single_io_compile.md`](../../design/SOLUTION_single_io_compile.md).
 > 아래 원문은 당시 분석 기록(historical)으로만 보존.
 
 ---

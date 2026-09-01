@@ -1,7 +1,7 @@
 # Mobilint 기술지원 문의 — Attention Pooling Head의 NPU(INT8) 양자화 정확도 붕괴
 
 > ✅ **[해결됨]** 이 문의는 해결되었습니다. 원인 = QKᵀ matmul의 outlier, 해결 = 그 score matmul만
-> 16bit override → full 모델도 NPU에서 cos 0.996. **→ [`mobilint_resolution_attn_pool.md`](mobilint_resolution_attn_pool.md)**
+> 16bit override → full 모델도 NPU에서 cos 0.996. **→ [`../../vendor/mobilint_resolution_attn_pool.md`](../../vendor/mobilint_resolution_attn_pool.md)**
 > (이 문서는 문의 당시 기록으로 보존.)
 
 > **목적**: ViT-L/14 vision encoder를 ARIES NPU용 INT8 MXQ로 컴파일했는데, **24개 transformer block
