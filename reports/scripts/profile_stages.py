@@ -8,7 +8,7 @@ from collections import deque
 import numpy as np, torch, cv2
 from PIL import Image
 
-sys.path.insert(0, "/home/gpuadmin/AX_NPU/Product-AI-mono/packages")
+sys.path.insert(0, "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/packages")
 from pia_prod.AI.modules.pe_npu.engine.preprocess import preprocess_image, IMAGE_SIZE
 from pia_prod.AI.modules.pe_npu.engine.pe_vendor import pe as pe_mod
 from pia_prod.AI.modules.pe_npu.parallel_preprocess import ParallelPreprocessor

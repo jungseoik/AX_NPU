@@ -7,7 +7,7 @@ import sys, os, time, json, statistics
 import numpy as np
 import cv2
 
-sys.path.insert(0, "/home/gpuadmin/AX_NPU/Product-AI-mono/packages")
+sys.path.insert(0, "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/packages")
 SP = "/tmp/claude-1000/-home-gpuadmin/057c9eaa-b86d-4a41-ab6f-9dc6babfd1fe/scratchpad"
 
 _cap = cv2.VideoCapture(f"{SP}/event_video.mp4"); _ok, _f = _cap.read(); _cap.release()

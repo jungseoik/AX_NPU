@@ -4,7 +4,7 @@ import numpy as np, cv2
 from huggingface_hub import hf_hub_download
 import qbruntime
 
-sys.path.insert(0, "/home/gpuadmin/AX_NPU/Product-AI-mono/packages")
+sys.path.insert(0, "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/packages")
 from pia_prod.AI.modules.pe_npu.preprocess import preprocess_image
 SP = "/tmp/claude-1000/-home-gpuadmin/057c9eaa-b86d-4a41-ab6f-9dc6babfd1fe/scratchpad"
 MXQ = hf_hub_download("PIA-SPACE-LAB/MXQ_NPU", "pe_feat.mxq")

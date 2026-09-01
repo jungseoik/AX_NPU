@@ -17,7 +17,7 @@ import qbruntime
 NUM_NPU = 7
 MAX_CH = 62
 REPEAT = 5
-sys.path.insert(0, "/home/gpuadmin/AX_NPU/Product-AI-mono/packages")
+sys.path.insert(0, "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/packages")
 from pia_prod.AI.modules.pe_npu.preprocess import preprocess_image  # 모듈의 배치 전처리
 
 MXQ = hf_hub_download("PIA-SPACE-LAB/MXQ_NPU", "pe_feat.mxq")

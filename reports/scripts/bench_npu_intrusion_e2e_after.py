@@ -11,7 +11,7 @@ import numpy as np
 import cv2
 from concurrent.futures import ThreadPoolExecutor
 
-sys.path.insert(0, "/home/gpuadmin/AX_NPU/Product-AI-mono/packages")
+sys.path.insert(0, "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/packages")
 from pia_prod.AI.modules.npu_intrusion.detect import (
     YOLONPU, detect_npu_devices, preprocess, postprocess, IMG_SIZE)
 from pia_prod.AI.modules.npu_intrusion.roi_manager import rect_crop     # [최적화] 마스킹 없는 rect crop
@@ -23,8 +23,8 @@ from pia.vision.roi.roi_manager import cv_crop_region                    # 정�
 from pia.ai.tasks.OD.models.yolov8.coordinate_utils import calc_expand_coord
 from pia.vision.postprocessing.bbox import calc_intersect
 
-VIDEOS = ["/home/gpuadmin/AX_NPU/Product-AI-mono/assets/videos/kk_helmet_1.mp4",
-          "/home/gpuadmin/AX_NPU/Product-AI-mono/assets/videos/kk_helmet_2.mp4"]
+VIDEOS = ["/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/assets/videos/kk_helmet_1.mp4",
+          "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/assets/videos/kk_helmet_2.mp4"]
 ROI = [[1166, 631], [1512, 560], [1810, 867], [1271, 1006], [1071, 833]]
 FRAME_WH = (1920, 1080)
 MAX_CH = 64

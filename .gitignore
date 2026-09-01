@@ -237,7 +237,7 @@ tutorial/pe_npu/images/
 tutorial/pe_npu/out/
 
 # 참조용 외부 레포 (추적 제외)
-Product-AI-mono/
+# (구) 루트 Product-AI-mono/ -> third_party/Product-AI-mono/ 로 통합됨 (third_party/* 로 제외)
 
 # === NPU 작업: 대용량/데이터 제외 (커밋 X, 재생성/다운로드) ===
 download/
@@ -272,3 +272,7 @@ nas192tb/
 
 # eval 데이터셋 실데이터 (HF PIA-SPACE-LAB/AX_NPU_TTA 로 배포, eval/README.md 참고)
 eval/datasets/
+
+# third_party/ — 외부 레포 클론 (각자 독립 git). 내용은 추적 안 하고 README만 추적
+third_party/*
+!third_party/README.md

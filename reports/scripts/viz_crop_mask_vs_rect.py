@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 plt.rcParams["font.family"] = "Noto Sans CJK KR"
 plt.rcParams["axes.unicode_minus"] = False
 
-sys.path.insert(0, "/home/gpuadmin/AX_NPU/Product-AI-mono/packages")
+sys.path.insert(0, "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/packages")
 from pia_prod.AI.modules.npu_intrusion.detect import YOLONPU, detect_npu_devices, preprocess, postprocess, IMG_SIZE
 from pia_prod.AI.modules.npu_intrusion.roi_manager import rect_crop
 from pia_prod.AI.modules.npu_intrusion.config import TARGET_CLASSES, OD_CONFIDENCE_THRESHOLD, OD_NMS_THRESHOLD, ROI_EXPAND_RATIO
@@ -25,7 +25,7 @@ ER = calc_expand_coord(roi=ROI, frame_wh=FRAME_WH, expand_ratio=ROI_EXPAND_RATIO
 reg = np.array(ER); X0, Y0, X1, Y1 = reg[:, 0].min(), reg[:, 1].min(), reg[:, 0].max(), reg[:, 1].max()
 CROP_ORIGIN = reg[0]
 ROI_IN_CROP = (np.array(ROI) - CROP_ORIGIN).astype(np.int32)
-VID = "/home/gpuadmin/AX_NPU/Product-AI-mono/assets/videos/kk_helmet_1.mp4"
+VID = "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/assets/videos/kk_helmet_1.mp4"
 
 det = YOLONPU.load(model="yolo11n", scheme="global4", device_ids=detect_npu_devices(),
                    classes=TARGET_CLASSES, bgr2rgb=True, conf_thres=0.3, iou_thres=OD_NMS_THRESHOLD)

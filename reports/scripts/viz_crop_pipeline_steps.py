@@ -10,14 +10,14 @@ from matplotlib.gridspec import GridSpec
 plt.rcParams["font.family"] = "Noto Sans CJK KR"
 plt.rcParams["axes.unicode_minus"] = False
 
-sys.path.insert(0, "/home/gpuadmin/AX_NPU/Product-AI-mono/packages")
+sys.path.insert(0, "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/packages")
 from pia.ai.tasks.OD.models.yolov8.coordinate_utils import calc_expand_coord
 
 ROI = [[1166, 631], [1512, 560], [1810, 867], [1271, 1006], [1071, 833]]
 FRAME_WH = (1920, 1080)
 ER = calc_expand_coord(roi=ROI, frame_wh=FRAME_WH, expand_ratio=0.1)
 reg = np.array(ER); X0, Y0, X1, Y1 = reg[:, 0].min(), reg[:, 1].min(), reg[:, 0].max(), reg[:, 1].max()
-VID = "/home/gpuadmin/AX_NPU/Product-AI-mono/assets/videos/kk_helmet_1.mp4"
+VID = "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/assets/videos/kk_helmet_1.mp4"
 
 cap = cv2.VideoCapture(VID); cap.set(cv2.CAP_PROP_POS_FRAMES, 760); ok, frame = cap.read()
 if not ok:
