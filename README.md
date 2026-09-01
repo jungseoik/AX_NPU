@@ -43,6 +43,7 @@ MXQ는 aries2 바이너리라 어디서 컴파일하든 동일 → 한 번 컴�
 | `yolo_npu/` | **YOLO11 패키지** — detect(YOLONPU: 전처리+NPU+NMS+draw, 단일/멀티카드) / compile(→4모드 MXQ) |
 | `tutorial/pe_npu/` | PE-Core·Qwen3-VL 따라하기 README + 데모 노트북 |
 | `tutorial/yolo_npu/` | YOLO11 따라하기 README + `demo_yolo11_npu.ipynb`(bbox 시각화·모델스왑·멀티카드) |
+| `eval/` | **평가용 데이터셋 관리** — HF에서 받아 쓰는 eval 데이터(`TTA_인증용` 등). 실데이터는 gitignore |
 | `reports/` | 분석/원리 문서 (아래 인덱스) |
 | `setup/` | 호스트 셋업 스크립트 (conda env, 드라이버, HF 업로드 등) |
 | `deploy/vllm/` | Docker+vLLM(NPU) OpenAI 서빙 (docker compose, batch1) |
@@ -57,6 +58,7 @@ MXQ는 aries2 바이너리라 어디서 컴파일하든 동일 → 한 번 컴�
 | `tutorial/pe_npu/README.md` | **시작점(PE-Core)** — 설치~calib~컴파일~추론 (옵션 A/B) 따라하기 |
 | `tutorial/yolo_npu/README.md` | **YOLO11** — 컴파일(패치0)~추론~bbox~멀티카드, mAP 검증 |
 | `.claude/skills/npu-setup/` | 신규 서버에서 `mobilint-cli status`까지 세팅 |
+| `eval/README.md` | **평가 데이터셋** — 폴더구조·개수·라벨 포맷 + 토큰만으로 재현 다운로드 |
 | `reports/vendor/mobilint_resolution_attn_pool.md` | ★ attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(16bit) → full NPU cos 0.99 |
 | `reports/performance/NPU_pe_throughput_modes_full.md` | ★ **다채널 처리량·모드선택 + 올바른 동시성 패턴**(서비스 짤 때 필독) |
 | `reports/performance/NPU_pe_hybrid_vs_full.md` · `NPU_pe_multicard_62ch_full.md` | full NPU 병목 제거 / 멀티카드 실측 |
@@ -78,6 +80,10 @@ sudo bash .claude/skills/npu-setup/setup_npu_cli.sh    # 세부: .claude/skills/
 
 # 2) 파이썬 추론 환경 (qbruntime + torch 등)
 bash setup/setup_conda_host.sh && conda activate pe_npu_host
+
+# 3) (평가할 때만) 평가용 데이터셋 — 토큰만 있으면 어느 서버에서든 동일하게 재현
+export HF_TOKEN=hf_...          # HF private
+python -m eval.tta download     # -> eval/datasets/TTA_인증용/ (2.2GB, gitignore)
 ```
 > SDK 수동 다운만: `python setup/fetch_sdk_from_hf.py` → `download/` 채움.
 > (HF `PIA-SPACE-LAB/MXQ_NPU`는 **private** — mxq + `sdk/<버전>/`(드라이버·런타임·컴파일러) 함께 관리.)

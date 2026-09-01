@@ -266,3 +266,9 @@ yolo_out/
 # 트래킹 데모 출력 영상 (생성물)
 *.mp4
 track_out.mp4
+
+# NAS 마운트 포인트 (192TB, 10.128.30.36)
+nas192tb/
+
+# eval 데이터셋 실데이터 (HF PIA-SPACE-LAB/AX_NPU_TTA 로 배포, eval/README.md 참고)
+eval/datasets/

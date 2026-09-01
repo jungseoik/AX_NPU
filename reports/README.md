@@ -70,18 +70,32 @@ YOLO11 침입감지 서비스 모듈 e2e를 측정→진단→재측정한 스�
 |------|------|
 | [test_results.md](testing/test_results.md) | 컴파일/추론 테스트 결과 종합 |
 
-## 📮 inquiries/ — Mobilint 문의서 (우리가 보내는 것)
-| 문서 | 내용 |
-|------|------|
-| [qwen3vl_batch_serving/](inquiries/qwen3vl_batch_serving/README.md) | ★ Qwen3-VL-2B 배치·코어모드 서빙(vLLM) NPU 1장 동시요청 테스트 요청 + vllm-mblt 버그 2건 (미발송) |
-| [attn_pool_inquiry.md](inquiries/attn_pool_inquiry.md) | attention pooling head INT8 붕괴 문의 (해결됨, 당시 기록 보존) |
-| [support_inquiry.md](inquiries/support_inquiry.md) | Mobilint 기술지원 문의 정리 |
+## 📮 inquiries/ — Mobilint 문의 스레드 (번호 = 문의 순서, 클수록 최신)
+전체 인덱스: [inquiries/README.md](inquiries/README.md)
+
+| # | 스레드 | 내용 | 상태 |
+|---|------|------|------|
+| 01 | [01_pe_single_io_compile/](inquiries/01_pe_single_io_compile/INQUIRY.md) | PE 비전 인코더 25-서브그래프 분할 문제 | 미발송(자체 해결) |
+| 02 | [02_attn_pool_int8/](inquiries/02_attn_pool_int8/INQUIRY.md) | attention pooling head INT8 붕괴 문의 (당시 기록 보존) | 해결 → vendor/ |
+| 03 | [03_qwen3vl_batch_serving/](inquiries/03_qwen3vl_batch_serving/README.md) | ★ Qwen3-VL-2B 배치·코어모드 서빙(vLLM) NPU 1장 동시요청 + vllm-mblt 버그 2건 | 미발송 |
+| 04 | [04_vit_quantization_speed/](inquiries/04_vit_quantization_speed/REPLY.md) | ★**최신** ViT 양자화 속도(W8A16/W4A16/W4A8) + uint8 입력 + single·async 권고, 컴파일 예제 3종 | 회신 수신(검증 미착수) |
 
 ## 📨 vendor/ — Mobilint 응답·해결 기록 (받은 것)
 | 문서 | 내용 |
 |------|------|
 | [mobilint_resolution_attn_pool.md](vendor/mobilint_resolution_attn_pool.md) | ★ **[해결]** attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.99 |
-| [mobilint_reply_email.md](vendor/mobilint_reply_email.md) | Mobilint 답장 이메일 원문 (attn_pool 건) |
+| [mobilint_reply_email.md](vendor/mobilint_reply_email.md) | Mobilint 답장 이메일 원문 (attn_pool 건 = 문의 02) |
+
+> 04번 회신(ViT 양자화)은 스레드 폴더 안에 있다 → [inquiries/04_vit_quantization_speed/REPLY.md](inquiries/04_vit_quantization_speed/REPLY.md)
+
+## 🧪 평가용 데이터셋 (측정 입력)
+
+벤치/정확도 문서가 쓰는 **평가 데이터는 이 레포에 커밋하지 않는다.** HF private에 zip으로 두고
+토큰만 있으면 재현한다 — 상세: [`eval/README.md`](../eval/README.md)
+
+| 데이터셋 | 내용 | 받기 |
+|---|---|---|
+| `TTA_인증용` | 이상행동 4종(falldown/fire/intrusion/smoke) 영상 200 + 이벤트 라벨 200 + clips 252 (2.2GB) | `export HF_TOKEN=... && python -m eval.tta download` |
 
 ## 🛠 scripts/ · assets/
 - `scripts/` — 벤치마크 재현 스크립트. 실행: `conda activate pe_npu_host` 후 해당 스크립트.

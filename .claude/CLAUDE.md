@@ -56,6 +56,11 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
 - **Qwen3-VL(멀티모달 LLM) 추론**: `tutorial/pe_npu/README_VLM_qwen3.md` + `demo_vlm_qwen3.ipynb` + 헬퍼 `tutorial/pe_npu/vlm_npu.py` + skill `.claude/skills/qwen3-vl/`. 이미지+프롬프트→텍스트. PE-Core와 별개로, Mobilint가 올린 `mobilint/Qwen3-VL-*` MXQ를 표준 HF API(`AutoModelForImageTextToText`+`mblt-model-zoo`)로 그대로 가져와 씀(포팅 불필요). **코어모드=global8**(8코어 전부, 단일스트림 latency 최적화, max_batch_size=1). 설치 핀: `mblt-model-zoo==1.3.1` + `transformers>=4.57`. 출처: `mobilint-runtime-gui` 백엔드. **멀티카드**: 컴파일 모드는 global8 하나뿐이라 카드별 인스턴스로 **동시요청 분산**(`VLMPool(device_ids="auto")`, 카드 지정은 `config.vision/text.dev_no`). 실측(2B VQA 1토큰): 단건 ~180ms, 64동시 1장 12s→7장 2.2s → `reports/performance/NPU_qwen3vl_multicard_batch.md`
 - **YOLO11 객체탐지 (컴파일~추론)**: `tutorial/yolo_npu/README.md` + `demo_yolo11_npu.ipynb` + 패키지 `yolo_npu/`(detect/compile). PE와 달리 **패치 0개**로 컴파일(표준 CNN, `yolo_decode_include`). 모델은 **mxq만 바꾸면**(11n/s/m/l). 단일/지정/`device_ids="auto"` 멀티카드 + `detect_batch`(출력 무결성 검증됨). **추적**: `ByteTrack`(자체 경량, `yolo_npu/track.py`) — 검출 NPU + 추적 CPU. mAP(11m INT8 0.53=fp32의 96%)·4모드×배치·1~7장 스케일링(64ch 198→1072 img/s): `reports/performance/NPU_yolo11_coremode_batch.md`. **기본 진입점 `YOLONPU.load(model, scheme)`** = HF `PIA-SPACE-LAB/MXQ_NPU/yolo/<model>/<scheme>/` 먼저 → 없으면 컴파일 안내
 - **신규 서버 NPU 세팅**: `.claude/skills/npu-setup/` (clone 후 `mobilint-cli status`까지)
+- **평가용 데이터셋**: `eval/README.md` + `eval/tta.py`. 실데이터는 git에 안 넣고 HF private에 zip으로 두고
+  **토큰만 있으면 재현** — `export HF_TOKEN=... && python -m eval.tta download` → `eval/datasets/TTA_인증용/`(gitignore).
+  현재 `TTA_인증용`(HF `PIA-SPACE/AX_NPU_TTA`, dataset·private): 이상행동 4종(falldown/fire/intrusion/smoke)
+  영상 200 + 라벨 json 200 + 이벤트 clips 252, 총 2.2GB. 원천은 NAS192TB `10.128.30.36:/volume1/AI_data`의
+  `TTA/TTA_인증용_재인코딩/`(재인코딩본을 씀). 갱신은 `pack` → `ZIP_SHA256` 반영 → `upload`.
 - **분석/원리** (전체 인덱스는 `reports/README.md`):
   - `reports/vendor/mobilint_resolution_attn_pool.md` — ★ attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.99
   - `reports/performance/NPU_pe_throughput_modes_full.md` — ★ 다채널 처리량·모드선택 (올바른 1모델+멀티스레드 sync 패턴, 출력검증) ← **다채널 서비스 짤 때 필독**
@@ -71,6 +76,9 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - `reports/performance/NPU_preprocess_3_cv2_decision.md` — 전처리 최적화 의사결정(e2e 기준): 리소스 원천=resize, torchvision→cv2(INTER_LINEAR) 전환으로 56ch e2e -25%·CPU 5배↓(정확도 0.99→0.97, opt-in), 워커16, 파이프라이닝 미채택
   - `reports/performance/compile_benchmark.md` — 컴파일 시간 GPU vs CPU
   - `reports/quantization/quantization_reference.md`, `reports/quantization/QUANT_TUNING_guide.md` — 양자화 배경
+- **Mobilint 문의 스레드**: `reports/inquiries/` — 번호가 문의 순서(클수록 최신). 인덱스 `reports/inquiries/README.md`.
+  최신 04(ViT 양자화 W4A16/W4A8·uint8 입력·single+async 권고)는 위의 **"NPU는 INT8 전용(bit4=no-op)"** 및
+  **"다채널 동시성 — async 다건 제출 금지"** 두 서술과 충돌 소지가 있다. 검증 전까지 기존 서술 유지, 확인 후 갱신.
 - Mobilint SDK 공식 문서: `docs/` (멀티코어 `docs/multicore.md` 등)
 
 ## Skill

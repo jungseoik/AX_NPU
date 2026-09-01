@@ -87,3 +87,5 @@ sudo bash .claude/skills/npu-setup/setup_npu_cli.sh
     (image→embedding 전부 NPU). NPU + qbruntime + 인터넷만 있으면 됨 (qbcompiler·원본 가중치 불필요).
   - **옵션 A (직접 컴파일)**: calib → `python -m pe_npu.compile --qk16` → 추론. qbcompiler(docker) 필요.
     커스텀 calib/해상도·컴파일 실험용. full NPU cos 0.99.
+- **평가(정확도/성능 측정)까지 할 서버라면**: `export HF_TOKEN=hf_... && python -m eval.tta download`
+  → `eval/datasets/TTA_인증용/`(이상행동 4종 영상 200 + 라벨 200 + clips 252, 2.2GB). 상세는 `eval/README.md`.
