@@ -1,0 +1,75 @@
+{
+  "_comment": "Mobilint ARIES SDK 번들 버전 정의. 모든 세팅/다운로드/업로드 스크립트가 이 파일을 단일 기준으로 읽는다.",
+  "default": "1.0",
+  "versions": {
+    "1.0": {
+      "label": "1.0v",
+      "summary": "드라이버 1.13 / qbruntime 1.2.0 / qbcompiler 1.1.2 (aries2 표기 세대)",
+      "hf_folder": "sdk/v1.0",
+      "hf_folder_legacy": "sdk/aries2_v1.2.0",
+      "local_dir": "download",
+      "components": {
+        "driver": {
+          "glob": "mobilint-aries2-driver_*.tar.gz",
+          "version": "1.13"
+        },
+        "runtime_amd64": {
+          "glob": "qbruntime_aries2-*_amd64.tar.gz",
+          "version": "1.2.0"
+        },
+        "runtime_arm64": {
+          "glob": "qbruntime_aries2-*_arm64.tar.gz",
+          "version": "1.2.0"
+        },
+        "compiler": {
+          "glob": "qbcompiler-*aries2-py3-none-any.whl",
+          "version": "1.1.2"
+        }
+      },
+      "compile": {
+        "mmc_bundled": false,
+        "docker_required": true,
+        "docker_image_cpu": "mobilint/qbcompiler:1.1-cpu-ubuntu22.04",
+        "docker_image_cuda": "mobilint/qbcompiler:1.1-cuda12.8.1-ubuntu22.04",
+        "python": "3.10",
+        "numpy": "<2",
+        "note": "컴파일러 whl에 mmc 네이티브 모듈이 없어 호스트 설치만으로는 컴파일 불가(ImportError: Fail to import mmc) → 벤더 docker 이미지를 쓴다. GPU 없는 호스트는 cpu 이미지로 충분하다(컴파일 코드가 torch.cuda.is_available()로 자동 폴백 — mblt-sdk-tutorial 예제 README 명시). 실측: cpu 이미지 14.2GB / cuda 이미지 27.7GB, cpu 이미지도 내부 torch는 CUDA 빌드(2.7.1+cu128)를 포함하므로 mmc가 정상 동작한다."
+      },
+      "firmware": "1.2.5"
+    },
+    "1.1": {
+      "label": "1.1v",
+      "summary": "드라이버 1.14 / qbruntime 1.4.0 / qbcompiler 1.2.0 (aries 표기로 변경)",
+      "hf_folder": "sdk/v1.1",
+      "local_dir": "download/sdk/v1.1",
+      "components": {
+        "driver": {
+          "glob": "mobilint-aries-driver_*.tar.gz",
+          "version": "1.14"
+        },
+        "runtime_amd64": {
+          "glob": "qbruntime_v*_amd64.tar.gz",
+          "version": "1.4.0"
+        },
+        "runtime_arm64": {
+          "glob": "qbruntime_v*_arm64.tar.gz",
+          "version": "1.4.0"
+        },
+        "compiler": {
+          "glob": "qbcompiler-*-py3-none-any.whl",
+          "version": "1.2.0"
+        }
+      },
+      "compile": {
+        "mmc_bundled": true,
+        "docker_required": true,
+        "docker_image_cpu": "mobilint/qbcompiler:1.2-cpu-ubuntu22.04",
+        "docker_image_cuda": "mobilint/qbcompiler:1.2-cuda12.8.1-ubuntu22.04",
+        "python": "3.10",
+        "numpy": "<2",
+        "note": "whl에 mmc(mmc.cpython-310-x86_64-linux-gnu.so, 38MB)가 포함되지만 그 .so가 CUDA 빌드 torch에 링크돼 있다 → CPU torch만 있는 호스트에서는 import 실패(libtorch_cuda.so / libcupti.so.12 없음, 2026-09-01 실측). 따라서 호스트 직접 설치는 비권장이고 벤더 이미지를 쓴다. GPU 없으면 cpu 이미지(내부 torch가 CUDA 빌드라 mmc 동작)."
+      },
+      "firmware": "확인 필요"
+    }
+  }
+}

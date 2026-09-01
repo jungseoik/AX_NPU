@@ -1,45 +1,64 @@
-"""HF private 레포에서 Mobilint ARIES SDK를 받아 로컬 download/ 에 배치.
+"""HF private 레포에서 Mobilint ARIES SDK 번들을 받아 로컬에 배치.
 
-신규 서버: 레포 clone → HF 로그인(`huggingface-cli login` 또는 HF_TOKEN) → 이 스크립트 →
-download/ 에 드라이버/런타임/컴파일러가 채워짐 → npu-setup skill로 설치.
+번들 버전은 setup/sdk_versions.json 이 단일 기준이다(현재 1.0 / 1.1, 기본 1.0).
+버전마다 HF 폴더와 로컬 경로가 다르다.
 
-사용: python setup/fetch_sdk_from_hf.py [--version aries2_v1.2.0] [--repo PIA-SPACE-LAB/MXQ_NPU]
+  1.0 → HF sdk/v1.0  (없으면 sdk/aries2_v1.2.0 로 폴백) → 로컬 download/
+  1.1 → HF sdk/v1.1                                     → 로컬 download/sdk/v1.1/
+
+사용:
+  python setup/fetch_sdk_from_hf.py                  # 기본 버전
+  python setup/fetch_sdk_from_hf.py --sdk 1.1        # 1.1v 번들
+  python setup/fetch_sdk_from_hf.py --folder sdk/실험폴더   # 원시 폴더 직접 지정(예외용)
 """
-import argparse, os, shutil
+import argparse, os, shutil, sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from sdk_resolve import resolve  # noqa: E402
 
 DEFAULT_REPO = "PIA-SPACE-LAB/MXQ_NPU"
-DEFAULT_VER = "aries2_v1.2.0"
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", default=DEFAULT_REPO)
-    ap.add_argument("--version", default=DEFAULT_VER)
-    ap.add_argument("--out", default=None, help="기본: <repo_root>/download")
+    ap.add_argument("--sdk", default=None, help="번들 버전 라벨 (1.0 | 1.1)")
+    ap.add_argument("--folder", default=None, help="HF 폴더 직접 지정 (예: sdk/aries2_v1.2.0)")
+    ap.add_argument("--out", default=None, help="기본: 해당 버전의 로컬 경로")
     ap.add_argument("--token", default=os.environ.get("HF_TOKEN"))
     args = ap.parse_args()
 
-    from huggingface_hub import HfApi, hf_hub_download
-    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    out = args.out or os.path.join(repo_root, "download")
+    v = resolve(args.sdk)
+    out = args.out or v["local_dir_abs"]
     os.makedirs(out, exist_ok=True)
 
+    from huggingface_hub import HfApi, hf_hub_download
     api = HfApi(token=args.token)
-    prefix = f"sdk/{args.version}/"
-    files = [f for f in api.list_repo_files(args.repo) if f.startswith(prefix) and not f.endswith("/")]
-    if not files:
-        raise SystemExit(f"HF {args.repo}에 {prefix} 없음. 먼저 upload_sdk_to_hf.py로 업로드했는지 확인.")
+    repo_files = api.list_repo_files(args.repo)
 
-    for f in files:
+    candidates = [args.folder] if args.folder else [v["hf_folder"], v.get("hf_folder_legacy")]
+    prefix = None
+    for cand in [c for c in candidates if c]:
+        pre = cand.rstrip("/") + "/"
+        if any(f.startswith(pre) for f in repo_files):
+            prefix = pre
+            break
+    if not prefix:
+        raise SystemExit(f"HF {args.repo}에 {candidates} 폴더 없음. "
+                         f"먼저 'python setup/upload_sdk_to_hf.py --sdk {v['sdk']}' 로 업로드했는지 확인.")
+
+    print(f"[fetch] 번들 {v['label']} | HF {args.repo}/{prefix} → {out}")
+    for f in [f for f in repo_files if f.startswith(prefix) and not f.endswith("/")]:
         name = os.path.basename(f)
-        if name == "README.md":  # 폴더 README는 스킵
+        if name == "README.md":
             continue
         cached = hf_hub_download(repo_id=args.repo, filename=f, token=args.token)
         dst = os.path.join(out, name)
         if os.path.abspath(cached) != os.path.abspath(dst):
             shutil.copy(cached, dst)
-        print(f"  받음: {name} -> {dst}")
-    print(f"[OK] SDK → {out}. 다음: sudo bash .claude/skills/npu-setup/setup_npu_cli.sh")
+        print(f"  받음: {name} ({os.path.getsize(dst)/1e6:.1f}MB)")
+    print(f"[OK] SDK({v['label']}) → {out}")
+    print(f"     다음: sudo bash .claude/skills/npu-setup/setup_npu_cli.sh --sdk {v['sdk']}")
 
 
 if __name__ == "__main__":

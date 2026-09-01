@@ -47,7 +47,12 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
 
 - **컴파일은 NPU가 아니라 호스트 CPU/GPU(`--device`)에서** 한다. NPU는 추론 전용.
 - **NPU는 INT8 전용.** 양자화를 더 못 낮춘다(bit4 mixed-precision = no-op 확인). → `reports/performance/NPU_batch_latency.md`
-- 컴파일 = docker `mblt_compiler`(qbcompiler 1.1.2), 추론 = 호스트 conda `pe_npu_host`(qbruntime, py3.10~3.12) 또는 docker.
+- 컴파일 = docker qbcompiler 이미지, 추론 = 호스트 conda `pe_npu_host`(qbruntime, py3.10~3.12) 또는 docker.
+  - **컴파일에 GPU 불필요** — 벤더가 버전별 `-cpu`/`-cuda` 이미지를 쌍으로 배포하고 코드가 CPU로 자동 폴백한다.
+    GPU 없는 서버는 `mobilint/qbcompiler:1.1-cpu-ubuntu22.04`(SDK 1.0v) / `1.2-cpu-ubuntu22.04`(1.1v).
+    이미지·요건은 `setup/sdk_versions.json` 기준, 조회는 `python setup/sdk_resolve.py --sdk <버전>`.
+  - **SDK 번들 버전**: 1.0v(드라이버1.13/런타임1.2.0/컴파일러1.1.2, 기본) / 1.1v(1.14/1.4.0/1.2.0).
+    신규 서버 세팅은 `bash setup/setup_all.sh --sdk 1.0|1.1` 한 줄 (스킬 `npu-setup`이 버전을 먼저 물어본다).
 - SDK(`download/`)는 비공개라 gitignore — 사람이 직접 배치. MXQ/pool head도 gitignore(HF로 배포).
 
 ## 문서 라우팅

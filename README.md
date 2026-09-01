@@ -49,7 +49,7 @@ MXQ는 aries2 바이너리라 어디서 컴파일하든 동일 → 한 번 컴�
 | `deploy/vllm/` | Docker+vLLM(NPU) OpenAI 서빙 (docker compose, batch1) |
 | `.claude/skills/` | `npu-setup`(신규 서버 세팅) 등 skill |
 | `docs/` | **Mobilint 공식 SDK 문서**(벤더 원본) |
-| `download/` | SDK 파일(드라이버/런타임/컴파일러). 비공개라 gitignore — 사람이 직접 배치 |
+| `download/` | SDK 파일(드라이버/런타임/컴파일러). 비공개라 gitignore. **번들 버전 1.0 = `download/` 직하, 1.1 = `download/sdk/v1.1/`** — `setup/sdk_versions.json` 기준 |
 
 ## 문서 인덱스 (핵심만 — **전체 인덱스는 [`reports/README.md`](reports/README.md)**)
 
@@ -75,7 +75,7 @@ MXQ는 aries2 바이너리라 어디서 컴파일하든 동일 → 한 번 컴�
 huggingface-cli login          # 또는 export HF_TOKEN=hf_...
 
 # 1) NPU 드라이버/런타임/CLI 설치 → mobilint-cli status
-#    (SDK가 download/에 없으면 HF private 레포 sdk/aries2_v1.2.0/ 에서 자동 fetch)
+#    (SDK가 없으면 HF private 레포 sdk/v1.0|v1.1/ 에서 자동 fetch. 다른 번들은 --sdk 1.1)
 sudo bash .claude/skills/npu-setup/setup_npu_cli.sh    # 세부: .claude/skills/npu-setup/SKILL.md
 
 # 2) 파이썬 추론 환경 (qbruntime + torch 등)
@@ -85,7 +85,8 @@ bash setup/setup_conda_host.sh && conda activate pe_npu_host
 export HF_TOKEN=hf_...          # HF private
 python -m eval.tta download     # -> eval/datasets/TTA_인증용/ (2.2GB, gitignore)
 ```
-> SDK 수동 다운만: `python setup/fetch_sdk_from_hf.py` → `download/` 채움.
+> SDK 수동 다운만: `python setup/fetch_sdk_from_hf.py [--sdk 1.0|1.1]` → 해당 버전 경로를 채움.
+> 번들 버전 목록·현재 상태: `python setup/sdk_resolve.py --list`  (기본 1.0v / 신규 1.1v)
 > (HF `PIA-SPACE-LAB/MXQ_NPU`는 **private** — mxq + `sdk/<버전>/`(드라이버·런타임·컴파일러) 함께 관리.)
 
 ### 추론 실행

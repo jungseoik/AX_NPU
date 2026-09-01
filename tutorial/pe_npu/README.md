@@ -82,6 +82,10 @@ docker exec mblt_compiler bash -lc 'cd /tmp && tar xzf /workspace/download/qbrun
 docker exec mblt_compiler pip install onnxruntime
 ```
 (이미지 pull: `docker pull mobilint/qbcompiler:1.1-cuda12.8.1-ubuntu22.04`)
+> **GPU 없는 서버는 cpu 이미지를 쓸 것** — `mobilint/qbcompiler:1.1-cpu-ubuntu22.04`.
+> 컴파일 코드가 `torch.cuda.is_available()`로 CPU에 자동 폴백하므로 결과는 같고, cuda 이미지(27.7GB)보다 훨씬 작다.
+> SDK 1.1v(컴파일러 1.2.0)를 쓰면 `mobilint/qbcompiler:1.2-cpu-ubuntu22.04`.
+> 버전별 권장 이미지: `python setup/sdk_resolve.py --sdk 1.0|1.1`
 
 > GPU 없는 서버는 도커 대신 **conda 컴파일(방법 A)** 을 쓴다. NPU 장착 후 통합 실행: `bash ../../setup/run_npu_tests.sh`.
 

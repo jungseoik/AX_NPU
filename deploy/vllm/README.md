@@ -89,5 +89,5 @@ docker exec vllm_mblt vllm bench serve --model mobilint/Qwen3-VL-2B-Instruct \
 
 ## 알려진 이슈(vllm-mblt 0.1.0, Mobilint 보고 대상)
 1. VLM(Qwen3-VL) `config.vocab_size` AttributeError — **트리거는 `top_k<=0` 요청**(이미지 아님; 기본 top_k=20은 정상).
-   → Dockerfile에서 `text_config` 폴백 패치 적용. 실측 재현: `reports/inquiries/qwen3vl_batch_serving/repro_vocab_size.md`.
+   → Dockerfile에서 `text_config` 폴백 패치 적용. 실측 재현: `reports/inquiries/03_qwen3vl_batch_serving/repro_vocab_size.md`.
 2. Qwen3-VL에 `--model-loader-extra-config`(dev_no 등) 전달 시 `from_pretrained` TypeError.
