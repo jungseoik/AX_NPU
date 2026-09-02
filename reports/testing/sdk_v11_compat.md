@@ -22,6 +22,38 @@
 > 드라이버 1.14로 올린 뒤의 조합은 미검증(모듈 교체가 운영 중단을 유발해 수행하지 않음).
 > 신규 서버에서 1.1v 전체(드라이버 1.14 + 런타임 1.4.0)로 세팅할 때 재확인할 것.
 
+## 1-b. ★ SDK 1.1v 전환 시 걸리는 것 — 타겟 디바이스 이름이 바뀌었다
+
+qbcompiler **1.2.0은 `aries2` 타겟을 더 이상 받지 않는다.**
+
+```
+ValueError: Unsupported device name: 'aries2'.
+Available devices: ['regulus-ra', 'aries-rb', 'regulus-rb']
+```
+
+| 컴파일러 | 인식하는 타겟 이름 |
+| --- | --- |
+| 1.1.2 (SDK 1.0v) | `aries2` |
+| 1.2.0 (SDK 1.1v) | `aries-rb` / `regulus-ra` / `regulus-rb` — **`aries2` 없음** |
+
+- `aries-rb` 가 우리 카드 계열이다. 최신 `mblt-sdk-tutorial` 예제가
+  `--target-device {regulus-rb, aries-rb}`(기본 `aries-rb`)로 **ARIES / REGULUS 제품군**을 가른다.
+- **`pe_npu/compile.py` 는 `target_device="aries2"` 를 4곳에 하드코딩**하고 있다.
+  SDK 1.1v로 올리면 컴파일이 전량 실패하므로, 버전별 매핑이 필요하다(미적용).
+- 부수 정황: 벤더가 보낸 양자화 예제의 기본값도 `--target-device aries-rb` 였다
+  → **그 예제가 1.2.0 기준으로 작성됐을 가능성**. 문의 05의 "컴파일러 버전" 질문과 연결된다.
+
+### 현재 배포본의 MXQ 정보 (`mobilint-cli mxqtool show`)
+
+```
+Format Version:     0x70000     → MXQ v7
+Compiler Version:   1.1.2.0
+Hardware Version:   Aries2
+```
+
+`docs/compatibility.md` 기준 런타임 1.0.0~latest 가 MXQv1~v7 을 지원하므로 현재 조합은 정상 범위다.
+**1.2.0 산출물이 MXQ v8을 내면 런타임도 함께 올려야 한다** — 1.2.0 컴파일 성공 후 같은 명령으로 확인할 것.
+
 ## 2. 컴파일 이미지 — GPU 없어도 된다
 
 벤더는 컴파일러 버전별로 `-cpu` / `-cuda` 이미지를 **쌍으로** 배포한다(Docker Hub `mobilint/qbcompiler`, 38개 태그).
