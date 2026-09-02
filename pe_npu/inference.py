@@ -114,30 +114,36 @@ class MXQInferenceFull:
 
     @classmethod
     def from_hf(cls, repo_id: str = None, device_id: int = 0, device_ids=None,
-                revision: str = None, scheme: str = "global4", slots_per_card: int = None):
-        """HF에서 미리 컴파일된 full MXQ(`<scheme>/pe_full.mxq`)를 받아 추론기 구성 (qbruntime만 필요).
+                revision: str = None, scheme: str = "global4", slots_per_card: int = None,
+                quant: str = None):
+        """HF에서 미리 컴파일된 full MXQ(`<quant>/<scheme>/pe_full.mxq`)를 받아 추론기 구성.
 
         scheme: 코어모드 (single|multi|global4|global8). 기본 **global4**(다채널 균형).
+        quant : 양자화 스킴 (기본 **W8A16** = 기존 배포본). W4A16 / W4A8_L5A16 선택 가능
+                — 속도·크기·정확도 트레이드오프는 reports/performance/NPU_pe_quant_schemes.md.
         device_ids: None(단일)|리스트|"auto"(전체).
         """
         from . import assets
         repo = repo_id or assets.HF_REPO
-        full = assets.ensure_full_mxq(repo_id=repo, revision=revision, scheme=scheme)
+        full = assets.ensure_full_mxq(repo_id=repo, revision=revision, scheme=scheme,
+                                      quant=quant or assets.DEFAULT_QUANT)
         return cls(full_mxq_path=full, device_id=device_id, device_ids=device_ids,
                    slots_per_card=slots_per_card)
 
     @classmethod
     def load(cls, scheme: str = "global4", local_mxq: str = None, repo_id: str = None,
-             revision: str = None, device_id: int = 0, device_ids=None, slots_per_card: int = None):
-        """**기본 로더**: local_mxq 지정 시 사용 → 없으면 HF `<scheme>/pe_full.mxq` → 없으면 컴파일 안내.
-        기본 scheme=**global4**. 단일/멀티카드(device_ids)는 그대로 전달. (YOLONPU.load와 동일 규칙)"""
+             revision: str = None, device_id: int = 0, device_ids=None, slots_per_card: int = None,
+             quant: str = None):
+        """**기본 로더**: local_mxq 지정 시 사용 → 없으면 HF `<quant>/<scheme>/pe_full.mxq` → 없으면 컴파일 안내.
+        기본 scheme=**global4**, quant=**W8A16**(기존 배포본). 단일/멀티카드(device_ids)는 그대로 전달."""
         from . import assets
         if local_mxq and os.path.exists(local_mxq):
             mxq = local_mxq
         else:
             try:
                 mxq = assets.ensure_full_mxq(repo_id=repo_id or assets.HF_REPO,
-                                             revision=revision, scheme=scheme)
+                                             revision=revision, scheme=scheme,
+                                             quant=quant or assets.DEFAULT_QUANT)
             except Exception as e:
                 raise FileNotFoundError(
                     f"HF에 {scheme}/pe_full.mxq가 없습니다 ({type(e).__name__}). 직접 컴파일하세요:\n"

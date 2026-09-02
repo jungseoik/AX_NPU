@@ -40,13 +40,17 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
 
 - **옵션 A(직접 컴파일)**: calib → `python -m pe_npu.compile --qk16 ...`(full NPU) → 추론. **qbcompiler**(docker `mblt_compiler`) 필요. 커스텀 calib/해상도·실험용.
 - **옵션 B(가져와 쓰기)**: `MXQInferenceFull.from_hf(scheme="single")`. **qbruntime만** 있으면 됨(qbcompiler·원본 가중치 불필요). 운영·빠른 시작.
+  - **양자화 스킴 선택**: `from_hf(scheme="global4", quant="W4A16")` — 기본 `W8A16`(기존 배포본과 동일).
+    HF 경로 `<quant>/<scheme>/pe_full.mxq`, 신규 경로 없으면 기존 최상위 경로로 자동 폴백.
   - HF `PIA-SPACE-LAB/MXQ_NPU`는 **코어모드 폴더별**: `single/` `multi/` `global4/` `global8/`(각 `pe_full.mxq` + `CALIBRATION.md`). `scheme=`로 선택. 단건 latency=global8, throughput=single/global4. (레거시 hybrid: 루트 `pe_feat.mxq`+`pe_pool_head.pt`)
   - 4모드 동일 calib(COCO val2017 200장), 전부 cos 0.99. 모드 선택: `reports/performance/NPU_pe_pipeline_e2e_full.md`.
 
 ## 헷갈리지 말 것
 
 - **컴파일은 NPU가 아니라 호스트 CPU/GPU(`--device`)에서** 한다. NPU는 추론 전용.
-- **NPU는 INT8 전용.** 양자화를 더 못 낮춘다(bit4 mixed-precision = no-op 확인). → `reports/performance/NPU_batch_latency.md`
+- **양자화 비트폭은 조절된다(2026-09-01 정정).** 기존 MXQ는 순수 INT8이 아니라 **W8A16**(Activation 기본값이 output/ffn=16bit)이고,
+  `BitConfig.Transformer.Weight(...=4)`로 **W4A16도 동작**한다(크기 −42%, 처리량 +43%, cos 0.9136 — 정확도 보정 옵션 검토 중).
+  단 `mixed_precision`(비율 방식) 필드는 여전히 no-op. → `reports/performance/NPU_pe_quant_schemes.md`, `reports/performance/NPU_batch_latency.md`
 - 컴파일 = docker qbcompiler 이미지, 추론 = 호스트 conda `pe_npu_host`(qbruntime, py3.10~3.12) 또는 docker.
   - **컴파일에 GPU 불필요** — 벤더가 버전별 `-cpu`/`-cuda` 이미지를 쌍으로 배포하고 코드가 CPU로 자동 폴백한다.
     GPU 없는 서버는 `mobilint/qbcompiler:1.1-cpu-ubuntu22.04`(SDK 1.0v) / `1.2-cpu-ubuntu22.04`(1.1v).
@@ -74,7 +78,9 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - `reports/performance/NPU_pe_multicard_62ch_full.md` — full NPU 멀티카드 1→62ch (비포와 동일 구조)
   - `reports/performance/NPU_pe_1card_coremode_full.md` — 1장 코어모드×1~16ch 순수추론(슬롯 거동, latency)
   - `reports/design/SOLUTION_single_io_compile.md` — [비포] 단일 입출력 컴파일 + hybrid(0.997)
-  - `reports/performance/NPU_batch_latency.md` — 배치 지연/멀티코어/Multi 모드/bit4 양자화 한계 (실측)
+  - `reports/performance/NPU_pe_quant_schemes.md` — ★ 양자화 스킴(W8A16/W4A16/W4A8) × 코어모드 × 1~20채널 실측.
+    배포 기본은 **W8A16**(cos 0.9936), W4A16은 크기 −42%·처리량 +13%·cos 0.9135, W4A8은 붕괴(미배포)
+  - `reports/performance/NPU_batch_latency.md` — 배치 지연/멀티코어/Multi 모드/bit4 양자화 한계 (실측, §6 정정 포함)
   - `reports/performance/NPU_pe_multicard_62ch_hybrid.md` — [비포·hybrid] 멀티카드 62채널 (trunk만)
   - `reports/performance/NPU_preprocess_1_parallel.md` — 고채널 병목인 CPU 전처리 병렬화 벤치
   - `reports/performance/NPU_preprocess_2_uint8_offload.md` — 전처리 NPU 오프로드(uint8 입력) 실험: normalize는 폴딩되나 resize 불가라 전처리 이득 없음(정확도 0.99 유지). + 남은 최적화 정리
@@ -82,6 +88,9 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - `reports/performance/compile_benchmark.md` — 컴파일 시간 GPU vs CPU
   - `reports/quantization/quantization_reference.md`, `reports/quantization/QUANT_TUNING_guide.md` — 양자화 배경
 - **Mobilint 문의 스레드**: `reports/inquiries/` — 번호가 문의 순서(클수록 최신). 인덱스 `reports/inquiries/README.md`.
+  - ★ **대외 표기 규약**: 벤더 문의에는 모델 실명을 쓰지 않는다. PE-Core-L14-336 → **"PIA custom ViT-L/14"**,
+    `pe_full.mxq` → `pia_full.mxq`, 체크포인트 → `vit_l14_336.pt`. **같은 모델이며 자산도 MD5 동일**이다.
+    (우리 모델은 공개 CLIP과 다르다 — 일반 GELU + attention pooling head 보유)
   최신 04(ViT 양자화 W4A16/W4A8·uint8 입력·single+async 권고)는 위의 **"NPU는 INT8 전용(bit4=no-op)"** 및
   **"다채널 동시성 — async 다건 제출 금지"** 두 서술과 충돌 소지가 있다. 검증 전까지 기존 서술 유지, 확인 후 갱신.
 - Mobilint SDK 공식 문서: `docs/` (멀티코어 `docs/multicore.md` 등)

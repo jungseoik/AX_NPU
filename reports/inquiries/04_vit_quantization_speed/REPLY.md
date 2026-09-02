@@ -39,6 +39,12 @@
 - **W4A16이 균형점** — W8A16 대비 속도 1.42배(16.6 → 23.6)에 top-1 손실 0.2%p.
 - **W4A8 + 5개 레이어 A16** 은 속도 1.71배에 top-1 −2.1%p, cos 0.905. 속도가 최우선일 때의 선택지.
 
+> **⚠️ 확인 중 (문의 05)**: 첨부 예제의 `A16_TENSORS` 5개는 post-fusion 이름에 `quickgelu` 가 들어가고
+> 모듈 명명이 HF CLIP 규약(`vision_model.encoder.layers.N.mlp.fc2`)이다. 우리 모델은 일반 GELU이고
+> `visual.transformer.resblocks.N.mlp.c_proj` 규약이며 **공개 CLIP에 없는 attention pooling head**를
+> 가진다. 즉 그 목록이 공개 CLIP 기준일 가능성이 있어 벤더에 확인 요청했다
+> → [`../05_a16_selection_followup/EMAIL.md`](../05_a16_selection_followup/EMAIL.md)
+
 ## 3. 첨부 예제
 
 대상 모델은 **CLIP ViT-L/14-336** 비전 인코더로, 우리 PE-Core-L14-336과 같은 계열이다.

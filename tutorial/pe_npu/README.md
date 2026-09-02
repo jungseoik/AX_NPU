@@ -86,6 +86,11 @@ docker exec mblt_compiler pip install onnxruntime
 > 컴파일 코드가 `torch.cuda.is_available()`로 CPU에 자동 폴백하므로 결과는 같고, cuda 이미지(27.7GB)보다 훨씬 작다.
 > SDK 1.1v(컴파일러 1.2.0)를 쓰면 `mobilint/qbcompiler:1.2-cpu-ubuntu22.04`.
 > 버전별 권장 이미지: `python setup/sdk_resolve.py --sdk 1.0|1.1`
+>
+> **한 줄 래퍼**: `bash setup/compile_in_docker.sh --calib-data-path <calib> --save <out.mxq> --quant w4a16 --qk16 --scheme single`
+> — SDK 버전·GPU 유무를 보고 이미지(`-cpu`/`-cuda`)와 `--device`를 자동 선택한다.
+> GPU 서버에서는 `--gpus all` 이 붙고 calibration·OPTQ가 GPU로 가서 크게 빨라진다
+> (전제: nvidia-container-toolkit 설치).
 
 > GPU 없는 서버는 도커 대신 **conda 컴파일(방법 A)** 을 쓴다. NPU 장착 후 통합 실행: `bash ../../setup/run_npu_tests.sh`.
 

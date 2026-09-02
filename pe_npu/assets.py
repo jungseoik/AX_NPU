@@ -30,15 +30,35 @@ def download_asset(filename: str, repo_id: str = HF_REPO, revision: str = None):
     return hf_hub_download(repo_id=repo_id, filename=filename, revision=revision)
 
 
+# 양자화 스킴 — HF repo의 `<quant>/<scheme>/pe_full.mxq` 폴더명.
+#   W8A16       weight 8bit / activation 16bit(output·ffn) — **기본값, 기존 배포본과 동일**
+#   W4A16       weight 4bit(value만 8) / activation 동일 — 크기 -42%, 처리량 +43%, 정확도 하락
+#   W4A8_L5A16  W4 + activation 8bit, outlier 상위 5개 텐서만 16bit — 속도 우선
+DEFAULT_QUANT = "W8A16"
+QUANT_SCHEMES = ("W8A16", "W4A16", "W4A8_L5A16")
+
+
 def ensure_full_mxq(path: str = None, repo_id: str = HF_REPO, revision: str = None,
-                    scheme: str = "single"):
+                    scheme: str = "single", quant: str = DEFAULT_QUANT):
     """로컬 path가 있으면 그대로, 없으면 HF에서 full MXQ(image->embedding)를 받아 경로 반환.
 
-    scheme: 코어모드 폴더 (single|multi|global4|global8). HF repo는 `<scheme>/pe_full.mxq` 구조.
+    scheme: 코어모드 (single|multi|global4|global8)
+    quant : 양자화 스킴 (W8A16 기본 | W4A16 | W4A8_L5A16)
+
+    HF 경로는 `<quant>/<scheme>/pe_full.mxq`. 기본 스킴은 예전 경로(`<scheme>/pe_full.mxq`)로
+    자동 폴백하여 구버전 배포본과도 호환된다.
     """
     if path and os.path.exists(path):
         return path
-    return download_asset(f"{scheme}/{FULL_MXQ}", repo_id, revision)
+    if quant not in QUANT_SCHEMES:
+        raise ValueError(f"알 수 없는 양자화 스킴 {quant!r} — 사용 가능: {list(QUANT_SCHEMES)}")
+    try:
+        return download_asset(f"{quant}/{scheme}/{FULL_MXQ}", repo_id, revision)
+    except Exception:
+        if quant != DEFAULT_QUANT:
+            raise
+        # 구조 개편 이전 배포본(최상위 <scheme>/pe_full.mxq)
+        return download_asset(f"{scheme}/{FULL_MXQ}", repo_id, revision)
 
 
 def ensure_feat_mxq(path: str = None, repo_id: str = HF_REPO, revision: str = None):

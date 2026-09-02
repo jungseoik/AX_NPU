@@ -70,6 +70,7 @@ YOLO11 침입감지 서비스 모듈 e2e를 측정→진단→재측정한 스�
 |------|------|
 | [test_results.md](testing/test_results.md) | 컴파일/추론 테스트 결과 종합 |
 | [sdk_v11_compat.md](testing/sdk_v11_compat.md) | ★ SDK 1.1v 호환성 — 기존 HF mxq는 런타임 1.4.0에서 재컴파일 불필요(cos 0.993/15.4 img/s), 컴파일은 cpu 이미지로 충분 |
+| [NPU_pe_quant_schemes.md](performance/NPU_pe_quant_schemes.md) | ★ 양자화 스킴 비교 W8A16/W4A16/W4A8 × 코어모드 4종 × 1~20채널 지연 + cos. W4A16 동작 확인(크기 −42%, 처리량 +13%), W4A8은 붕괴 |
 
 ## 📮 inquiries/ — Mobilint 문의 스레드 (번호 = 문의 순서, 클수록 최신)
 전체 인덱스: [inquiries/README.md](inquiries/README.md)

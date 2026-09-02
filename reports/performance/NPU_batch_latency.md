@@ -98,9 +98,29 @@ Global Core 중재(target cores 10개) 비용이 든다. ViT trunk는 이미 코
 
 ---
 
-## 6. 양자화를 더 낮춰 속도를 올릴 수 있나 — bit_4 실측 (결론: 불가)
+## 6. 양자화를 더 낮춰 속도를 올릴 수 있나 — bit_4 실측
 
-"INT8보다 더 낮추면(4bit) 빨라지냐"를 실측. **결론: 안 된다. mixed-precision 옵션은 존재하지만 이 경로에서 무시(no-op)된다.**
+> ### ⚠️ 2026-09-01 정정 — 이 절의 "4bit 불가" 결론은 **틀렸다**
+>
+> 아래 실측은 `BitConfig.Transformer.mixed_precision`(weight를 2/4/8비트 **비율**로 섞는 필드)만
+> 시험한 것이고, 그 필드가 no-op이라는 판정 자체는 여전히 유효하다.
+> 그러나 **weight 4bit로 가는 실제 경로는 다른 API**였다 —
+> `BitConfig.Transformer.Weight(query/key/value/output/ffn/head=4)` 로 역할별 비트폭을 직접 지정하면
+> **정상 동작한다**(Mobilint 회신 문의 04로 확인). 실측:
+>
+> | 설정 | 크기 | cos | 처리량 |
+> |---|---:|---:|---:|
+> | 기존 기본값(W8A16) | 327.2 MB | 0.9936 | 15.73 img/s |
+> | **W4A16** | **188.8 MB (−42%)** | 0.9135 | **22.52 img/s (+43%)** |
+>
+> 즉 "INT8이 ARIES의 실질 최저 정밀도"도 사실이 아니다. 덧붙여 **기존 MXQ는 순수 INT8이 아니라
+> W8A16**이었다(Activation 기본값이 output/ffn=16bit). 상세·후속은
+> [`NPU_pe_quant_schemes.md`](NPU_pe_quant_schemes.md) 와
+> [`../inquiries/04_vit_quantization_speed/REPLY.md`](../inquiries/04_vit_quantization_speed/REPLY.md) 참조.
+>
+> 아래 원문은 당시 기록으로 보존한다(mixed_precision 필드에 한해 유효).
+
+"INT8보다 더 낮추면(4bit) 빨라지냐"를 실측. **결론(당시): mixed-precision 옵션은 존재하지만 이 경로에서 무시(no-op)된다.**
 
 ### 배경
 - `docs/programming_guide.md`의 "입력 데이터 타입 UINT8/INT8/float32"는 **입력 텐서 형식**이고, weight 양자화 비트와는 다른 축.
@@ -120,9 +140,11 @@ Global Core 중재(target cores 10개) 비용이 든다. ViT trunk는 이미 코
 - 컴파일은 "successful"로 끝나지만(에러 없음) 실제 양자화 비트에 영향 0. docs 미기재 = 실험적/미지원 정황과 일치.
 - (주의) 위 cos 0.9238은 calib 16장이라 낮다. 정식 배포본은 COCO 200장 calib: **full NPU `pe_full.mxq`(--qk16) = cos 0.99**, 레거시 trunk `pe_feat.mxq`(hybrid+CPU pool) = cos 0.997. 여기선 4종 상대비교가 목적이라 calib을 통일했을 뿐, 절대 정확도 비교 아님.
 
-### 결론
-- **양자화로 속도를 더 짜내는 길은 막혀 있다. INT8이 ARIES의 실질 최저 정밀도.** (bit_4는 API엔 있으나 무효)
-- 속도를 줄이려면 양자화가 아니라 **연산량 축소**(입력 해상도 336→224, 더 작은 PE 모델) 또는 **C++ 런타임**(GIL 제거) 뿐.
+### 결론 (당시 — 상단 정정 참조)
+- `mixed_precision` 필드로는 양자화를 더 낮출 수 없다. **이 판정은 지금도 유효하다.**
+- 다만 "양자화로 속도를 짜내는 길이 막혔다"는 확장 결론은 **2026-09-01 실측으로 뒤집혔다** —
+  역할별 비트폭 지정(`Weight(...=4)`)으로 W4A16이 동작하며 처리량 +43%.
+- 연산량 축소(입력 해상도, 더 작은 모델)·C++ 런타임은 여전히 유효한 별도 축이다.
 
 ---
 
