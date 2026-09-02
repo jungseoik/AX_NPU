@@ -8,7 +8,9 @@
   기존 CPU 서버 실측(단독 78분, +SWS 118분, +OPTQ 3~5h 예상 — `NPU_pe_quant_schemes.md` §4)이 GPU에서 해소됨.
 - md5 24개 전부 상이 → 튜닝 옵션이 실제로 가중치를 바꿨다는 바이너리 수준 증거.
   (동일 조건 tuned vs plain 직접 비교에서도 md5 상이 확인)
-- **cos 정확도는 미검증** — 이 서버(NPU 없음)에선 불가. NPU 서버에서
+- ~~cos 정확도는 미검증~~ → **검증 완료(2026-09-02)**: [`NPU_pe_quant_tuning_verify.md`](NPU_pe_quant_tuning_verify.md).
+  결과: **모든 양자화에서 튜닝 없음이 최선**(OPTQ·SWS가 9/9 케이스에서 cos 악화), W4A8_L5A16은 붕괴가 아니라 **cos 0.8790**(앞선 0.2609는 A16 이름 지정 오류였다).
+- (원문) cos 정확도는 미검증 — 이 서버(NPU 없음)에선 불가. NPU 서버에서
   `reports/scripts/bench_quant_schemes.py` 패턴으로 24종 검증 후 좋은 조합을 기존 경로로 승격할 것.
   관전 포인트: W4A16+SWS+OPTQ가 cos 0.9135(무보정)를 얼마나 회복하는지, SWS 단독 악화(0.8786)가 OPTQ 병용으로 반전되는지(문의 05 가설).
 

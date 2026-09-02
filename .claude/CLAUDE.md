@@ -78,6 +78,8 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - `reports/performance/NPU_pe_multicard_62ch_full.md` — full NPU 멀티카드 1→62ch (비포와 동일 구조)
   - `reports/performance/NPU_pe_1card_coremode_full.md` — 1장 코어모드×1~16ch 순수추론(슬롯 거동, latency)
   - `reports/design/SOLUTION_single_io_compile.md` — [비포] 단일 입출력 컴파일 + hybrid(0.997)
+  - `reports/performance/NPU_pe_quant_tuning_verify.md` — ★ 양자화×튜닝 24종 NPU 실측. **OPTQ·SWS는 쓰지 말 것**
+    (9/9 케이스에서 cos 악화, W8A16도 0.9937→0.9744). 배포는 튜닝 없음만. W4A8_L5A16은 cos 0.879로 보유·미배포
   - `reports/performance/NPU_pe_quant_schemes.md` — ★ 양자화 스킴(W8A16/W4A16/W4A8) × 코어모드 × 1~20채널 실측.
     배포 기본은 **W8A16**(cos 0.9936), W4A16은 크기 −42%·처리량 +13%·cos 0.9135, W4A8은 붕괴(미배포)
   - `reports/performance/NPU_pe_quant_tuning_compile.md` — [컴파일] 양자화 3종 × SWS/OPTQ 온오프 × single·global4 24종 GPU 스윕(조합당 5~8분). HF `<quant>/<tuning>/<scheme>/pe_full.mxq` + 루트 `TUNING_MATRIX.md`(컴파일 환경 표기). cos는 NPU 검증 대기
