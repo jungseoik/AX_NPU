@@ -1,5 +1,19 @@
 # 런북 — GPU 서버에서 qbcompiler 1.2.0 양자화 매트릭스 재현
 
+> ## ✅ 실행 기록 (2026-09-04, GPU 서버 Xeon 6530P + RTX PRO 6000×2)
+>
+> - **§3 매트릭스 24조합 전부 컴파일 완료** — 4워커 병렬(잡마다 새 `--rm` 컨테이너, OMP 32스레드),
+>   조합당 5~13분, 전체 벽시계 ~55분. §5-2 체크 통과: 24/24 로그에서 `aries-rb`·qk16 25개·(1,1024),
+>   md5 24개 유일, 크기 정상(W8≈327-330MB / W4≈188-192MB). `mxqtool show` 는 이 서버에 런타임이
+>   없어 **NPU 서버에서 확인 필요**.
+> - **HF 업로드 완료** — `<quant>/<tuning>/<scheme>/pe_full.mxq` 24개 + 루트 `TUNING_MATRIX.md`
+>   (철회 공지를 1.2.0 표로 교체, 컴파일 환경 명시). 로컬 원본: GPU 서버 `out/matrix_120/`.
+> - **§2.5 검증 B·C 완료** (아래 각 섹션에 결과 기입). 검증 중 `validate_compile_cli.sh` 가
+>   `--calib-data-path` 를 안 넘기는 버그 발견·수정(random calib으로 돌던 문제 — C 의 에러로 드러남).
+> - **다음(NPU 서버)**: §4 — `out/matrix_120/` 를 rsync 또는 HF에서 받아
+>   `verify_quant_tuning_matrix.py` 로 24종 cos 측정(회귀 4점 자동 대조), B(0.8932)·C(0.9126 동일성) cos 확정,
+>   `mxqtool show` 4항목 확인. 이후 §6 배포 판단(W8A16 sws_optq 우선).
+
 > **왜 다시 돌리나**: 기존 24종은 qbcompiler **1.1.2** 로 컴파일했고, 그 버전의 OPTQ/SearchWeightScale
 > 구현 문제로 튜닝본이 열화돼 있었다. 1.2.0 에서는 반대로 정확도가 올라간다.
 > 근거: [`performance/NPU_pe_quant_tuning_compiler_version.md`](performance/NPU_pe_quant_tuning_compiler_version.md)
@@ -207,7 +221,11 @@ python reports/scripts/verify_quant_tuning_matrix.py --src-dir <위 mxq 폴더> 
 **기대: cos 0.9642 (`✓ 기준 0.9642`).** 이 한 건이 맞으면 CLI 경로가 임시 하네스와 등가임이
 증명되고, 이후 매트릭스를 CLI 로 돌려도 된다. 어긋나면 `compile_quant_tuning_matrix.py` 로만 간다.
 
-### 검증 B — `--quant w4a8` 의 A16 주입
+### 검증 B — `--quant w4a8` 의 A16 주입 → **컴파일 측면 통과 (2026-09-04)**
+
+> GPU 서버에서 아래 명령 그대로 실행: `[quant] preset=w4a8 activation16=30`(qk16 25 + A16 5) ✓,
+> calib 200장 정상 주입, 산출물 188,065,891 bytes(≈기대 188.0MB). **cos 0.8932 는 NPU 검증 대기**
+> (산출물: GPU 서버 `out/validate_cli/pe_W4A8_L5A16_sws_optq_single.mxq`).
 
 **`--quant w4a8` 은 A16 텐서 5개를 자동으로 넣지 않는다.** `--a16` 으로 정확한 mblt 이름을
 직접 넘겨야 한다(부분문자열 매칭인 `--act16` 을 쓰면 엉뚱한 텐서가 걸린다 — 과거 W4A8 cos 0.2609
@@ -230,7 +248,16 @@ visual_transformer_resblocks_10_mlp_c_fc/reshape/gelu_0" \
 > 이 5개 이름은 `compile_quant_tuning_matrix.py` 의 `A16_TENSORS_W4A8` 에 하드코딩돼 있다.
 > 다른 체크포인트에서는 `--mode parse --dump-names` 로 다시 뽑아야 한다.
 
-### 검증 C — calibration 통계 캐시 (`--calib-stats-save/load`)
+### 검증 C — calibration 통계 캐시 (`--calib-stats-save/load`) → **기능 동작 확인 (2026-09-04)**
+
+> GPU 서버 실측: stats-save 컴파일 **424.4s** → stats-load 재사용 **185.6s (2.3배 단축)** ✓,
+> 출력 경로 정상(`_0.9999` 잔재 없음, `_normalize_stats_output` 동작) ✓. 크기 차 10바이트는
+> 저장 파일명 길이 차이(검증 A 와 동일 현상). **cos 0.9126 동일성만 NPU 검증 대기**
+> (산출물: `out/validate_cli/pe_W4A16_none_single{,_statsload}.mxq`). 추가 발견:
+> ① stats 는 파일이 아니라 **디렉토리**로 저장된다(~98KB). ② `--calib-stats-*` 는
+> `--calib-data-path` 필수(없으면 에러 — 이 에러 덕에 validate 스크립트의 calib 누락 버그를 잡음).
+> ③ GPU 메모리가 빠듯하면(당시 GPU0 에 vLLM 88GB 상주) stats-save 가 CUDA abort 로 죽는다 —
+> 여유 GPU 에선 정상.
 
 **전혀 검증되지 않은 기능이다.** 캘리브레이션이 컴파일 시간을 지배하므로(3개 병렬 CPU 실행에서
 61분 시점에 아직 76%) 통계를 재사용할 수 있으면 매트릭스 전체가 크게 빨라진다.
@@ -269,7 +296,7 @@ python -m pe_npu.compile --mode compile --quant w4a16 --scheme global4 --device 
 | C 통과 | `none` 조합 12개에 통계 재사용 → 시간 단축 |
 | C 실패 | 그냥 전부 풀 캘리브레이션. 기능은 별도 수정 대상 |
 
-**남은 것은 B·C 뿐이다.** GPU 에서 `--tests B,C` → 3건 컴파일 = 15~25분.
+~~**남은 것은 B·C 뿐이다.**~~ → **B·C 완료(2026-09-04, 위 각 섹션 결과 참조).** 남은 것은 NPU 서버의 cos 확정뿐.
 
 ---
 
@@ -353,9 +380,10 @@ python setup/upload_tuning_matrix_to_hf.py --src-dir out/matrix_120 --dry-run   
 python setup/upload_tuning_matrix_to_hf.py --src-dir out/matrix_120
 ```
 
-> **HF 업로드 전 확인**: 루트 `TUNING_MATRIX.md` 는 현재 **철회 공지**로 바뀌어 있다
-> (1.1.2 산출물 24개는 2026-09-03 삭제). 새 매트릭스를 올릴 때 공지를 실제 표로 교체해야 한다.
-> 배포 경로 `<quant>/<scheme>/` 와 루트 `<scheme>/` 는 건드리지 말 것 — 현행 배포본이다.
+> ~~**HF 업로드 전 확인**: 루트 `TUNING_MATRIX.md` 는 현재 **철회 공지**로 바뀌어 있다~~
+> → **완료(2026-09-04)**: 1.2.0 재컴파일 24종 업로드 + `TUNING_MATRIX.md` 를 철회 이력이 포함된
+> 새 표로 교체했다(`setup/upload_tuning_matrix_to_hf.py` 가 생성). cos 검증 상태가 문서에 명시돼 있다.
+> 배포 경로 `<quant>/<scheme>/` 와 루트 `<scheme>/` 는 건드리지 않았다 — 현행 배포본 그대로다.
 
 ---
 

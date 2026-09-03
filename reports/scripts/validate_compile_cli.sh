@@ -75,7 +75,8 @@ compile_one() {  # $1=파일명  $2...=pe_npu.compile 인자
   echo "[compile] $name"
   # shellcheck disable=SC2086
   bash setup/compile_in_docker.sh ${SDK_ARG:+--sdk "$SDK_ARG"} $FORCE \
-       --name "mblt_validate" "$@" --save "$dst" || { echo "[FAIL] $name 컴파일 실패"; return 1; }
+       --name "mblt_validate" "$@" --calib-data-path "$CALIB" --save "$dst" \
+    || { echo "[FAIL] $name 컴파일 실패"; return 1; }
   [ -f "$dst" ] || { echo "[FAIL] $name 산출물 없음"; return 1; }
   echo "[ok] $name  $(stat -c %s "$dst") bytes"
 }
