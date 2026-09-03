@@ -127,6 +127,28 @@ docker exec -w /workspace <컨테이너> python -m pe_npu.compile --mode parse
 부담스럽지만 GPU 라면 20분 남짓이다. 검증 방법이 깔끔한데, **이미 정답을 아는 조합을 다시 뽑아
 숫자가 맞는지 보면 된다**(§5-1 회귀 기준).
 
+### 한 줄로 돌리기
+
+세 검증을 순서대로 돌리고, NPU 가 있으면 cos 대조까지 이어가는 스크립트가 있다.
+
+```bash
+# 컴파일 서버(GPU/CPU 무관) — 이미지·디바이스는 자동 선택
+bash reports/scripts/validate_compile_cli.sh --sdk 1.1
+
+# 일부만
+bash reports/scripts/validate_compile_cli.sh --tests A
+
+# NPU 서버에서 검증만 (qbruntime 있는 python 지정)
+PYTHON=~/miniconda3/envs/pe_npu_host/bin/python \
+  bash reports/scripts/validate_compile_cli.sh --verify-only --out out/validate_cli --device 0
+```
+
+**이미 만들어진 mxq 는 건너뛴다.** 그래서 한 서버에서 일부를 돌리고 `out/` 만 rsync 로 옮겨
+다른 서버에서 이어 돌릴 수 있다. NPU 가 없는 서버면 mxq 만 만들고 검증 명령을 안내한다.
+검증은 §5-1 회귀 기준을 자동 대조해 이탈 시 **exit 1** 이다.
+
+아래는 그 스크립트가 실제로 무엇을 하는지, 그리고 왜 필요한지의 설명이다.
+
 ### 왜 필요한가
 
 1.2.0 실측 4점과 기존 24조합은 각각 임시 하네스와 `compile_quant_tuning_matrix.py` 로 뽑았다.
