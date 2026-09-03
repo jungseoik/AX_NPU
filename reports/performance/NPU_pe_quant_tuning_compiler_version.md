@@ -74,8 +74,12 @@ Hardware Version:    Aries2         # aries-rb 로 컴파일했으나 하드웨�
 따라서 **1.2.0 으로 컴파일한 mxq 가 드라이버 1.13 + 런타임 1.2.0 환경에서 그대로 로드·추론된다**(위 측정 전부가 그 환경).
 SDK 버전을 올리지 않아도 컴파일러만 1.2.0 을 쓰면 이득을 취할 수 있다.
 
-> **주의**: `pe_npu/compile.py` 는 `aries2` 를 하드코딩하고 있어(`_detect_score_matmuls`, `_parse_operators` 포함 4곳)
-> 1.2.0 컴파일러에서 그대로 실패한다. 1.2.0 을 쓰려면 `target_device` 를 인자화해야 한다.
+> **해결됨(2026-09-03)**: 이전에는 `pe_npu/compile.py` 가 `aries2` 를 하드코딩해(4곳) 1.2.0 에서 바로 실패했다.
+> 지금은 **`pe_npu/target_device.py` 가 `qbcompiler.__version__` 으로 자동 판별**한다
+> (1.1.x→`aries2` / 1.2.x→`aries-rb`). 우선순위: `--target-device` > 환경변수 `AX_NPU_TARGET_DEVICE` > 자동 감지 > `aries2` 폴백.
+> `pe_npu/compile.py`·`yolo_npu/compile.py`·`reports/scripts/compile_quant_tuning_matrix.py` 전부 연결됐고
+> 두 컨테이너에서 확인했다(1.1.2→aries2 / 1.2.0→aries-rb, 1.2.0 자체 `validate_target_device` 통과).
+> **추론 쪽은 변경 없음** — `pe_npu/inference.py` 에는 버전·타겟 의존 코드가 없다.
 
 ## 6. 컴파일 비용
 
@@ -94,4 +98,7 @@ GPU 서버에서는 조합당 5~8분이므로, 전체 재검증은 GPU 서버에
 2. **배포본 재검토** — W4A16+OPTQ+SWS 가 cos 0.9642 / 크기 −42% / 처리량 +13% 로
    실사용 후보가 되었다. 현행 배포본은 W8A16(0.9937).
    W8A16+OPTQ+SWS(0.9951) 는 현행보다 정확도가 더 높다.
-3. `pe_npu/compile.py` 의 `target_device` 인자화 + `setup/sdk_versions.json` 에 버전별 매핑 추가.
+3. ~~`pe_npu/compile.py` 의 `target_device` 인자화~~ → **완료**. `setup/sdk_versions.json` 에도
+   버전별 매핑(`compile.target_device`)을 넣었다.
+4. **재현 절차서**: [`../RUNBOOK_quant_matrix_120.md`](../RUNBOOK_quant_matrix_120.md) —
+   GPU 서버에서 clone 후 그대로 따라가면 24조합이 재현되고, 검증 스크립트가 위 4점을 회귀 기준으로 자동 대조한다.

@@ -42,9 +42,12 @@ def main():
     ap.add_argument("--calib", required=True)
     ap.add_argument("--save", required=True)
     ap.add_argument("--device", default="gpu", choices=["cpu", "gpu"])
+    from pe_npu.target_device import add_argument as _add_target_device_arg
+    _add_target_device_arg(ap)
     a = ap.parse_args()
 
     from pe_npu.compile import _build_feed_dict, _detect_score_matmuls
+    from pe_npu.target_device import resolve_target_device
     from pe_npu.pe_model import load_pe
     from qbcompiler import mxq_compile, BitConfig, CalibrationConfig
     from qbcompiler.configs import OptqConfig, SearchWeightScaleConfig
@@ -55,7 +58,7 @@ def main():
     log(f"model load+sanity {time.time() - t0:.0f}s — output {tuple(out.shape)}")
 
     t = time.time()
-    qk_names = _detect_score_matmuls(wrapper, fd)
+    qk_names = _detect_score_matmuls(wrapper, fd, a.target_device)
     log(f"qk16 detect {time.time() - t:.0f}s — score MatMul {len(qk_names)}개")
     if not qk_names:
         raise SystemExit("score MatMul 탐지 실패 — full 모드에 qk16 없이는 진행 금지")
@@ -98,7 +101,7 @@ def main():
     t = time.time()
     mxq_compile(
         model=wrapper, backend="torch", feed_dict=fd, save_path=a.save,
-        target_device="aries2", yolo_decode_include=True,
+        target_device=resolve_target_device(a.target_device), yolo_decode_include=True,
         inference_scheme=a.scheme, device=a.device,
         calib_data_path=calib, calibration_config=cc,
         bit_config=bit, **tuning,

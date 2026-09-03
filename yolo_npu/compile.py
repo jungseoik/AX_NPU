@@ -62,14 +62,17 @@ def build_calib(calib_dir: str, out_dir: str, num: int = 64, imgsz: int = IMG_SI
 
 
 def compile_model(model_name: str, out_dir: str, schemes=SCHEMES, calib_list: str = None,
-                  device: str = "cpu", imgsz: int = IMG_SIZE):
+                  device: str = "cpu", imgsz: int = IMG_SIZE,
+                  target_device: str = None):
     """<model_name>을 지정 코어모드들로 MXQ 컴파일. 반환: {scheme: mxq_path}."""
     os.makedirs(out_dir, exist_ok=True)
     onnx = export_onnx(model_name, out_dir, imgsz)
     print(f"[onnx] {onnx}")
 
     from qbcompiler import mxq_compile
-    common = dict(model=onnx, backend="onnx", target_device="aries2",
+    from pe_npu.target_device import resolve_target_device
+    common = dict(model=onnx, backend="onnx",
+                  target_device=resolve_target_device(target_device),
                   yolo_decode_include=True, device=device)
     if calib_list:
         from qbcompiler import CalibrationConfig
@@ -100,11 +103,14 @@ def main():
                     help="calib 이미지 폴더 (미지정 시 random calib = latency용)")
     ap.add_argument("--calib-num", type=int, default=64)
     ap.add_argument("--device", default="cpu", choices=["cpu", "gpu"])
+    from pe_npu.target_device import add_argument as _add_target_device_arg
+    _add_target_device_arg(ap)
     args = ap.parse_args()
 
     calib_list = build_calib(args.calib, args.out, args.calib_num) if args.calib else None
     schemes = [s.strip() for s in args.schemes.split(",") if s.strip()]
-    compile_model(args.model, args.out, schemes=schemes, calib_list=calib_list, device=args.device)
+    compile_model(args.model, args.out, schemes=schemes, calib_list=calib_list,
+                  device=args.device, target_device=args.target_device)
 
 
 if __name__ == "__main__":
