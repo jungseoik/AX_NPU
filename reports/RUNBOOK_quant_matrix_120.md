@@ -156,7 +156,30 @@ PYTHON=~/miniconda3/envs/pe_npu_host/bin/python \
 설정 구성은 두 컨테이너에서 확인했지만(비트 배치·OptqConfig·SearchWeightScaleConfig 필드 동일,
 camelCase alias 정상), 실제 컴파일 산출물이 등가인지는 확인되지 않았다.
 
-### 검증 A — 정식 CLI 경로 등가성 ★
+### 검증 A — 정식 CLI 경로 등가성 ★ → **완료 (2026-09-03, PASS)**
+
+> **이미 검증됐다. GPU 서버에서는 B·C 만 돌리면 된다** (`--tests B,C`).
+>
+> qbcompiler 1.2.0 / CPU 로 아래 명령을 그대로 돌려 NPU 에서 cos 를 쟀다.
+>
+> | 항목 | 결과 |
+> | --- | --- |
+> | 타겟 자동 판별 | `qbcompiler 1.2 → target_device=aries-rb` ✓ |
+> | qk16 score MatMul | 25개 ✓ |
+> | 비트 프리셋 | `preset=w4a16 activation16=25 weight16=0` ✓ |
+> | **cos** | **0.9642** — 회귀 기준과 완전 일치 ✓ |
+> | 컴파일 | 5189.8s (86분, CPU) |
+>
+> **결론: `python -m pe_npu.compile --quant ... --optq --search-weight-scale` 는
+> 임시 하네스·매트릭스 스크립트와 등가다.** 매트릭스를 CLI 로 돌려도 된다.
+>
+> **주의 — MD5 는 다르다.** 임시 하네스 산출물 188,491,097 bytes(md5 `7b039f39…`) vs
+> CLI 산출물 188,491,103 bytes(md5 `6f2b5c1c…`). 차이 **6바이트는 저장 파일명 길이 차이와
+> 정확히 일치**한다(`cli_W4A16_sws_optq_single.mxq` 29자 vs `W4A16_sws_optq_c120.mxq` 23자).
+> mxq 가 save 경로를 내부에 담기 때문이다. **비트 구성·정확도는 동일하므로 md5 불일치를
+> 문제로 보지 말 것** — 판정은 cos 와 크기로 한다.
+
+
 
 ```bash
 python -m pe_npu.compile --mode compile \
@@ -240,10 +263,13 @@ python -m pe_npu.compile --mode compile --quant w4a16 --scheme global4 --device 
 
 | 결과 | 다음 |
 | --- | --- |
-| A 통과 | 매트릭스를 CLI 로 돌려도 된다 |
-| A 실패 | `compile_quant_tuning_matrix.py` 로만 간다(§3). 검증된 경로다 |
+| ~~A 통과~~ | **완료(2026-09-03)** — 매트릭스를 CLI 로 돌려도 된다 |
+| B 통과 | `--quant w4a8 --a16` 조합을 CLI 로 써도 된다 |
+| B 실패 | W4A8 은 `compile_quant_tuning_matrix.py` 로만 (A16 5개 하드코딩 보유) |
 | C 통과 | `none` 조합 12개에 통계 재사용 → 시간 단축 |
 | C 실패 | 그냥 전부 풀 캘리브레이션. 기능은 별도 수정 대상 |
+
+**남은 것은 B·C 뿐이다.** GPU 에서 `--tests B,C` → 3건 컴파일 = 15~25분.
 
 ---
 

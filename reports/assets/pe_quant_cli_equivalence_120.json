@@ -1,0 +1,20 @@
+{
+ "results": [
+  {
+   "quant": "W4A16",
+   "tuning": "sws_optq",
+   "scheme": "single",
+   "mxq": "/tmp/w4a16/cli_stage/pe_W4A16_sws_optq_single.mxq",
+   "size_mb": 188.5,
+   "cos_mean": 0.9642,
+   "cos_min": 0.9401,
+   "ms": {
+    "1": 268.0,
+    "20": 1134.8
+   },
+   "img_s_max_ch": 17.62,
+   "baseline_120": 0.9642,
+   "baseline_delta": 0.0
+  }
+ ]
+}
