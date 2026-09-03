@@ -78,8 +78,11 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - `reports/performance/NPU_pe_multicard_62ch_full.md` — full NPU 멀티카드 1→62ch (비포와 동일 구조)
   - `reports/performance/NPU_pe_1card_coremode_full.md` — 1장 코어모드×1~16ch 순수추론(슬롯 거동, latency)
   - `reports/design/SOLUTION_single_io_compile.md` — [비포] 단일 입출력 컴파일 + hybrid(0.997)
-  - `reports/performance/NPU_pe_quant_tuning_verify.md` — ★ 양자화×튜닝 24종 NPU 실측. **OPTQ·SWS는 쓰지 말 것**
-    (9/9 케이스에서 cos 악화, W8A16도 0.9937→0.9744). 배포는 튜닝 없음만. W4A8_L5A16은 cos 0.879로 보유·미배포
+  - `reports/performance/NPU_pe_quant_tuning_compiler_version.md` — ★★ **OPTQ·SWS 열화는 qbcompiler 1.1.2 버그**(2026-09-03).
+    1.2.0으로 컴파일하면 부호가 뒤집혀 **정확도가 올라간다**: W4A16 0.8795→**0.9642**, W8A16 0.9747→**0.9951**, W4A8+A16×5 0.8560→0.8932.
+    튜닝 끈 베이스라인은 두 버전 동일(0.9110→0.9126) → 차이는 전적으로 튜닝 구현. 벤더 회신 수치(0.973/0.905)도 1.2.0에서 재현됨.
+    `aries-rb`=Aries2(mxq v7 동일)라 **1.2.0 컴파일본이 드라이버 1.13에서 그대로 돈다**. 단 `pe_npu/compile.py`가 `aries2`를 4곳 하드코딩 → 1.2.0에선 실패, `target_device` 인자화 필요
+  - `reports/performance/NPU_pe_quant_tuning_verify.md` — [1.1.2 한정] 양자화×튜닝 24종 NPU 실측(9/9 cos 악화). **위 문서에서 원인 규명·정정됨** — 배포 판단 근거로 쓰지 말 것. W4A8_L5A16은 cos 0.879로 보유·미배포
   - `reports/performance/NPU_pe_quant_schemes.md` — ★ 양자화 스킴(W8A16/W4A16/W4A8) × 코어모드 × 1~20채널 실측.
     배포 기본은 **W8A16**(cos 0.9936), W4A16은 크기 −42%·처리량 +13%·cos 0.9135, W4A8은 붕괴(미배포)
   - `reports/performance/NPU_pe_quant_tuning_compile.md` — [컴파일] 양자화 3종 × SWS/OPTQ 온오프 × single·global4 24종 GPU 스윕(조합당 5~8분). HF `<quant>/<tuning>/<scheme>/pe_full.mxq` + 루트 `TUNING_MATRIX.md`(컴파일 환경 표기). cos는 NPU 검증 대기

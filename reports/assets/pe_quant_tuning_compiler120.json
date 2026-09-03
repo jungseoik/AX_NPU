@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "note": "qbcompiler 1.2.0 (SDK 1.1v) CPU 컴파일 + 드라이버 1.13/런타임 1.2.0 NPU 측정",
+    "calib": "COCO val2017 200장",
+    "n_cos": 20,
+    "n_speed": 32,
+    "device": 7,
+    "mxq_format": "0x70000 (v7)",
+    "hardware_version": "Aries2"
+  },
+  "results": [
+    {
+      "quant": "W4A16",
+      "tuning": "none",
+      "scheme": "single",
+      "compiler": "1.2.0",
+      "target_device": "aries-rb",
+      "size_mb": 188.5,
+      "cos_mean": 0.9126,
+      "cos_min": 0.8564,
+      "cos_max": 0.949,
+      "throughput_img_s": 19.23
+    },
+    {
+      "quant": "W4A16",
+      "tuning": "sws_optq",
+      "scheme": "single",
+      "compiler": "1.2.0",
+      "target_device": "aries-rb",
+      "size_mb": 188.5,
+      "cos_mean": 0.9642,
+      "cos_min": 0.9401,
+      "cos_max": 0.9838,
+      "throughput_img_s": 22.36
+    },
+    {
+      "quant": "W8A16",
+      "tuning": "sws_optq",
+      "scheme": "single",
+      "compiler": "1.2.0",
+      "target_device": "aries-rb",
+      "size_mb": 326.9,
+      "cos_mean": 0.9951,
+      "cos_min": 0.9715,
+      "cos_max": 0.9979,
+      "throughput_img_s": 14.19
+    },
+    {
+      "quant": "W4A8_L5A16",
+      "tuning": "sws_optq",
+      "scheme": "single",
+      "compiler": "1.2.0",
+      "target_device": "aries-rb",
+      "size_mb": 188.0,
+      "cos_mean": 0.8932,
+      "cos_min": 0.7833,
+      "cos_max": 0.9495,
+      "throughput_img_s": 22.18
+    }
+  ]
+}
