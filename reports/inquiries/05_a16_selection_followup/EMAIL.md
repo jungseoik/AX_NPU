@@ -71,7 +71,9 @@ NPU(Aries2)에서 측정한 결과입니다.
 2. 그렇다면 튜닝 옵션 사용 시 **권장 최소 컴파일러 버전**을 1.2.0 으로 안내해 주시면
    저희 같은 사용자가 같은 혼선을 겪지 않을 것 같습니다.
 
-참고로 `SearchWeightScaleConfig` 의 필드 구성도 두 버전 간에 달라져 있었습니다.
+참고로 `SearchWeightScaleConfig` / `OptqConfig` 의 **설정 필드 구성은 두 버전이 동일**했습니다
+(`apply` + `transformer(query/key/value/out/ffn)`, `attributes(actOrder/blockSize/percDamp)`).
+저희가 넘긴 값도 양쪽 동일합니다. 그래서 설정 인터페이스가 아니라 **내부 구현** 차이로 보고 있습니다.
 
 ## 3. `select_a16.py` 파일을 받을 수 있을까요?
 
