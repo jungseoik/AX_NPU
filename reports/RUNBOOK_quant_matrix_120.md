@@ -121,6 +121,110 @@ docker exec -w /workspace <컨테이너> python -m pe_npu.compile --mode parse
 
 ---
 
+## 2.5. 미검증 코드 경로 검증 — GPU 에서 20~25분
+
+**GPU 에서는 조합당 5~8분이므로 아래를 먼저 털고 가는 게 이득이다.** CPU 에서는 건당 64분이라
+부담스럽지만 GPU 라면 20분 남짓이다. 검증 방법이 깔끔한데, **이미 정답을 아는 조합을 다시 뽑아
+숫자가 맞는지 보면 된다**(§5-1 회귀 기준).
+
+### 왜 필요한가
+
+1.2.0 실측 4점과 기존 24조합은 각각 임시 하네스와 `compile_quant_tuning_matrix.py` 로 뽑았다.
+**정식 CLI(`python -m pe_npu.compile --quant ... --optq ...`) 로 컴파일한 적이 없다.**
+설정 구성은 두 컨테이너에서 확인했지만(비트 배치·OptqConfig·SearchWeightScaleConfig 필드 동일,
+camelCase alias 정상), 실제 컴파일 산출물이 등가인지는 확인되지 않았다.
+
+### 검증 A — 정식 CLI 경로 등가성 ★
+
+```bash
+python -m pe_npu.compile --mode compile \
+  --quant w4a16 --optq --search-weight-scale \
+  --scheme single --device gpu \
+  --calib-data-path download/calib_coco_hwc \
+  --save out/cli_W4A16_sws_optq_single.mxq
+```
+
+로그에서 확인:
+
+| 항목 | 기대 |
+| --- | --- |
+| `[target]` | `qbcompiler 1.2 → target_device=aries-rb` |
+| `[quant]` | `preset=w4a16  activation16=25  weight16=0` |
+| `[qk16]` | score MatMul **25개** |
+| `[OK]` | `size_bytes` ≈ 188,500,000 |
+
+그다음 NPU 서버에서 cos:
+
+```bash
+python reports/scripts/verify_quant_tuning_matrix.py --src-dir <위 mxq 폴더> --device 0
+```
+
+**기대: cos 0.9642 (`✓ 기준 0.9642`).** 이 한 건이 맞으면 CLI 경로가 임시 하네스와 등가임이
+증명되고, 이후 매트릭스를 CLI 로 돌려도 된다. 어긋나면 `compile_quant_tuning_matrix.py` 로만 간다.
+
+### 검증 B — `--quant w4a8` 의 A16 주입
+
+**`--quant w4a8` 은 A16 텐서 5개를 자동으로 넣지 않는다.** `--a16` 으로 정확한 mblt 이름을
+직접 넘겨야 한다(부분문자열 매칭인 `--act16` 을 쓰면 엉뚱한 텐서가 걸린다 — 과거 W4A8 cos 0.2609
+오측정의 원인이 이것이었다).
+
+```bash
+python -m pe_npu.compile --mode compile --quant w4a8 \
+  --a16 "visual_transformer_resblocks_3_mlp_c_proj,\
+visual_transformer_resblocks_12_mlp_c_proj,\
+visual_transformer_resblocks_10_mlp_c_proj,\
+visual_transformer_resblocks_12_mlp_c_fc/reshape/gelu_0,\
+visual_transformer_resblocks_10_mlp_c_fc/reshape/gelu_0" \
+  --optq --search-weight-scale --scheme single --device gpu \
+  --calib-data-path download/calib_coco_hwc --save out/cli_W4A8_sws_optq_single.mxq
+```
+
+`[quant] activation16=30` (qk16 25개 + A16 5개) 이어야 한다. **기대 cos 0.8932.**
+`activation16=25` 면 A16 5개가 안 들어간 것이다.
+
+> 이 5개 이름은 `compile_quant_tuning_matrix.py` 의 `A16_TENSORS_W4A8` 에 하드코딩돼 있다.
+> 다른 체크포인트에서는 `--mode parse --dump-names` 로 다시 뽑아야 한다.
+
+### 검증 C — calibration 통계 캐시 (`--calib-stats-save/load`)
+
+**전혀 검증되지 않은 기능이다.** 캘리브레이션이 컴파일 시간을 지배하므로(3개 병렬 CPU 실행에서
+61분 시점에 아직 76%) 통계를 재사용할 수 있으면 매트릭스 전체가 크게 빨라진다.
+
+```bash
+# 1) 통계 저장하며 컴파일
+python -m pe_npu.compile --mode compile --quant w4a16 --scheme single --device gpu \
+  --calib-data-path download/calib_coco_hwc \
+  --calib-stats-save out/calib_stats.bin --save out/stats_save.mxq
+
+# 2) 통계 재사용
+python -m pe_npu.compile --mode compile --quant w4a16 --scheme global4 --device gpu \
+  --calib-data-path download/calib_coco_hwc \
+  --calib-stats-load out/calib_stats.bin --save out/stats_load.mxq
+```
+
+확인할 것:
+
+- [ ] 2) 가 1) 보다 **실제로 빨라지는가** (`compile_seconds` 비교)
+- [ ] 산출물 cos 가 통계 없이 뽑은 것과 같은가 (W4A16 `none` 기준 **0.9126**)
+- [ ] 출력 경로가 `out/stats_load.mxq` 로 정상화되는가
+      — qbcompiler 가 `_0.9999` 접미사를 붙이는 quirk 를 코드가 rename 으로 보정한다(`_normalize_stats_output`).
+        `out/stats_load_0.9999.mxq` 가 남아 있으면 그 보정이 실패한 것이다
+
+> **제약**: `--calib-stats-load` 는 `--optq` 와 병용할 수 없다(코드가 막는다).
+> 1.1.2 통계에 OPTQ Hessian 이 없어서다. 1.2.0 에서 이 제약이 풀렸는지도 함께 확인할 가치가 있다
+> (풀렸다면 `_validate_calibration_strategy` 를 버전 조건부로 완화). 현재로선 튜닝 없는 조합에만 쓸 수 있다.
+
+### 검증 결과에 따른 분기
+
+| 결과 | 다음 |
+| --- | --- |
+| A 통과 | 매트릭스를 CLI 로 돌려도 된다 |
+| A 실패 | `compile_quant_tuning_matrix.py` 로만 간다(§3). 검증된 경로다 |
+| C 통과 | `none` 조합 12개에 통계 재사용 → 시간 단축 |
+| C 실패 | 그냥 전부 풀 캘리브레이션. 기능은 별도 수정 대상 |
+
+---
+
 ## 3. 매트릭스 컴파일 (24조합)
 
 ```bash
