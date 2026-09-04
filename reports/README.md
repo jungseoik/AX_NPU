@@ -71,6 +71,7 @@ YOLO11 침입감지 서비스 모듈 e2e를 측정→진단→재측정한 스�
 | [test_results.md](testing/test_results.md) | 컴파일/추론 테스트 결과 종합 |
 | [sdk_v11_compat.md](testing/sdk_v11_compat.md) | ★ SDK 1.1v 호환성 — 기존 HF mxq는 런타임 1.4.0에서 재컴파일 불필요(cos 0.993/15.4 img/s), 컴파일은 cpu 이미지로 충분 |
 | [NPU_pe_quant_schemes.md](performance/NPU_pe_quant_schemes.md) | ★ 양자화 스킴 비교 W8A16/W4A16/W4A8 × 코어모드 4종 × 1~20채널 지연 + cos. W4A16 동작 확인(크기 −42%, 처리량 +13%), W4A8은 붕괴 |
+| [NPU_pe_quant_tuning_matrix_120.md](performance/NPU_pe_quant_tuning_matrix_120.md) | ★★ 1.2.0 매트릭스 **24종 전수 NPU 검증** — 튜닝 3/3 양자화에서 정확도 상승, 코어모드는 정확도 무관·지연만 상이, 배포 후보 비교(W8A16+튜닝=공짜 교체) |
 | [NPU_pe_quant_tuning_compiler_version.md](performance/NPU_pe_quant_tuning_compiler_version.md) | ★★ **튜닝 열화는 qbcompiler 1.1.2 버그였다** — 1.2.0에서 부호 반전(W4A16 0.8795→0.9642, W8A16 0.9747→0.9951), 베이스라인은 동일, 벤더 수치 재현 |
 | [RUNBOOK_quant_matrix_120.md](RUNBOOK_quant_matrix_120.md) | ★ **GPU 서버 재현 절차서** — 1.2.0 매트릭스 24조합(양자화3×튜닝2×코어모드4) 컴파일→검증, 회귀 기준값·체크리스트·알려진 함정 |
 | [NPU_pe_quant_tuning_verify.md](performance/NPU_pe_quant_tuning_verify.md) | [1.1.2 한정] 양자화×튜닝 24종 NPU 검증 — 튜닝 9/9 악화(원인=컴파일러 버전, 위 문서에서 정정), W4A8_L5A16 cos 0.8790 |

@@ -36,12 +36,33 @@ QUANTS = ["W8A16", "W4A16", "W4A8_L5A16"]
 TUNINGS = ["sws_optq", "optq", "sws", "none"]
 SCHEMES = ["global4", "global8", "single", "multi"]
 
-#: 1.2.0 실측 회귀 기준(single). 벗어나면 설정이 다르다. → RUNBOOK §5-1
+#: 1.2.0 매트릭스 24종 NPU 실측(2026-09-04, GPU 컴파일 + 표준 이미지셋 download/coco/val2017 앞 20장).
+#: 재컴파일 후 회귀 판정용. → reports/performance/NPU_pe_quant_tuning_matrix_120.md
 BASELINE_120 = {
-    ("W8A16", "sws_optq", "single"): 0.9951,
-    ("W4A16", "none", "single"): 0.9126,
-    ("W4A16", "sws_optq", "single"): 0.9642,
-    ("W4A8_L5A16", "sws_optq", "single"): 0.8932,
+    ("W8A16", "none", "single"): 0.9937,
+    ("W8A16", "none", "multi"): 0.9937,
+    ("W8A16", "none", "global4"): 0.9937,
+    ("W8A16", "none", "global8"): 0.9937,
+    ("W8A16", "sws_optq", "single"): 0.9946,
+    ("W8A16", "sws_optq", "multi"): 0.9946,
+    ("W8A16", "sws_optq", "global4"): 0.9946,
+    ("W8A16", "sws_optq", "global8"): 0.9946,
+    ("W4A16", "none", "single"): 0.9175,
+    ("W4A16", "none", "multi"): 0.9173,
+    ("W4A16", "none", "global4"): 0.9175,
+    ("W4A16", "none", "global8"): 0.9175,
+    ("W4A16", "sws_optq", "single"): 0.9654,
+    ("W4A16", "sws_optq", "multi"): 0.9654,
+    ("W4A16", "sws_optq", "global4"): 0.9654,
+    ("W4A16", "sws_optq", "global8"): 0.9654,
+    ("W4A8_L5A16", "none", "single"): 0.8884,
+    ("W4A8_L5A16", "none", "multi"): 0.8884,
+    ("W4A8_L5A16", "none", "global4"): 0.8884,
+    ("W4A8_L5A16", "none", "global8"): 0.8884,
+    ("W4A8_L5A16", "sws_optq", "single"): 0.9420,
+    ("W4A8_L5A16", "sws_optq", "multi"): 0.9420,
+    ("W4A8_L5A16", "sws_optq", "global4"): 0.9420,
+    ("W4A8_L5A16", "sws_optq", "global8"): 0.9420,
 }
 TOLERANCE = 0.005
 
@@ -106,7 +127,8 @@ def main() -> int:
     ap.add_argument("--tunings", default=None, help="--from-hf 에서만: 쉼표 구분")
     ap.add_argument("--schemes", default=None, help="--from-hf 에서만: 쉼표 구분")
     ap.add_argument("--out", type=Path, default=Path("reports/assets/verify_matrix.json"))
-    ap.add_argument("--ref-cache", type=Path, default=Path("/tmp/pe_ref_emb.npy"))
+    ap.add_argument("--ref-cache", type=Path, default=Path("/tmp/pe_ref_emb.npz"),
+                    help="참조 임베딩 캐시(.npz). 이미지 목록이 다르면 자동 재계산")
     a = ap.parse_args()
 
     ch = [int(x) for x in a.channels.split(",") if x.strip()]
@@ -117,18 +139,33 @@ def main() -> int:
                          f"(필요 {max(max(ch), a.n_cos)}장) — --coco-dir 확인")
     batch = np.stack([preprocess_image(p) for p in paths])
 
+    # 참조 임베딩은 "이 이미지들"에 대한 값이다. 캐시를 다른 --coco-dir 로 재사용하면
+    # cos 가 조용히 무의미해진다(실제로 겪었다: W8A16 none 이 0.9937 대신 0.3396).
+    # → 캐시에 이미지 이름 목록을 함께 저장하고, 어긋나면 재계산한다.
+    ref_key = [p.name for p in paths[:a.n_cos]]
+    emb_ref = None
     if a.ref_cache.exists():
-        emb_ref = np.load(a.ref_cache)
-        print(f"[ref] 캐시 재사용 {a.ref_cache} {emb_ref.shape}", flush=True)
-    else:
+        try:
+            z = np.load(a.ref_cache, allow_pickle=True)
+            if isinstance(z, np.ndarray):          # 구 포맷(.npy, 키 없음) — 신뢰할 수 없다
+                print(f"[ref] 구 캐시({a.ref_cache})는 이미지 목록이 없어 재계산한다", flush=True)
+            elif list(z["images"]) != ref_key:
+                print(f"[ref] 캐시가 다른 이미지 세트 기준 → 재계산 "
+                      f"(캐시 {list(z['images'])[0]}… vs 지금 {ref_key[0]}…)", flush=True)
+            else:
+                emb_ref = z["emb"]
+                print(f"[ref] 캐시 재사용 {a.ref_cache} {emb_ref.shape}", flush=True)
+        except Exception as e:
+            print(f"[ref] 캐시 읽기 실패({type(e).__name__}) → 재계산", flush=True)
+    if emb_ref is None:
         print("[ref] 원본 PyTorch 임베딩 계산 중(패치 모델은 batch=1 전용이라 1장씩)", flush=True)
         ref = load_pe(model_name="PE-Core-L14-336", mode="full", patch=True).eval()
         with torch.no_grad():
             emb_ref = np.stack([ref(torch.from_numpy(batch[i:i + 1])).cpu().numpy().reshape(-1)
                                 for i in range(a.n_cos)])
         a.ref_cache.parent.mkdir(parents=True, exist_ok=True)
-        np.save(a.ref_cache, emb_ref)
-        print(f"[ref] {emb_ref.shape} → {a.ref_cache}", flush=True)
+        np.savez(a.ref_cache, emb=emb_ref, images=np.array(ref_key))
+        print(f"[ref] {emb_ref.shape} → {a.ref_cache} (이미지 목록 동봉)", flush=True)
 
     if a.src_dir:
         jobs = discover_local(a.src_dir)

@@ -1,0 +1,444 @@
+{
+ "results": [
+  {
+   "quant": "W8A16",
+   "tuning": "none",
+   "scheme": "single",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W8A16/none/single/pe_full.mxq",
+   "size_mb": 326.9,
+   "cos_mean": 0.9937,
+   "cos_min": 0.9778,
+   "ms": {
+    "1": 295.3,
+    "4": 396.1,
+    "8": 537.8,
+    "12": 980.3,
+    "16": 1146.6,
+    "20": 1528.4
+   },
+   "img_s_max_ch": 13.09
+  },
+  {
+   "quant": "W8A16",
+   "tuning": "none",
+   "scheme": "multi",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W8A16/none/multi/pe_full.mxq",
+   "size_mb": 329.7,
+   "cos_mean": 0.9937,
+   "cos_min": 0.9778,
+   "ms": {
+    "1": 373.9,
+    "4": 1497.8,
+    "8": 2993.9,
+    "12": 4497.0,
+    "16": 5992.4,
+    "20": 7488.8
+   },
+   "img_s_max_ch": 2.67
+  },
+  {
+   "quant": "W8A16",
+   "tuning": "none",
+   "scheme": "global4",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W8A16/none/global4/pe_full.mxq",
+   "size_mb": 328.8,
+   "cos_mean": 0.9937,
+   "cos_min": 0.9778,
+   "ms": {
+    "1": 125.5,
+    "4": 368.9,
+    "8": 703.4,
+    "12": 1004.9,
+    "16": 1347.8,
+    "20": 1674.9
+   },
+   "img_s_max_ch": 11.94
+  },
+  {
+   "quant": "W8A16",
+   "tuning": "none",
+   "scheme": "global8",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W8A16/none/global8/pe_full.mxq",
+   "size_mb": 330.2,
+   "cos_mean": 0.9937,
+   "cos_min": 0.9778,
+   "ms": {
+    "1": 187.2,
+    "4": 521.4,
+    "8": 1042.9,
+    "12": 1565.6,
+    "16": 2198.5,
+    "20": 2837.7
+   },
+   "img_s_max_ch": 7.05
+  },
+  {
+   "quant": "W8A16",
+   "tuning": "sws_optq",
+   "scheme": "single",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W8A16/sws_optq/single/pe_full.mxq",
+   "size_mb": 326.9,
+   "cos_mean": 0.9946,
+   "cos_min": 0.977,
+   "ms": {
+    "1": 294.3,
+    "4": 393.6,
+    "8": 587.0,
+    "12": 915.2,
+    "16": 1130.1,
+    "20": 1508.8
+   },
+   "img_s_max_ch": 13.26,
+   "baseline_120": 0.9951,
+   "baseline_delta": -0.0005
+  },
+  {
+   "quant": "W8A16",
+   "tuning": "sws_optq",
+   "scheme": "multi",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W8A16/sws_optq/multi/pe_full.mxq",
+   "size_mb": 329.7,
+   "cos_mean": 0.9946,
+   "cos_min": 0.977,
+   "ms": {
+    "1": 374.6,
+    "4": 1499.0,
+    "8": 2996.2,
+    "12": 4497.9,
+    "16": 5988.7,
+    "20": 7492.7
+   },
+   "img_s_max_ch": 2.67
+  },
+  {
+   "quant": "W8A16",
+   "tuning": "sws_optq",
+   "scheme": "global4",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W8A16/sws_optq/global4/pe_full.mxq",
+   "size_mb": 328.8,
+   "cos_mean": 0.9946,
+   "cos_min": 0.977,
+   "ms": {
+    "1": 125.8,
+    "4": 374.4,
+    "8": 714.8,
+    "12": 1004.5,
+    "16": 1351.1,
+    "20": 1676.7
+   },
+   "img_s_max_ch": 11.93
+  },
+  {
+   "quant": "W8A16",
+   "tuning": "sws_optq",
+   "scheme": "global8",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W8A16/sws_optq/global8/pe_full.mxq",
+   "size_mb": 330.2,
+   "cos_mean": 0.9946,
+   "cos_min": 0.976,
+   "ms": {
+    "1": 189.2,
+    "4": 634.4,
+    "8": 1042.1,
+    "12": 1564.9,
+    "16": 2199.8,
+    "20": 2723.9
+   },
+   "img_s_max_ch": 7.34
+  },
+  {
+   "quant": "W4A16",
+   "tuning": "none",
+   "scheme": "single",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A16/none/single/pe_full.mxq",
+   "size_mb": 188.5,
+   "cos_mean": 0.9175,
+   "cos_min": 0.8575,
+   "ms": {
+    "1": 267.0,
+    "4": 319.4,
+    "8": 369.2,
+    "12": 698.9,
+    "16": 836.5,
+    "20": 1128.3
+   },
+   "img_s_max_ch": 17.73,
+   "baseline_120": 0.9126,
+   "baseline_delta": 0.0049
+  },
+  {
+   "quant": "W4A16",
+   "tuning": "none",
+   "scheme": "multi",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A16/none/multi/pe_full.mxq",
+   "size_mb": 191.2,
+   "cos_mean": 0.9173,
+   "cos_min": 0.8516,
+   "ms": {
+    "1": 353.5,
+    "4": 1415.1,
+    "8": 2828.5,
+    "12": 4255.7,
+    "16": 5670.7,
+    "20": 7086.5
+   },
+   "img_s_max_ch": 2.82
+  },
+  {
+   "quant": "W4A16",
+   "tuning": "none",
+   "scheme": "global4",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A16/none/global4/pe_full.mxq",
+   "size_mb": 190.3,
+   "cos_mean": 0.9175,
+   "cos_min": 0.8575,
+   "ms": {
+    "1": 115.4,
+    "4": 343.6,
+    "8": 668.9,
+    "12": 915.8,
+    "16": 1261.3,
+    "20": 1490.6
+   },
+   "img_s_max_ch": 13.42
+  },
+  {
+   "quant": "W4A16",
+   "tuning": "none",
+   "scheme": "global8",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A16/none/global8/pe_full.mxq",
+   "size_mb": 191.7,
+   "cos_mean": 0.9175,
+   "cos_min": 0.8575,
+   "ms": {
+    "1": 182.6,
+    "4": 501.4,
+    "8": 1000.1,
+    "12": 1505.2,
+    "16": 2128.1,
+    "20": 2619.7
+   },
+   "img_s_max_ch": 7.63
+  },
+  {
+   "quant": "W4A16",
+   "tuning": "sws_optq",
+   "scheme": "single",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A16/sws_optq/single/pe_full.mxq",
+   "size_mb": 188.5,
+   "cos_mean": 0.9654,
+   "cos_min": 0.9401,
+   "ms": {
+    "1": 267.1,
+    "4": 316.2,
+    "8": 376.9,
+    "12": 762.1,
+    "16": 856.3,
+    "20": 1131.6
+   },
+   "img_s_max_ch": 17.67,
+   "baseline_120": 0.9642,
+   "baseline_delta": 0.0012
+  },
+  {
+   "quant": "W4A16",
+   "tuning": "sws_optq",
+   "scheme": "multi",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A16/sws_optq/multi/pe_full.mxq",
+   "size_mb": 191.2,
+   "cos_mean": 0.9654,
+   "cos_min": 0.9401,
+   "ms": {
+    "1": 353.6,
+    "4": 1415.5,
+    "8": 2831.7,
+    "12": 4246.9,
+    "16": 5672.3,
+    "20": 7084.4
+   },
+   "img_s_max_ch": 2.82
+  },
+  {
+   "quant": "W4A16",
+   "tuning": "sws_optq",
+   "scheme": "global4",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A16/sws_optq/global4/pe_full.mxq",
+   "size_mb": 190.3,
+   "cos_mean": 0.9654,
+   "cos_min": 0.9401,
+   "ms": {
+    "1": 115.6,
+    "4": 342.6,
+    "8": 658.3,
+    "12": 923.3,
+    "16": 1265.0,
+    "20": 1503.8
+   },
+   "img_s_max_ch": 13.3
+  },
+  {
+   "quant": "W4A16",
+   "tuning": "sws_optq",
+   "scheme": "global8",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A16/sws_optq/global8/pe_full.mxq",
+   "size_mb": 191.7,
+   "cos_mean": 0.9654,
+   "cos_min": 0.9401,
+   "ms": {
+    "1": 182.5,
+    "4": 500.4,
+    "8": 1004.8,
+    "12": 1505.2,
+    "16": 2007.0,
+    "20": 2618.6
+   },
+   "img_s_max_ch": 7.64
+  },
+  {
+   "quant": "W4A8_L5A16",
+   "tuning": "none",
+   "scheme": "single",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A8_L5A16/none/single/pe_full.mxq",
+   "size_mb": 188.1,
+   "cos_mean": 0.8884,
+   "cos_min": 0.8017,
+   "ms": {
+    "1": 240.3,
+    "4": 276.8,
+    "8": 327.3,
+    "12": 657.0,
+    "16": 734.7,
+    "20": 1001.9
+   },
+   "img_s_max_ch": 19.96
+  },
+  {
+   "quant": "W4A8_L5A16",
+   "tuning": "none",
+   "scheme": "multi",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A8_L5A16/none/multi/pe_full.mxq",
+   "size_mb": 190.8,
+   "cos_mean": 0.8884,
+   "cos_min": 0.8017,
+   "ms": {
+    "1": 286.0,
+    "4": 1144.8,
+    "8": 2292.2,
+    "12": 3436.4,
+    "16": 4584.5,
+    "20": 5726.9
+   },
+   "img_s_max_ch": 3.49
+  },
+  {
+   "quant": "W4A8_L5A16",
+   "tuning": "none",
+   "scheme": "global4",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A8_L5A16/none/global4/pe_full.mxq",
+   "size_mb": 189.9,
+   "cos_mean": 0.8884,
+   "cos_min": 0.8017,
+   "ms": {
+    "1": 100.8,
+    "4": 300.4,
+    "8": 520.5,
+    "12": 811.5,
+    "16": 1053.1,
+    "20": 1366.0
+   },
+   "img_s_max_ch": 14.64
+  },
+  {
+   "quant": "W4A8_L5A16",
+   "tuning": "none",
+   "scheme": "global8",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A8_L5A16/none/global8/pe_full.mxq",
+   "size_mb": 191.2,
+   "cos_mean": 0.8884,
+   "cos_min": 0.8017,
+   "ms": {
+    "1": 62.4,
+    "4": 473.6,
+    "8": 948.7,
+    "12": 1424.5,
+    "16": 1902.2,
+    "20": 2489.2
+   },
+   "img_s_max_ch": 8.03
+  },
+  {
+   "quant": "W4A8_L5A16",
+   "tuning": "sws_optq",
+   "scheme": "single",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A8_L5A16/sws_optq/single/pe_full.mxq",
+   "size_mb": 188.1,
+   "cos_mean": 0.942,
+   "cos_min": 0.8952,
+   "ms": {
+    "1": 239.0,
+    "4": 279.3,
+    "8": 372.8,
+    "12": 649.7,
+    "16": 726.0,
+    "20": 1002.9
+   },
+   "img_s_max_ch": 19.94,
+   "baseline_120": 0.8932,
+   "baseline_delta": 0.0488
+  },
+  {
+   "quant": "W4A8_L5A16",
+   "tuning": "sws_optq",
+   "scheme": "multi",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A8_L5A16/sws_optq/multi/pe_full.mxq",
+   "size_mb": 190.8,
+   "cos_mean": 0.942,
+   "cos_min": 0.8952,
+   "ms": {
+    "1": 288.0,
+    "4": 1144.9,
+    "8": 2286.1,
+    "12": 3430.0,
+    "16": 4576.5,
+    "20": 5723.8
+   },
+   "img_s_max_ch": 3.49
+  },
+  {
+   "quant": "W4A8_L5A16",
+   "tuning": "sws_optq",
+   "scheme": "global4",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A8_L5A16/sws_optq/global4/pe_full.mxq",
+   "size_mb": 189.9,
+   "cos_mean": 0.942,
+   "cos_min": 0.8952,
+   "ms": {
+    "1": 100.7,
+    "4": 298.9,
+    "8": 605.1,
+    "12": 833.6,
+    "16": 1092.6,
+    "20": 1349.7
+   },
+   "img_s_max_ch": 14.82
+  },
+  {
+   "quant": "W4A8_L5A16",
+   "tuning": "sws_optq",
+   "scheme": "global8",
+   "mxq": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/9c528729f4e3c771246b488576c5ce7109a37add/W4A8_L5A16/sws_optq/global8/pe_full.mxq",
+   "size_mb": 191.2,
+   "cos_mean": 0.942,
+   "cos_min": 0.8952,
+   "ms": {
+    "1": 175.8,
+    "4": 472.1,
+    "8": 947.0,
+    "12": 1422.0,
+    "16": 1897.7,
+    "20": 2366.8
+   },
+   "img_s_max_ch": 8.45
+  }
+ ]
+}

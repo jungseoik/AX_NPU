@@ -28,8 +28,8 @@ HEAD_MD = """# PE-Core-L14-336 — 양자화×튜닝 매트릭스 (qbcompiler **
 
 | 구분 | 상태 |
 |---|---|
-| 회귀 기준 4점(§아래 표 참조) | **1.2.0 NPU 실측 존재** — W8A16 sws_optq 0.9951 / W4A16 none 0.9126 / W4A16 sws_optq 0.9642 / W4A8_L5A16 sws_optq 0.8932 (single) |
-| 나머지 20종 | **NPU cos 검증 대기** — `reports/scripts/verify_quant_tuning_matrix.py` 로 검증 후 사용 |
+| **24종 전부 NPU 검증 완료(2026-09-04)** | cos: W8A16 none 0.9937 / W8A16 sws_optq **0.9946** / W4A16 none 0.9175 / W4A16 sws_optq **0.9654** / W4A8_L5A16 none 0.8884 / W4A8_L5A16 sws_optq **0.9420** — 코어모드 4종 모두 동일 |
+| 상세 | AX_NPU `reports/performance/NPU_pe_quant_tuning_matrix_120.md` (채널 지연·배포 후보 비교 포함) |
 | 배포 경로 `<quant>/<scheme>/`, 루트 `<scheme>/` | 영향 없음(튜닝 없는 빌드, 계속 사용 가능) |
 
 ## 컴파일 환경 (2026-09-03, NPU 없는 GPU 서버)

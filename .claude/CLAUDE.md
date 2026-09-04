@@ -79,12 +79,15 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - `reports/performance/NPU_pe_1card_coremode_full.md` — 1장 코어모드×1~16ch 순수추론(슬롯 거동, latency)
   - `reports/design/SOLUTION_single_io_compile.md` — [비포] 단일 입출력 컴파일 + hybrid(0.997)
   - `reports/performance/NPU_pe_quant_tuning_compiler_version.md` — ★★ **OPTQ·SWS 열화는 qbcompiler 1.1.2 버그**(2026-09-03).
-    1.2.0으로 컴파일하면 부호가 뒤집혀 **정확도가 올라간다**: W4A16 0.8795→**0.9642**, W8A16 0.9747→**0.9951**, W4A8+A16×5 0.8560→0.8932.
+    1.2.0으로 컴파일하면 부호가 뒤집혀 **정확도가 올라간다**: W4A16 0.8795→**0.9654**, W8A16 0.9747→**0.9946**, W4A8+A16×5 0.8560→**0.9420**.
     튜닝 끈 베이스라인은 두 버전 동일(0.9110→0.9126) → 차이는 전적으로 튜닝 구현. 벤더 회신 수치(0.973/0.905)도 1.2.0에서 재현됨.
     `aries-rb`=Aries2(mxq v7 동일)라 **1.2.0 컴파일본이 드라이버 1.13에서 그대로 돈다** — 추론 코드 변경 0(`inference.py`에 버전 의존 없음, mxq만 교체).
     컴파일 타겟은 `pe_npu/target_device.py`가 `qbcompiler.__version__`으로 **자동 판별**(1.1.x→aries2 / 1.2.x→aries-rb, `--target-device`/`AX_NPU_TARGET_DEVICE`로 덮어쓰기 가능)
+  - `reports/performance/NPU_pe_quant_tuning_matrix_120.md` — ★★ **1.2.0 매트릭스 24종 NPU 전수 검증(2026-09-04)**. 튜닝이 3개 양자화 모두에서 정확도 상승,
+    **코어모드는 정확도 무관**(4모드 cos 동일, 지연만 다름). 배포 후보: **W8A16+튜닝 0.9946**(현행 0.9937과 크기·속도 동일 → 공짜 교체) / W4A16+튜닝 0.9654(−42%, +35%) / W4A8+튜닝 0.9420(가장 빠름).
+    `multi` 모드는 20ch 5.7~7.5s로 쓰지 말 것. ★ 이전 W4A8 값 0.8932는 A16 5개 누락 산출물이었고 정정값이 0.9420
   - `reports/RUNBOOK_quant_matrix_120.md` — ★ **GPU 서버 재현 절차서**. clone→.env→SDK 1.1v→docker→calib→24조합(양자화3×튜닝2×**코어모드4**)→NPU 검증.
-    `verify_quant_tuning_matrix.py --src-dir <dir>`가 회귀 기준 4점(W8A16+tuning 0.9951 / W4A16 none 0.9126 / W4A16+tuning 0.9642 / W4A8+tuning 0.8932)을 ±0.005로 자동 대조, 이탈 시 exit 1
+    `verify_quant_tuning_matrix.py --src-dir <dir>`가 **회귀 기준 24점**(표준 이미지셋 `download/coco/val2017` 앞 20장 기준)을 ±0.005로 자동 대조, 이탈 시 exit 1
   - `reports/performance/NPU_pe_quant_tuning_verify.md` — [1.1.2 한정] 양자화×튜닝 24종 NPU 실측(9/9 cos 악화). **위 문서에서 원인 규명·정정됨** — 배포 판단 근거로 쓰지 말 것. W4A8_L5A16은 cos 0.879로 보유·미배포
   - `reports/performance/NPU_pe_quant_schemes.md` — ★ 양자화 스킴(W8A16/W4A16/W4A8) × 코어모드 × 1~20채널 실측.
     배포 기본은 **W8A16**(cos 0.9936), W4A16은 크기 −42%·처리량 +13%·cos 0.9135, W4A8은 붕괴(미배포)

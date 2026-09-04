@@ -5,7 +5,7 @@
 # 절차·기대값 상세: reports/RUNBOOK_quant_matrix_120.md §2.5
 #
 #   A  정식 CLI 등가성        --quant w4a16 --optq --search-weight-scale   → cos 0.9642
-#   B  --quant w4a8 A16 주입  --quant w4a8 --a16 "<5개>"                   → cos 0.8932
+#   B  --quant w4a8 A16 주입  --quant w4a8 --a16 "<5개>"                   → cos 0.9420
 #   C  calibration 통계 캐시  --calib-stats-save → --calib-stats-load      → cos 0.9126 (양쪽 동일)
 #
 # GPU 서버면 조합당 5~8분(전체 20~35분), CPU 서버면 조합당 ~64분.
@@ -90,7 +90,7 @@ if [ "$VERIFY_ONLY" = "0" ]; then
   has A && compile_one pe_W4A16_sws_optq_single.mxq \
       --quant w4a16 --optq --search-weight-scale --scheme single
 
-  # ── B: --quant w4a8 + A16 5개 주입 (기대 cos 0.8932, activation16=30)
+  # ── B: --quant w4a8 + A16 5개 주입 (기대 cos 0.9420, activation16=30)
   has B && compile_one pe_W4A8_L5A16_sws_optq_single.mxq \
       --quant w4a8 --optq --search-weight-scale --scheme single --a16 "$A16_W4A8"
 
@@ -144,8 +144,8 @@ mxq 를 NPU 서버로 옮겨 검증한다.
     bash reports/scripts/validate_compile_cli.sh --verify-only --out $OUT --device 0
 
 기대값(RUNBOOK §5-1):
-  pe_W4A16_sws_optq_single            cos 0.9642
-  pe_W4A8_L5A16_sws_optq_single       cos 0.8932
-  pe_W4A16_none_single(+_statsload)   cos 0.9126  (양쪽 동일해야 함)
+  pe_W4A16_sws_optq_single            cos 0.9654
+  pe_W4A8_L5A16_sws_optq_single       cos 0.9420
+  pe_W4A16_none_single(+_statsload)   cos 0.9175  (양쪽 동일해야 함)
 EOF
 fi
