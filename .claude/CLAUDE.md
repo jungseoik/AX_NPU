@@ -83,6 +83,8 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
     튜닝 끈 베이스라인은 두 버전 동일(0.9110→0.9126) → 차이는 전적으로 튜닝 구현. 벤더 회신 수치(0.973/0.905)도 1.2.0에서 재현됨.
     `aries-rb`=Aries2(mxq v7 동일)라 **1.2.0 컴파일본이 드라이버 1.13에서 그대로 돈다** — 추론 코드 변경 0(`inference.py`에 버전 의존 없음, mxq만 교체).
     컴파일 타겟은 `pe_npu/target_device.py`가 `qbcompiler.__version__`으로 **자동 판별**(1.1.x→aries2 / 1.2.x→aries-rb, `--target-device`/`AX_NPU_TARGET_DEVICE`로 덮어쓰기 가능)
+  - `reports/performance/NPU_pe_mxq_sdk_version_matrix.md` — ★ **버전별 대조표**. mxq가 어떤 SDK/컴파일러/타겟 산출물인지 명시(1.0v=1.1.2/aries2, 1.1v=1.2.0/aries-rb)하고
+    두 빌드의 cos·채널지연(1/8/12/20ch)을 나란히. `none`은 버전 무관, `sws_optq`만 크게 갈린다(W4A16 +0.086). 코어모드: 1ch=global4, 8ch↑=single, multi 비권장
   - `reports/performance/NPU_pe_quant_tuning_matrix_120.md` — ★★ **1.2.0 매트릭스 24종 NPU 전수 검증(2026-09-04)**. 튜닝이 3개 양자화 모두에서 정확도 상승,
     **코어모드는 정확도 무관**(4모드 cos 동일, 지연만 다름). 배포 후보: **W8A16+튜닝 0.9946**(현행 0.9937과 크기·속도 동일 → 공짜 교체) / W4A16+튜닝 0.9654(−42%, +35%) / W4A8+튜닝 0.9420(가장 빠름).
     `multi` 모드는 20ch 5.7~7.5s로 쓰지 말 것. ★ 이전 W4A8 값 0.8932는 A16 5개 누락 산출물이었고 정정값이 0.9420
