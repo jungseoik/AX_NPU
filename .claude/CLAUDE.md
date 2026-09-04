@@ -87,7 +87,8 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
     두 빌드의 cos·채널지연(1/8/12/20ch)을 나란히. `none`은 버전 무관, `sws_optq`만 크게 갈린다(W4A16 +0.086). 코어모드: 1ch=global4, 8ch↑=single, multi 비권장
   - `reports/performance/NPU_pe_quant_tuning_matrix_120.md` — ★★ **1.2.0 매트릭스 24종 NPU 전수 검증(2026-09-04)**. 튜닝이 3개 양자화 모두에서 정확도 상승,
     **코어모드는 정확도 무관**(4모드 cos 동일, 지연만 다름). 배포 후보: **W8A16+튜닝 0.9946**(현행 0.9937과 크기·속도 동일 → 공짜 교체) / W4A16+튜닝 0.9654(−42%, +35%) / W4A8+튜닝 0.9420(가장 빠름).
-    `multi` 모드는 20ch 5.7~7.5s로 쓰지 말 것. ★ 이전 W4A8 값 0.8932는 A16 5개 누락 산출물이었고 정정값이 0.9420
+    코어모드(저부하 재측정): **단건=global8 61~73ms**, 배치는 W8A16→global4 / W4계열→single, `multi`는 전구간 최악(20ch 5.6~7.4s) 비권장.
+    ★ **지연은 공유 카드 측정이라 다른 날 값끼리 비교 금지** — 버전 비교는 같은 세션 교차측정으로만(그렇게 재면 single 동일, global4만 1.2.0이 5~6% 느림). ★ 이전 W4A8 값 0.8932는 A16 5개 누락 산출물이었고 정정값이 0.9420
     **배치 출력 무결성 72/72 비트 동일**(양자화3×모드4×배치 1/4/8/12/16/20) — `infer(batch)`는 동기 infer 스레드풀이라 안전. 검증: `reports/scripts/verify_pe_batch_output.py`
   - `reports/RUNBOOK_quant_matrix_120.md` — ★ **GPU 서버 재현 절차서**. clone→.env→SDK 1.1v→docker→calib→24조합(양자화3×튜닝2×**코어모드4**)→NPU 검증.
     `verify_quant_tuning_matrix.py --src-dir <dir>`가 **회귀 기준 24점**(표준 이미지셋 `download/coco/val2017` 앞 20장 기준)을 ±0.005로 자동 대조, 이탈 시 exit 1
