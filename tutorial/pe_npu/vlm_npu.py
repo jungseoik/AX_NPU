@@ -4,8 +4,11 @@ Qwen3-VL NPU 추론 헬퍼 (ARIES MLA100).
 이미지+프롬프트 -> 텍스트. NPU 가속은 모델 레포의 trust_remote_code(mblt_model_zoo)가
 처리하므로, 이 파일은 표준 HuggingFace API만 호출한다(= "포팅" 없음).
 
-코어모드: mobilint/Qwen3-VL-* MXQ는 vision/text 모두 **global8**(8코어 전부, 2클러스터)로
-config.json에 박혀 있다. 단일 스트림 latency 최적화. max_batch_size=1.
+코어모드: MXQ는 inference_scheme="all"로 컴파일돼 single/multi/global4/global8을 **모두** 담고 있다.
+config.json의 core_mode="global8"(target_clusters=[0,1])은 기본값일 뿐이며 런타임에 바꿀 수 있다
+(cfg.vision_config.core_mode / cfg.text_config.core_mode). max_batch_size=1은 컴파일러 제약
+(배치 컴파일은 qbcompiler 1.2.0에 없음 — 차기 릴리즈 예정).
+→ reports/vendor/mobilint_update_vlm_batch_coremode.md
 
 필요 패키지(검증):  mblt-model-zoo==1.3.1, transformers>=4.57(<=4.57.6), torch(cpu), qbruntime 1.2.0
     pip install "mblt-model-zoo[transformers]==1.3.1" "transformers==4.57.1"
@@ -44,7 +47,7 @@ from transformers import (
 )
 from mblt_model_zoo.hf_transformers.utils.cache_utils import MobilintCache
 
-# 지원 모델 (global8, 단일 ARIES 카드)
+# 지원 모델 (기본 global8, 단일 ARIES 카드 — 코어모드 변경 가능)
 SUPPORTED = (
     "mobilint/Qwen3-VL-2B-Instruct",
     "mobilint/Qwen3-VL-4B-Instruct",
@@ -147,7 +150,9 @@ class VLMChat:
 class VLMPool:
     """멀티카드 Qwen3-VL — 카드별 인스턴스 + 요청 라운드로빈 분산 (PE/YOLO 멀티카드와 동일 방침).
 
-    Qwen3-VL은 global8 단일모드(max_batch_size=1)라 한 인스턴스는 in-flight 1개만 처리.
+    max_batch_size=1이라 한 인스턴스는 in-flight 1개만 처리(코어모드와 무관한 컴파일러 제약).
+    기본 global8은 8코어를 독점하므로 카드당 1스트림. 코어를 쪼개면(global4/single + target_clusters)
+    카드당 여러 인스턴스도 가능하나 미실측.
     그래서 "배치"가 아니라 **동시요청을 카드에 나눠** 처리량을 올린다(카드당 1건씩 순차).
 
         pool = VLMPool("mobilint/Qwen3-VL-2B-Instruct", device_ids="auto")   # 장착 NPU 전부

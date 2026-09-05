@@ -5,7 +5,11 @@ Qwen3-VL-2B를 ARIES NPU 여러 장에 나눠 **동시요청(배치)** 을 처�
 재현: `reports/scripts/bench_vlm_batch.py`.
 
 ## 설정
-- 모델 `mobilint/Qwen3-VL-2B-Instruct` (mblt-model-zoo, global8 단일모드, `max_batch_size=1`).
+- 모델 `mobilint/Qwen3-VL-2B-Instruct` (mblt-model-zoo, **기본** core_mode=global8, `max_batch_size=1`).
+  > **정정(2026-09-05)**: "global8 단일모드"는 틀린 서술이었다. mxq는 `inference_scheme="all"`로
+  > single/multi/global4/global8을 모두 담고 있고 global8은 `config.json` 기본값일 뿐이다.
+  > 이 리포트의 측정은 **기본값(global8, 카드당 1인스턴스)** 기준이며, 코어를 쪼개면 카드당
+  > 여러 인스턴스도 가능하다(미실측). → [`../vendor/mobilint_update_vlm_batch_coremode.md`](../vendor/mobilint_update_vlm_batch_coremode.md)
 - 태스크: 이미지 + "Is there a bus? Answer yes or no" → **`max_new_tokens=1`** (yes/no 1토큰). 답 "yes"(정답).
 - 카드 지정: `config.vision_config.dev_no` / `text_config.dev_no` = 카드번호 (from_pretrained 인자 아님).
 - 분산: 동시요청 B개를 N카드에 라운드로빈, **카드당 in-flight 1**(순차). 값 = B개 전부 끝난 wall-clock.

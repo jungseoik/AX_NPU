@@ -71,6 +71,7 @@ YOLO11 침입감지 서비스 모듈 e2e를 측정→진단→재측정한 스�
 | [test_results.md](testing/test_results.md) | 컴파일/추론 테스트 결과 종합 |
 | [sdk_v11_compat.md](testing/sdk_v11_compat.md) | ★ SDK 1.1v 호환성 — 기존 HF mxq는 런타임 1.4.0에서 재컴파일 불필요(cos 0.993/15.4 img/s), 컴파일은 cpu 이미지로 충분 |
 | [NPU_pe_quant_schemes.md](performance/NPU_pe_quant_schemes.md) | ★ 양자화 스킴 비교 W8A16/W4A16/W4A8 × 코어모드 4종 × 1~20채널 지연 + cos. W4A16 동작 확인(크기 −42%, 처리량 +13%), W4A8은 붕괴 |
+| [vendor/mobilint_update_vlm_batch_coremode.md](vendor/mobilint_update_vlm_batch_coremode.md) | ★ Qwen3-VL 벤더회신 확인 — 배치컴파일은 1.2.0에 없음(차기 예정), **코어모드는 mxq에 4종 다 있고 런타임 변경 가능**(우리 문서 정정), 카드 분할 동시성 가능성 |
 | [NPU_pe_mxq_sdk_version_matrix.md](performance/NPU_pe_mxq_sdk_version_matrix.md) | ★ **SDK/컴파일러 버전별 대조표** — 어떤 SDK·컴파일러·타겟으로 만든 mxq인지 명시하고 1.0v(1.1.2/aries2) vs 1.1v(1.2.0/aries-rb) 정확도·채널 지연(1/8/12/20ch)을 나란히 |
 | [NPU_pe_quant_tuning_matrix_120.md](performance/NPU_pe_quant_tuning_matrix_120.md) | ★★ 1.2.0 매트릭스 **24종 전수 NPU 검증** — 튜닝 3/3 양자화에서 정확도 상승, 코어모드는 정확도 무관·지연만 상이, 배포 후보 비교(W8A16+튜닝=공짜 교체) |
 | [NPU_pe_quant_tuning_compiler_version.md](performance/NPU_pe_quant_tuning_compiler_version.md) | ★★ **튜닝 열화는 qbcompiler 1.1.2 버그였다** — 1.2.0에서 부호 반전(W4A16 0.8795→0.9642, W8A16 0.9747→0.9951), 베이스라인은 동일, 벤더 수치 재현 |
