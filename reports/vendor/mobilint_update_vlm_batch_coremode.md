@@ -86,9 +86,11 @@ target_clusters: Optional[List[Union[int, "Cluster"]]] = None
 
 ## 4. 다음에 할 것
 
-1. **코어모드 스윕**: vision/text × {single, multi, global4, global8} 조합별 단건 지연·동시처리량 실측
-2. **카드 분할 동시성**: 카드당 2~4 인스턴스(코어 분할) vs 카드당 1인스턴스(global8) 비교
-3. 배치 컴파일은 차기 qbcompiler 릴리즈 확인 후 재검토
+1. **라이브러리 업그레이드 검토**: `mblt-model-zoo` 1.3.1 → 2.4.2 (§5)
+2. **코어모드 스윕**: vision/text × {single, multi, global4, global8} 조합별 단건 지연·동시처리량 실측
+3. **카드 분할 동시성**: 카드당 2~4 인스턴스(코어 분할) vs 카드당 1인스턴스(global8) 비교
+4. 배치 컴파일(하드웨어)은 차기 qbcompiler 릴리즈 확인 후 재검토 — 단 **소프트웨어 배치는
+   이미 v2.4.0 에 있다**(multi-slot)
 
 ## 부록. 확인에 쓴 명령
 
@@ -98,3 +100,63 @@ mobilint-cli mxqtool show <Qwen3-VL-2B-Instruct_vision.mxq> | grep "Core Mode"
 docker exec mblt_c12 python -c "from qbcompiler import mxq_compile; import inspect; \
   print([p for p in inspect.signature(mxq_compile).parameters if 'batch' in p.lower()])"
 ```
+
+## 5. ★ 우리 실행 형태 vs 최신 — 최적화 여지가 크다
+
+### 5-1. 우리가 지금 돌리는 방식
+
+| 항목 | 현재 |
+| --- | --- |
+| 런타임 라이브러리 | **`mblt-model-zoo==1.3.1`** (핀) |
+| 진입 | `AutoModelForImageTextToText.from_pretrained(trust_remote_code=True)` + `AutoProcessor` |
+| 코어모드 | vision/text 둘 다 **global8**, `target_clusters=[0,1]` (config.json 기본값 그대로) |
+| 배치 | `max_batch_size=1` — 인스턴스당 in-flight 1건 |
+| 동시성 | `VLMPool`: **카드당 1인스턴스**, ThreadPoolExecutor 로 카드 간 분산 |
+| vision mxq | **static** (입력 1개 `images_0`) → 비디오 불가, 이미지 전용 |
+
+### 5-2. 최신(v2.4.2)과의 격차 — 74커밋
+
+| 버전 | 들어온 것 | 우리에게 의미 |
+| --- | --- | --- |
+| v2.1.0 | core-mode fan-out to subconfigs | vision/text 코어모드를 따로 주기 쉬워짐 |
+| v2.2.1 | `npu_prefill_chunk_size` 런타임 전파 | prefill 튜닝 노브 |
+| v2.3.0 | **Qwen3-VL 배치 추론 지원** + MRoPE/dynamic vision + transformers 4.x/5.x | 다중 이미지·배치 경로 |
+| v2.4.0 | **multi-slot NPU backend (sw-batch)** | 한 가속기에 **N개 Model 인스턴스**를 띄우고 ThreadPoolExecutor 로 동시 `.infer` |
+
+v2.4.0 커밋 설명이 우리가 PE-Core 에서 쓰는 패턴과 정확히 같다:
+
+> *"N Models per Accelerator with per-Model batching … runs concurrent `.infer` via ThreadPoolExecutor"*
+
+즉 **PE-Core 에서 이미 검증한 "카드당 N모델 + 멀티스레드 동기 infer"를 VLM 에도 쓸 수 있게 된 것**이다.
+
+### 5-3. 확인된 최적화 여지 4가지
+
+1. **라이브러리 업그레이드 (1.3.1 → 2.4.2)** — 위 4개 기능이 전부 여기 딸려온다.
+   호환성: v2.4.2 요구 `transformers>=4.54.0,<=5.12.1`, 우리 설치본 **4.57.1 → 범위 안**.
+2. **vision `core_mode="multi"` → 하드웨어 배치.** `modeling_qwen3_vl.py` 에 명시적 분기가 있다:
+   ```python
+   if not is_dynamic and core_mode == "multi" and len(npu_inputs) > 1:
+       encoder_outputs = mxq_model.infer(np.stack(npu_inputs, axis=0))   # 한 번에 여러 장
+   ```
+   우리 vision mxq 에 **Multi 번들이 5개** 있으므로 지금 자산 그대로 쓸 수 있다.
+   (text mxq 에는 Multi 가 없다 — vision 전용 경로다)
+3. **카드 분할** — vision=global4/cluster0, text=single/core1:0 로 나누면 카드당 다중 인스턴스.
+   현재는 global8 로 8코어를 독점해 카드당 1스트림이 한계다.
+4. **`dev_no` 리스트 지원** — v2.4.2 는 `dev_no: Union[int, list[int]]` 라 한 인스턴스가
+   여러 카드를 걸칠 수 있다. 지금 `VLMPool` 이 파이썬 레벨에서 하는 분산을 라이브러리가 대신할 수 있다.
+
+### 5-4. 주의
+
+- **전부 미실측이다.** 코드·시그니처·mxq 번들에서 확인한 "가능성"이고, 실제 이득은 재봐야 한다.
+  코어를 쪼개면 인스턴스당 지연은 늘어난다(global8→single/global4).
+- **1.3.1 → 2.4.2 는 메이저 업그레이드**라 `VLMPool`/`load_vlm` 이 그대로 도는지 확인이 필요하다.
+  특히 config 필드 마이그레이션(`_migrate_target_cores` 등)이 들어가 있다.
+- 우리 vision mxq 는 static 이라 **비디오는 안 된다.** dynamic vision mxq 를 쓰는 신규 릴리스가
+  있는지는 별도 확인 필요.
+
+### 5-5. 권장 순서
+
+1. 별도 conda env 에 `mblt-model-zoo==2.4.2` 설치 → 기존 `demo_vlm_qwen3` 흐름이 그대로 도는지 확인
+2. vision `core_mode="multi"` 다중 이미지 배치 실측 (현재 자산 그대로 가능)
+3. 카드 분할(vision global4 + text single) 동시성 실측 — 카드당 1인스턴스 대비
+4. 이득 확인되면 `vlm_npu.py` / `VLMPool` 갱신 + 핀 버전 상향
