@@ -117,3 +117,26 @@ conda create -y -n vlm_zoo242 --clone gov_vlm && pip install "mblt-model-zoo==2.
 python /tmp/w4a16/vlm_ttft.py  --device 7 --batches 1,2,4     # 해상도별 TTFT
 python /tmp/w4a16/vlm_conc.py  --device 7 --threads 1,2,4,8 --n 16   # 동시성 스윕
 ```
+
+## 5. 고해상도 컴파일 가능성 조사 (2026-09-08)
+
+**질문**: 고해상도로 MXQ 를 다시 컴파일하면 224×224 제약이 풀리는가? 지금 지원되는가?
+
+| 확인 항목 | 결과 |
+| --- | --- |
+| `mblt_compile_vision.py` | `--image-size` 인자 **있음**, 기본값 `[224, 224]` |
+| `mblt_compile_language.py` | `image_size=(224, 224)` **코드에 고정** (CLI 인자 없음, line 124) |
+| 튜토리얼 README | *"image size fixed at 224x224"* 로 **명시** |
+| `download_images.py` (calib) | 224×224 고정 |
+| `mblt-model-zoo` 상한 | `_NPU_MAX_VISION_TOKENS = 2048` |
+
+**해석**: vision 만 `--image-size` 를 올려도 소용없다. language 모델이 RoPE 와 시각 토큰 수를
+구워 넣기 때문에 **vision·language·calibration 세 가지를 일관되게 맞춰야** 한다.
+그런데 language 쪽은 인자화되어 있지 않고 README 도 224 고정을 전제로 쓰여 있다.
+→ **공식적으로는 224×224만 지원**으로 보는 것이 맞다.
+
+상한 `_NPU_MAX_VISION_TOKENS = 2048` 은 dynamic-vision 빌드용 클램프 값이며,
+1080p 네이티브(2040 토큰)와 비슷한 수준이라 **하드웨어적으로는 여지가 있어 보인다.**
+다만 그 경로를 쓰려면 dynamic-vision MXQ 가 필요하고 우리 자산은 static 이다.
+
+→ 문의 06 에서 (a) 고해상도 컴파일 지원 여부, (b) 권장 절차·상한, (c) 미지원 시 제공 계획을 질의.
