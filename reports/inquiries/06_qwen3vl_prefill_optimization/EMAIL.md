@@ -38,7 +38,7 @@ AX 미니트랙 서현석 매니저님과 황지욱 엔지니어님께 **신규 
 
 | 항목 | 값 |
 | --- | --- |
-| 모델 | `mobilint/Qwen3-VL-2B-Instruct` (HF 커밋 `7202ab5b`, 2026-06-29 — 현재 최신) |
+| 모델 | `mobilint/Qwen3-VL-2B-Instruct` (HF 최신 리비전) |
 | NPU | ARIES, 드라이버 **1.13** / 펌웨어 1.2.5 |
 | 런타임 | qbruntime **1.2.0** (SDK 번들 1.0v) |
 | 라이브러리 | `mblt-model-zoo` **2.4.2**, `transformers` 4.57.1 |
