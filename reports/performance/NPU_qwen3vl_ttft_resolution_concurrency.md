@@ -151,3 +151,30 @@ release/v1.3.0 의 재구성(`compile_encoder`/`compile_decoder` 분리)에서 �
 다만 그 경로를 쓰려면 dynamic-vision MXQ 가 필요하고 우리 자산은 static 이다.
 
 → 문의 06 에서 (a) 고해상도 컴파일 지원 여부, (b) 권장 절차·상한, (c) 미지원 시 제공 계획을 질의.
+
+## 6. 텍스트 디코더 MXQ 빌드 종류 (2026-09-08 조사)
+
+`mblt-model-zoo` v2.4.2 `modeling_qwen3_vl.py` 주석에 컴파일 레이아웃이 정리돼 있다.
+
+| 구분 | 입력 | RoPE | 비고 |
+| --- | --- | --- | --- |
+| **비배치 2입력** | `[inputs_embeds, deepstack]` | **모델에 구워짐** | legacy/static. **2B·4B W8 빌드** ← 우리 것 |
+| 비배치 3입력 | `[inputs_embeds, deepstack, rope]` | 런타임 입력 | dynamic. **8B W8 빌드** |
+| **배치(Batch16)** | `[inputs_embeds, rope, deepstack]` | 런타임 입력 | `max_batch_size>1`. 2입력 배치 빌드는 **지원 종료** |
+
+배치가 3입력을 요구하는 이유: 배치의 각 행은 시퀀스 길이·위치가 달라 **행마다 다른 RoPE**가 필요하다.
+RoPE 가 모델에 구워져 있으면 모든 행이 같은 위치를 쓰게 되므로 배치가 성립하지 않는다.
+
+### HF 공개 저장소 현황
+
+| 저장소 | text mxq | vision core_mode | text core_mode |
+| --- | --- | --- | --- |
+| `mobilint/Qwen3-VL-2B-Instruct` | `_text.mxq` (2입력) | global8 | global8 |
+| `mobilint/Qwen3-VL-4B-Instruct` | `_text-W8.mxq` | global8 | global8 |
+| `mobilint/Qwen3-VL-8B-Instruct` | `_text-W8.mxq` | global8 | global8 |
+| **`mobilint/Qwen3-VL-8B-Instruct-Batch16`** | `-Batch16_text-W4V8.mxq` | global8 | **single** |
+
+**배치 대응 빌드는 8B 에만 있고 2B 에는 없다.** 8B Batch16 은 text 가 `W4V8` 양자화에
+`core_mode=single` 인 점도 다르다(배치는 코어를 독립으로 쓰는 편이 유리한 것으로 추정).
+
+→ 문의 06 에서 **2B 용 Batch16 빌드 제공 가능 여부**를 질의.

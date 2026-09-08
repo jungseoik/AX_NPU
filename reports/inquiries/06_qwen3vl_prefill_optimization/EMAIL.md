@@ -151,8 +151,17 @@ ValueError: Batched Qwen3-VL text inference requires a 3-input
             The legacy 2-input build ...
 ```
 
-확인해보니 저희가 받은 text MXQ 는 입력이 2개(`inputs_embeds/reshape`, `deepstack_visual_embeds_0`)인
-legacy 빌드였습니다. 또한 text MXQ 에는 Multi 번들이 없어(`Single`/`Global4`/`Global8` 만 존재)
+내용을 확인해보니, **텍스트 디코더 MXQ 가 배치용으로 컴파일된 것과 아닌 것 두 종류**가 있는 것으로
+보였습니다.
+
+- 저희가 쓰는 **2B 빌드**는 위치 정보(RoPE)가 **모델 안에 미리 구워진** 형태입니다.
+  입력이 2개(`inputs_embeds`, `deepstack_visual_embeds`)입니다.
+  이 경우 배치의 각 행이 서로 다른 위치를 가질 수 없어 배치 추론이 불가능한 것으로 이해했습니다.
+- 배치가 가능한 빌드는 **위치 정보를 실행 시점에 입력으로 받는** 형태이고,
+  입력이 3개(`inputs_embeds`, `rope`, `deepstack`)입니다.
+
+찾아보니 **`mobilint/Qwen3-VL-8B-Instruct-Batch16`** 저장소가 이미 공개되어 있었습니다.
+즉 배치 대응 빌드가 **8B 에는 존재하고 2B 에는 없는** 상황으로 보입니다. 또한 text MXQ 에는 Multi 번들이 없어(`Single`/`Global4`/`Global8` 만 존재)
 `core_mode="multi"` 지정 시 `Model_MXQAndModelConfigNotMatch` 가 발생했습니다.
 (vision MXQ 에는 Multi 번들이 있습니다)
 
@@ -172,7 +181,8 @@ legacy 빌드였습니다. 또한 text MXQ 에는 Multi 번들이 없어(`Single
 
 함께 확인하고 싶은 점은 아래와 같습니다.
 
-1. 신규 릴리즈에 **3-input Batch16 text MXQ** 가 포함되는지, 포함된다면 배포 일정
+1. **2B 용 배치 대응 빌드**(`mobilint/Qwen3-VL-8B-Instruct-Batch16` 에 해당하는 2B 버전)를
+   제공받을 수 있는지, 가능하다면 배포 일정
 2. 신규 릴리즈 적용 시 **20채널 / 1000ms** 목표에 도달 가능한 수준인지
    (현재 가용 수량인 2장 기준 1580ms 이므로 약 1.6배 개선이 필요합니다).
    목표 달성에 **필요한 NPU 수량**을 함께 알려주시면 자원 확보를 검토하겠습니다.
