@@ -122,15 +122,26 @@ python /tmp/w4a16/vlm_conc.py  --device 7 --threads 1,2,4,8 --n 16   # 동시성
 
 **질문**: 고해상도로 MXQ 를 다시 컴파일하면 224×224 제약이 풀리는가? 지금 지원되는가?
 
-| 확인 항목 | 결과 |
-| --- | --- |
-| `mblt_compile_vision.py` | `--image-size` 인자 **있음**, 기본값 `[224, 224]` |
-| `mblt_compile_language.py` | `image_size=(224, 224)` **코드에 고정** (CLI 인자 없음, line 124) |
-| 튜토리얼 README | *"image size fixed at 224x224"* 로 **명시** |
-| `download_images.py` (calib) | 224×224 고정 |
-| `mblt-model-zoo` 상한 | `_NPU_MAX_VISION_TOKENS = 2048` |
+**서브모듈을 최신으로 갱신한 뒤 두 브랜치 모두 확인했다.**
+`mblt-model-zoo` = v2.4.2(origin/master 최신), `mblt-sdk-tutorial` = master `659d052` +
+`release/v1.3.0` `6b8f7bd`(master보다 22커밋 앞섬).
 
-**해석**: vision 만 `--image-size` 를 올려도 소용없다. language 모델이 RoPE 와 시각 토큰 수를
+| 브랜치 | 확인 항목 | 결과 |
+| --- | --- | --- |
+| master | `mblt_compile_vision.py` | `--image-size` 인자 **있음**, 기본값 `[224, 224]` |
+| master | `mblt_compile_language.py` | `image_size=(224, 224)` **코드 고정** (CLI 인자 없음) |
+| master | README | *"image size fixed at 224x224"* **명시** |
+| **release/v1.3.0** | `compile_encoder.py` | `resize((224, 224), LANCZOS)` **코드 고정** |
+| **release/v1.3.0** | `compile_decoder.py` | `resize((224, 224), LANCZOS)` **코드 고정** |
+| **release/v1.3.0** | 두 스크립트 CLI | `--target-device`, `--device` 뿐 — **`--image-size` 없어짐** |
+| 공통 | `download_images.py` (calib) | 224×224 |
+| `mblt-model-zoo` v2.4.2 | 상한 | `_NPU_MAX_VISION_TOKENS = 2048` |
+
+**최신 브랜치에서 오히려 인자가 사라졌다.** master 에 있던 `--image-size` 가
+release/v1.3.0 의 재구성(`compile_encoder`/`compile_decoder` 분리)에서 없어지고
+양쪽 다 하드코딩으로 바뀌었다.
+
+**해석**: encoder 만 해상도를 올려도 소용없다. language 모델이 RoPE 와 시각 토큰 수를
 구워 넣기 때문에 **vision·language·calibration 세 가지를 일관되게 맞춰야** 한다.
 그런데 language 쪽은 인자화되어 있지 않고 README 도 224 고정을 전제로 쓰여 있다.
 → **공식적으로는 224×224만 지원**으로 보는 것이 맞다.

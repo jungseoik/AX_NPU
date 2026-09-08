@@ -91,18 +91,27 @@ AX 미니트랙 서현석 매니저님과 황지욱 엔지니어님께 **신규 
 
 공개해 주신 튜토리얼(`compilation/vlm/`)을 살펴보니 아래와 같았습니다.
 
+**`master` 브랜치 기준**
+
 - `mblt_compile_vision.py` 에는 `--image-size` 인자가 있으나 **기본값이 `[224, 224]`** 입니다.
 - 반면 `mblt_compile_language.py` 는 `image_size=(224, 224)` 가 **코드에 고정**되어 있고,
   README 에도 *"image size fixed at 224x224"* 로 명시되어 있습니다.
-- 캘리브레이션 이미지 생성(`download_images.py`)도 224×224 로 고정되어 있습니다.
+- 캘리브레이션 이미지 생성(`download_images.py`)도 224×224 입니다.
+
+**`release/v1.3.0` 브랜치 기준** (현재 가장 앞선 브랜치, VLM 스크립트가 재구성되어 있었습니다)
+
+- `compile_encoder.py` / `compile_decoder.py` 로 나뉘었는데 **양쪽 모두**
+  `image.resize((224, 224), Image.Resampling.LANCZOS)` 가 **코드에 고정**되어 있습니다.
+- 두 스크립트의 CLI 인자는 `--target-device` 와 `--device` 뿐이고,
+  `master` 에 있던 **`--image-size` 인자는 없어졌습니다.**
 - `mblt-model-zoo` 에는 `_NPU_MAX_VISION_TOKENS = 2048` 이라는 상한이 정의되어 있어,
   시각 토큰이 최대 2048개까지는 가능한 것으로 보입니다(1080p 원본 기준 2040개와 유사한 수준).
 
 여쭙고 싶은 것은 다음과 같습니다.
 
 1. **고해상도로 MXQ 를 컴파일하면 이 문제가 해결되는지**, 그리고 **현재 지원되는지** 입니다.
-   vision 만 `--image-size` 를 올려서는 안 되고 language 모델과 캘리브레이션까지 함께 맞춰야 할 것으로
-   보이는데, 튜토리얼 상으로는 224×224 고정이 전제인 것으로 읽힙니다.
+   encoder 만 해상도를 올려서는 안 되고 decoder(language)와 캘리브레이션까지 함께 맞춰야 할 것으로
+   보이는데, 두 브랜치 모두 224×224 고정이 전제인 것으로 읽힙니다.
 2. 지원된다면 **권장 절차와 상한**(시각 토큰 2048 기준 어느 해상도까지 가능한지)
 3. 지원되지 않는다면, **고해상도 대응 빌드의 제공 계획**이 있는지
 
