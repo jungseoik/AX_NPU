@@ -9,15 +9,15 @@
 | 02 | [`02_attn_pool_int8/`](02_attn_pool_int8/INQUIRY.md) | 2026-06 | attention pooling head의 INT8 양자화 정확도 붕괴 | **해결** — 회신·분석은 [`../vendor/`](../vendor/mobilint_resolution_attn_pool.md) |
 | 03 | [`03_qwen3vl_batch_serving/`](03_qwen3vl_batch_serving/README.md) | 2026-07 | Qwen3-VL-2B 배치·코어모드 서빙(vLLM), NPU 1장 동시요청 + vllm-mblt 버그 2건 | **미발송** |
 | 04 | [`04_vit_quantization_speed/`](04_vit_quantization_speed/REPLY.md) | 2026-09 | ViT 비전 인코더 양자화 설정별 속도·정확도(W8A16/W4A16/W4A8), uint8 입력, 추론 패턴 | **회신 수신** — 재현 완료 |
-| 05 | [`05_a16_selection_followup/`](05_a16_selection_followup/EMAIL.md) | 2026-09 | `select_a16.py` 요청 + A16 5개가 어느 체크포인트 기준인지 확인 | **발송 대기** ★최신 |
-| [06](06_qwen3vl_prefill_optimization/) | Qwen3-VL-2B prefill 최적화 — 신규 릴리즈 SDK·튜토리얼 요청 + 실증기간 상위 NPU 교체 문의. 첨부(실측): 20채널 720p — 1카드 3026ms / **2카드 1580ms**, 목표 1000ms 대비 1.58배. 카드확장 1.92×, 채널수에 선형. 배치는 text mxq legacy 2입력이라 불가(튜토리얼도 RoPE 사전계산이라 자체 컴파일 불가) | 발송 대기 |
+| 05 | [`05_a16_selection_followup/`](05_a16_selection_followup/EMAIL.md) | 2026-09 | `select_a16.py` 요청 + A16 5개가 어느 체크포인트 기준인지 확인 | **발송 대기** |
+| 06 | [`06_qwen3vl_prefill_optimization/`](06_qwen3vl_prefill_optimization/EMAIL.md) | 2026-09 | Qwen3-VL-2B prefill 최적화 — 신규 릴리즈 SDK·튜토리얼 요청, 고해상도(네이티브 해상도) 대응, 실증기간 상위 NPU 교체 | **발송 대기** ★최신 |
 
 ## 폴더 안 파일 규칙
 
 | 파일 | 용도 |
 | --- | --- |
-| `INQUIRY.md` | 우리가 보낸(또는 작성한) 문의 본문 |
-| `REPLY.md` | Mobilint 회신 정리 + 원문 |
+| `INQUIRY.md` / `EMAIL.md` | 우리가 보낸(또는 작성한) 문의 본문 |
+| `REPLY.md` | Mobilint 회신 정리 + 원문. **회신이 오면 같은 폴더에 이 이름으로 추가**하고 위 표의 상태를 갱신한다 |
 | `examples/` · 그 외 | 회신 첨부 코드, 재현 기록 등 |
 
 ## ★ 대외 표기 규약 (벤더 문의 시)
