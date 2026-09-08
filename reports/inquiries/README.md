@@ -10,6 +10,7 @@
 | 03 | [`03_qwen3vl_batch_serving/`](03_qwen3vl_batch_serving/README.md) | 2026-07 | Qwen3-VL-2B 배치·코어모드 서빙(vLLM), NPU 1장 동시요청 + vllm-mblt 버그 2건 | **미발송** |
 | 04 | [`04_vit_quantization_speed/`](04_vit_quantization_speed/REPLY.md) | 2026-09 | ViT 비전 인코더 양자화 설정별 속도·정확도(W8A16/W4A16/W4A8), uint8 입력, 추론 패턴 | **회신 수신** — 재현 완료 |
 | 05 | [`05_a16_selection_followup/`](05_a16_selection_followup/EMAIL.md) | 2026-09 | `select_a16.py` 요청 + A16 5개가 어느 체크포인트 기준인지 확인 | **발송 대기** ★최신 |
+| [06](06_qwen3vl_prefill_optimization/) | Qwen3-VL-2B prefill 최적화 — 신규 릴리즈 SDK·튜토리얼 요청 + 실증기간 상위 NPU 교체 문의. 첨부: 카드1장 16장 2415ms(720p, 2스레드) → 2장 추정 1207ms, 목표 1000ms 대비 +21%. 배치는 text mxq legacy 2입력이라 불가 | 발송 대기 |
 
 ## 폴더 안 파일 규칙
 
