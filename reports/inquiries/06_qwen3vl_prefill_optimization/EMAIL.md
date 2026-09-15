@@ -161,9 +161,11 @@ ValueError: Batched Qwen3-VL text inference requires a 3-input
   입력이 3개(`inputs_embeds`, `rope`, `deepstack`)입니다.
 
 찾아보니 **`mobilint/Qwen3-VL-8B-Instruct-Batch16`** 저장소가 이미 공개되어 있었습니다.
-즉 배치 대응 빌드가 **8B 에는 존재하고 2B 에는 없는** 상황으로 보입니다. 또한 text MXQ 에는 Multi 번들이 없어(`Single`/`Global4`/`Global8` 만 존재)
-`core_mode="multi"` 지정 시 `Model_MXQAndModelConfigNotMatch` 가 발생했습니다.
-(vision MXQ 에는 Multi 번들이 있습니다)
+즉 배치 대응 빌드가 **8B 에는 존재하고 2B 에는 없는** 상황으로 보입니다.
+
+한편 코어모드로 우회해 보려 했으나, text MXQ 에는 Multi 번들이 없어
+(`Single` / `Global4` / `Global8` 만 존재) `core_mode="multi"` 지정 시
+`Model_MXQAndModelConfigNotMatch` 가 발생했습니다. (vision MXQ 에는 Multi 번들이 있습니다)
 
 공개해 주신 **SDK 튜토리얼(`compilation/vlm/`)의 language 컴파일은 RoPE 를 사전 계산해 모델에 굽는
 방식**("Pre-cached RoPE embeddings")이라, 저희가 직접 컴파일해도 2입력 빌드만 만들어지는 것으로
