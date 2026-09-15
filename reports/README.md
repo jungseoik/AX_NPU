@@ -32,6 +32,7 @@ attn_pool의 QKᵀ를 16bit로 올려 CPU pool을 없애고 전부 NPU로 옮긴
 | [NPU_preprocess_1_parallel.md](performance/NPU_preprocess_1_parallel.md) | [전처리 ①] 병렬화(스레드/멀티프로세스) — 1차 시도 |
 | [NPU_preprocess_2_uint8_offload.md](performance/NPU_preprocess_2_uint8_offload.md) | [전처리 ②] NPU 오프로드(uint8) 실험: normalize는 폴딩되나 resize 불가라 이득 없음 |
 | [NPU_preprocess_3_cv2_decision.md](performance/NPU_preprocess_3_cv2_decision.md) | [전처리 ③ 채택] 의사결정(e2e): 비용 원천=resize, torchvision→cv2(56ch −25%·CPU↓, 정확도 0.99→0.97 opt-in) |
+| [NPU_preprocess_4_roi_crop.md](performance/NPU_preprocess_4_roi_crop.md) | ★ [전처리 ④] **CPU 전처리 병목 제거** — ROI 크롭 torch→cv2(62ch 2602→4.6ms) + resize/normalize 분리(176→40ms) + NHWC 직행(왕복 −72ms). e2e 8카드 62ch 3422→569ms, 수용 18→62ch+. 양자화/튜닝 모델 선택 env 추가 |
 
 ### npu_intrusion 침입 서비스 e2e (before → 최적화 → after)
 YOLO11 침입감지 서비스 모듈 e2e를 측정→진단→재측정한 스토리.

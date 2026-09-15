@@ -103,7 +103,12 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - `reports/performance/NPU_pe_multicard_62ch_hybrid.md` — [비포·hybrid] 멀티카드 62채널 (trunk만)
   - `reports/performance/NPU_preprocess_1_parallel.md` — 고채널 병목인 CPU 전처리 병렬화 벤치
   - `reports/performance/NPU_preprocess_2_uint8_offload.md` — 전처리 NPU 오프로드(uint8 입력) 실험: normalize는 폴딩되나 resize 불가라 전처리 이득 없음(정확도 0.99 유지). + 남은 최적화 정리
-  - `reports/performance/NPU_preprocess_3_cv2_decision.md` — 전처리 최적화 의사결정(e2e 기준): 리소스 원천=resize, torchvision→cv2(INTER_LINEAR) 전환으로 56ch e2e -25%·CPU 5배↓(정확도 0.99→0.97, opt-in), 워커16, 파이프라이닝 미채택
+  - `reports/performance/NPU_preprocess_3_cv2_decision.md` — 전처리 최적화 의사결정(e2e 기준): 리소스 원천=resize, torchvision→cv2(INTER_LINEAR) 전환으로 56ch e2e -25%·CPU 5배↓(정확도 0.99→0.97, opt-in), 워커16, 파이프라이닝 미채택.
+    ★ **단 이 cv2 전환은 실서비스 경로(`_detect`)에서 동작하지 않고 있었다** — ROI 크롭이 프레임을 torch로 넘겨 `isinstance(img, np.ndarray)` 분기가 항상 거짓. → ④에서 규명·수정
+  - `reports/performance/NPU_preprocess_4_roi_crop.md` — ★★ **[전처리 ④] CPU 전처리 병목 제거**. ROI 크롭 torch→cv2(`fillPoly`+스레드풀, ROI 미지정 시 크롭 스킵) **62ch 2602→4.6ms**,
+    전처리를 스레드 resize + 배치 normalize로 분리 176→40ms, 전처리가 NPU 네이티브 **NHWC**로 바로 내보내 CHW↔HWC 왕복 제거(추론 −61ms).
+    **62ch e2e 3422→569ms(6.0배)**, 1fps 수용 채널 18ch→62ch+. 출력 비트 동일(폴리곤 ROI만 경계 0.2%, cos 0.9988).
+    적용은 Product-AI-mono `pe_npu`(PR #610/AIPROD-313), 본 문서는 근거 기록
   - `reports/performance/compile_benchmark.md` — 컴파일 시간 GPU vs CPU
   - `reports/quantization/quantization_reference.md`, `reports/quantization/QUANT_TUNING_guide.md` — 양자화 배경
 - **Mobilint 문의 스레드**: `reports/inquiries/` — 번호가 문의 순서(클수록 최신). 인덱스 `reports/inquiries/README.md`.
