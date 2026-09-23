@@ -52,7 +52,7 @@
 | 축 | 기존 | 벤더 |
 | --- | --- | --- |
 | 배치 | `max_batch_size=1` | **32** |
-| 양자화 | W8 (text 1682.9MB) | **W4V8** (883.5MB) |
+| 양자화 | text 1682.9MB | text 883.5MB (**크기 절반** — 더 낮은 비트폭으로 추정, 미확인) |
 | 코어 배치 | vision·text 모두 `global8` | vision **`global4×2`** + text `global8` |
 
 벤더 측정에서 `vision_stage_ms` 가 657~671ms 로 **전체 1107ms 의 약 60%** 였다.
