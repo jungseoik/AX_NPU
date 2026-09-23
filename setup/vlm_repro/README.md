@@ -35,17 +35,14 @@
 docker build -f setup/vlm_repro/Dockerfile.runtime -t mblt_vlm_repro:rt \
     download/vendor/customer-capacity-repro
 
-# 2) run_table.py 에 --device 인자 추가 (원본은 .orig 로 보존)
-python setup/vlm_repro/apply_patch.py
-
-# 3) 무결성 확인
+# 2) 무결성 확인
 bash setup/vlm_repro/run_runtime.sh --shell
   # 컨테이너 안에서: python3.10 scripts/verify_files.py
 
-# 4) 스모크 (30회 용량검증 아님)
+# 3) 스모크 (30회 용량검증 아님)
 bash setup/vlm_repro/run_runtime.sh --sizes 224x224 --repetitions 2 --output results/smoke
 
-# 5) 특정 해상도만
+# 4) 특정 해상도만
 bash setup/vlm_repro/run_runtime.sh --sizes 224x224 320x320 --output results/sel
 ```
 
@@ -56,11 +53,16 @@ NPU_DEVICES="7" bash setup/vlm_repro/run_runtime.sh ...      # 7번만
 NPU_DEVICES="1 7" RUN_DEVICE=7 bash ... run_runtime.sh ...   # 둘 다 넘기고 7번으로 실행
 ```
 
-## `--device` 패치가 필요한 이유
+## `--device` — 패키지를 고치지 않고 래퍼로 해결한다
 
 `run_table.py` 는 `Classifier(device=0)` 로 **0번 카드 고정**이고 CLI 로 바꿀 수 없다.
 이 서버는 0번을 운영 파드가 쓰고 있어 그대로는 못 돌린다.
-`apply_patch.py` 가 `--device` 인자를 추가한다(되돌리기: `--revert`).
+
+처음엔 원본을 직접 패치했는데 **`scripts/verify_files.py` 가 즉시 검출한다**
+(`Missing or modified files: scripts/run_table.py`). 벤더 패키지는 건드리지 않는 것이 맞다.
+
+→ `run_table_device.py` 가 `Classifier.__init__` 의 기본 device 를 바꾼 뒤
+원본 `run_table.py` 를 `runpy` 로 호출한다. 패키지는 무결성 검사를 통과한 상태 그대로다.
 
 ## 주의 — 벤더가 밝힌 한계
 

@@ -1,0 +1,53 @@
+[
+  {
+    "case": {
+      "size": "224x224",
+      "requested_size": [
+        224,
+        224
+      ],
+      "reference_cameras": 20,
+      "decoder_batch": 32,
+      "vision_mode": "global4x2",
+      "text_mode": "global8",
+      "reference_worst_ms": 929.8,
+      "max_patches": 4096,
+      "chunk_size": 128,
+      "repetitions": 30
+    },
+    "trials": {
+      "20": {
+        "repetitions": 1,
+        "median_ms": 1317.3373127356172,
+        "min_ms": 1317.3373127356172,
+        "max_ms": 1317.3373127356172,
+        "all_bursts_under_deadline": false,
+        "deadline_ms": 1000.0,
+        "deadline_misses": 20,
+        "invalid_labels": 0,
+        "labeled_requests": 20,
+        "correct_labels": 20,
+        "all_labels_correct": true,
+        "completed_requested_repetitions": false,
+        "qualified": false,
+        "requested_repetitions": 2
+      },
+      "21": {
+        "repetitions": 1,
+        "median_ms": 1328.1627357937396,
+        "min_ms": 1328.1627357937396,
+        "max_ms": 1328.1627357937396,
+        "all_bursts_under_deadline": false,
+        "deadline_ms": 1000.0,
+        "deadline_misses": 21,
+        "invalid_labels": 0,
+        "labeled_requests": 21,
+        "correct_labels": 21,
+        "all_labels_correct": true,
+        "completed_requested_repetitions": false,
+        "qualified": false,
+        "requested_repetitions": 2
+      }
+    }
+  }
+]

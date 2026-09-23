@@ -1,0 +1,36 @@
+{
+  "utc": "2026-09-23T03:31:32.246572+00:00",
+  "python": "3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]",
+  "platform": "Linux-5.15.0-187-generic-x86_64-with-glibc2.35",
+  "threads": 4,
+  "packages": {
+    "torch": "2.9.0+cu128",
+    "transformers": "4.57.6",
+    "qbruntime": "1.4.0+repack1",
+    "mblt-model-zoo": "2.3.0+tta1",
+    "numpy": "2.2.6",
+    "Pillow": "12.3.0"
+  },
+  "artifacts": {
+    "decoder.mxq": "001974a3e52d744f0b38d59ba2d777af22a26d3372a8b31942cc63512c2d7788",
+    "vision.mxq": "ed5ea94ed9639fbd37132d0758ba653d7f45d8c812864e7dbfdf871a58bb6573"
+  },
+  "source_hashes": {
+    "scripts/run_table.py": "313989286b04eab30cf98bc8039ae9052cc13c5395d6569529279b42fc138253",
+    "src/pia_vlm/runtime.py": "21dc3ba454326103f94da212cb1fac6dae8a8f4be27bf9247e77a1c3885a1ccc",
+    "src/pia_vlm/artifact.py": "d1ffa9fb3595d3e1f24a276cc8d7ce3fba0cb5c33a423882bfab092d9633151c",
+    "src/pia_vlm/benchmark.py": "f223a568bff8d14b25ecaf6c499d29f72a8ffc9b80ff968267318c7ba9b47f6a",
+    "src/pia_vlm/support.py": "f6898e5ef7754c6bdb0eada67277e3cfc9ee5857ab049f3232cd5d44223f1efc",
+    "src/pia_vlm/__init__.py": "fb80e40ff806f6fa278ba07c6318a66e6584577af88767ac964f34bcfb0bdbce",
+    "src/pia_vlm/capacity.py": "2691378452b223d75b36e478f064e527fcaff2b54ea58a7a1d0fb17f52f0372d"
+  },
+  "repetitions": 2,
+  "find_capacity": false,
+  "timing": "JPEG in host memory through greedy first token; includes preprocessing and arrival backlog",
+  "images": {
+    "dog1080.jpg": "eec9d4617ef1cd9fd61390603d3797734b4616bb6fb8d7c8b8bc052cd87dcaa0",
+    "dog720.jpg": "fad22778cd1d31ff8836934255c31892b99f0ce8ae19ceb62ac6483f9ce12b88",
+    "cats720.jpg": "d08d9f659d66e80f9afbbef6e321ef56311a2ce22852d4f92b8a84293e0ba383",
+    "cats1080.jpg": "96151265931eb4d523c96cd05b650c9e8598795f7232f57d321e353ff7bd6c4a"
+  }
+}
