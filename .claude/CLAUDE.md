@@ -55,7 +55,9 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - **컴파일에 GPU 불필요** — 벤더가 버전별 `-cpu`/`-cuda` 이미지를 쌍으로 배포하고 코드가 CPU로 자동 폴백한다.
     GPU 없는 서버는 `mobilint/qbcompiler:1.1-cpu-ubuntu22.04`(SDK 1.0v) / `1.2-cpu-ubuntu22.04`(1.1v).
     이미지·요건은 `setup/sdk_versions.json` 기준, 조회는 `python setup/sdk_resolve.py --sdk <버전>`.
-  - **SDK 번들 버전**: 1.0v(드라이버1.13/런타임1.2.0/컴파일러1.1.2, 기본) / 1.1v(1.14/1.4.0/1.2.0).
+  - **SDK 번들 버전**: 1.0v(드라이버1.13/런타임1.2.0/컴파일러1.1.2, 기본) / 1.1v(1.14/1.4.0/1.2.0) /
+    **1.2v**(드라이버 미확인/런타임1.4.0/**컴파일러1.3.0**, 2026-09-23 수령 — **미설치·미검증**, 문서 미수령).
+    ★ Qwen3-VL 용량 재현은 이 공개 1.3.0이 아니라 **벤더 커스텀 `qbcompiler-1.3.4+pia.capacity3`** 를 쓰라는 안내 → `reports/inquiries/06_qwen3vl_prefill_optimization/REPLY_2.md`
     신규 서버 세팅은 `bash setup/setup_all.sh --sdk 1.0|1.1` 한 줄 (스킬 `npu-setup`이 버전을 먼저 물어본다).
 - SDK(`download/`)는 비공개라 gitignore — 사람이 직접 배치. MXQ/pool head도 gitignore(HF로 배포).
 

@@ -86,8 +86,12 @@ def main():
         f"| {os.path.basename(c['path']) if c['path'] else c['glob']} | {name} | {c['version']} |"
         for name, c in v["components"].items())
     cp = v["compile"]
-    compile_note = (f"- docker 필요: `{cp['docker_image']}`\n" if cp["docker_required"]
-                    else "- 호스트에서 바로 컴파일 가능(컴파일러 whl에 mmc 내장)\n")
+    if cp["docker_required"]:
+        imgs = [cp[k] for k in ("docker_image_cpu", "docker_image_cuda") if cp.get(k)]
+        compile_note = "- docker 필요: " + " / ".join(f"`{i}`" for i in imgs) + "\n" if imgs \
+            else "- docker 필요(이미지 확인 필요)\n"
+    else:
+        compile_note = "- 호스트에서 바로 컴파일 가능(컴파일러 whl에 mmc 내장)\n"
     compile_note += f"- python {cp['python']} / numpy {cp['numpy']}\n- {cp['note']}"
     readme = README_TMPL.format(label=v["label"], sdk=v["sdk"], summary=v["summary"],
                                 rows=rows, compile_note=compile_note)
