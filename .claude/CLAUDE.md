@@ -119,7 +119,10 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
     (우리 모델은 공개 CLIP과 다르다 — 일반 GELU + attention pooling head 보유)
   최신 04(ViT 양자화 W4A16/W4A8·uint8 입력·single+async 권고)는 위의 **"NPU는 INT8 전용(bit4=no-op)"** 및
   **"다채널 동시성 — async 다건 제출 금지"** 두 서술과 충돌 소지가 있다. 검증 전까지 기존 서술 유지, 확인 후 갱신.
-- Mobilint SDK 공식 문서: `docs/` (멀티코어 `docs/multicore.md` 등)
+- Mobilint SDK 공식 문서: `docs/` (멀티코어 `docs/multicore.md` 등). 최상위 md = 런타임 1.2 계열(현 운영).
+  - **`docs/compiler_v1.3/`**(16p) / **`docs/runtime_v1.4/`**(14p) — 2026-09-23 수집, `_sources/*.md` 원본.
+    ★ compiler 1.3 CHANGELOG에 **dynamic RoPE 지원** 명시, `transformer.md`에 `LlmConfig.Attributes.Runtime.dynamicRope`/`dynamicMask` 문서화(켜면 런타임 입력 늘고 최적화 여지 감소 — 필요할 때만).
+    재수집: `python reports/scripts/fetch_mobilint_docs.py --set compiler --version v1.3`
 
 ## Skill
 
