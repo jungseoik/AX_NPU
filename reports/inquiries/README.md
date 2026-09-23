@@ -10,7 +10,7 @@
 | 03 | [`03_qwen3vl_batch_serving/`](03_qwen3vl_batch_serving/README.md) | 2026-07 | Qwen3-VL-2B 배치·코어모드 서빙(vLLM), NPU 1장 동시요청 + vllm-mblt 버그 2건 | **미발송** |
 | 04 | [`04_vit_quantization_speed/`](04_vit_quantization_speed/REPLY.md) | 2026-09 | ViT 비전 인코더 양자화 설정별 속도·정확도(W8A16/W4A16/W4A8), uint8 입력, 추론 패턴 | **회신 수신** — 재현 완료 |
 | 05 | [`05_a16_selection_followup/`](05_a16_selection_followup/EMAIL.md) | 2026-09 | `select_a16.py` 요청 + A16 5개가 어느 체크포인트 기준인지 확인 | **발송 대기** |
-| 06 | [`06_qwen3vl_prefill_optimization/`](06_qwen3vl_prefill_optimization/REPLY.md) | 2026-09 | Qwen3-VL-2B prefill 최적화 — 고해상도(dynamic RoPE)·신규 SDK 성능·코어모드·상위 NPU(MLA400) | **회신 수신 · 후속 발송 대기** ★최신 — dynamic RoPE는 신규 SDK(1.3.0?) 지원 예정. 후속 [`EMAIL_2_scenario.md`](06_qwen3vl_prefill_optimization/EMAIL_2_scenario.md)에 1.3.0 문서 요청 + 구체 시나리오 |
+| 06 | [`06_qwen3vl_prefill_optimization/`](06_qwen3vl_prefill_optimization/REPLY_2.md) | 2026-09 | Qwen3-VL-2B prefill 최적화 — 고해상도(dynamic RoPE)·배치·코어모드·상위 NPU | **회신 2차 수신** ★최신 — 벤더가 1장당 최대 카메라 수 실측표 + 재현 패키지(10GB, 커스텀 컴파일러 포함) 전달. **720p 원본은 1대도 불가(1259.9ms)**, 224×224에서 20대/929.8ms |
 
 ## 폴더 안 파일 규칙
 
