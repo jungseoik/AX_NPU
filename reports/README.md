@@ -48,6 +48,11 @@ YOLO11 침입감지 서비스 모듈 e2e를 측정→진단→재측정한 스�
 | [NPU_yolo11_coremode_batch.md](performance/NPU_yolo11_coremode_batch.md) | ★ [YOLO11] 4사이즈(n/s/m/l)×4모드 컴파일(패치0)·코어모드×배치 1→64·카드수(1~7)×배치 스케일링·mAP(INT8 vs fp32) |
 | [NPU_qwen3vl_multicard_batch.md](performance/NPU_qwen3vl_multicard_batch.md) | [Qwen3-VL] 멀티카드×배치(동시요청) VQA 1토큰 지연 (dev_no 카드지정, VLMPool) |
 
+### 정확도 (다운스트림 과제)
+| 문서 | 내용 |
+|------|------|
+| [NPU_wave_tta_event_f1.md](performance/NPU_wave_tta_event_f1.md) | ★ **[PIA_Wave]** zero-shot 이벤트 탐지 NPU 이식 + TTA 200영상 프레임 F1. falldown 0.981 / fire 0.984 / smoke 0.915 (macro 0.960, 원본 0.892). 결정규칙 교체 + 프롬프트 16,125→13개 선택(APO 이식). held-out 0.953 로 과적합 아님 |
+
 ### 공통·기타 (스토리 무관)
 | 문서 | 내용 |
 |------|------|
