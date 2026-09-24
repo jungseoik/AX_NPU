@@ -53,7 +53,7 @@ def encode_text(prompts, model_name="PE-Core-L14-336", batch=256):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", default="third_party/PIA_Wave/data/text_features_tuningfree_v2_soil최종.csv")
-    ap.add_argument("--out", default="out/wave/text_feats.npz")
+    ap.add_argument("--out", default="wave_npu/cache/text_feats.npz")
     ap.add_argument("--batch", type=int, default=256)
     a = ap.parse_args()
 

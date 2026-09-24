@@ -19,20 +19,22 @@ class Objective:
     FAST_RULES = ("mean_margin", "iou_std", "zmean_margin")
 
     def __init__(self, sims, cls, lab, vid, categories, rule="iou_std", win=1,
-                 fast=True, target=None, **kw):
+                 fast=True, target=None, cat2cls=None, normal=None, **kw):
         self.target = target
+        self.cat2cls, self.normal = cat2cls, normal
         self.sims, self.cls, self.lab, self.vid = sims, cls, lab, vid
         self.categories, self.rule, self.win, self.kw = categories, rule, win, kw
         self.n_calls = 0
-        self._fast = FastMeanScorer(sims, cls, categories) if (
+        self._fast = FastMeanScorer(sims, cls, categories, cat2cls, normal) if (
             fast and rule in self.FAST_RULES and not kw) else None
 
     def scores(self, mask):
         if self._fast is not None:
             s = self._fast.scores(mask, self.rule)
         else:
-            s = category_scores(self.sims, self.cls, self.categories,
-                                rule=self.rule, mask=mask, **self.kw)
+            s = category_scores(self.sims, self.cls, self.categories, rule=self.rule,
+                                mask=mask, cat2cls=self.cat2cls, normal=self.normal,
+                                **self.kw)
         return smooth(s, self.vid, self.win)
 
     def __call__(self, mask):
@@ -109,6 +111,7 @@ def greedy_axis(obj, space, state, axis, cls=None, verbose=True, min_keep=1):
 def coordinate_ascent(obj, space, categories, rounds=2, verbose=True, min_keep=1):
     """세 축을 번갈아 최적화. 반환: (mask, state, score)"""
     from .score import CAT2CLS
+    cat2cls = getattr(obj, "cat2cls", None) or CAT2CLS
     state = {
         "scenes": set(range(len(space.scenes))),
         "occs": set(range(len(space.occs))),
@@ -119,7 +122,7 @@ def coordinate_ascent(obj, space, categories, rounds=2, verbose=True, min_keep=1
         print(f"[opt] start macro_f1={score:.4f}", flush=True)
 
     axes = [("scenes", None), ("occs", None), ("phrases", 0)] + \
-           [("phrases", CAT2CLS[c]) for c in categories]
+           [("phrases", cat2cls[c]) for c in categories]
     for r in range(rounds):
         if verbose:
             print(f"[opt] round {r + 1}/{rounds}", flush=True)

@@ -135,7 +135,7 @@ def tta_videos(root: str, categories=("falldown", "fire", "intrusion", "smoke"))
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="eval/datasets/TTA_인증용")
-    ap.add_argument("--out", default="out/wave/emb_tta")
+    ap.add_argument("--out", default="wave_npu/cache/emb_tta")
     ap.add_argument("--device-ids", default="1,3,4,5")
     ap.add_argument("--scheme", default="single")
     ap.add_argument("--quant", default=None)

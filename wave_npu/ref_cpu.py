@@ -19,7 +19,7 @@ from .embed import decode_video, to_model_input, tta_videos
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="eval/datasets/TTA_인증용")
-    ap.add_argument("--out", default="out/wave/emb_tta_fp32")
+    ap.add_argument("--out", default="wave_npu/cache/emb_tta_fp32")
     ap.add_argument("--fps", type=float, default=2.0, help="레퍼런스는 서브샘플만 (CPU가 느림)")
     ap.add_argument("--threads", type=int, default=64)
     ap.add_argument("--batch", type=int, default=8)

@@ -54,18 +54,24 @@ def _top_mean(s, frac):
 
 
 def category_scores(sims, cls, categories, rule="iou_std", mask=None,
-                    topk=13, temp=0.01, frac=0.1) -> np.ndarray:
-    """(N, C) float32. 높을수록 이벤트."""
+                    topk=13, temp=0.01, frac=0.1, cat2cls=None, normal=None) -> np.ndarray:
+    """(N, C) float32. 높을수록 이벤트.
+
+    cat2cls/normal 을 주면 카테고리→프롬프트 클래스 매핑을 스펙에서 받는다
+    (wave_npu.config.Spec). 미지정 시 모듈 기본값(falldown/fire/smoke).
+    """
     if mask is None:
         mask = np.ones(len(cls), bool)
-    classes = [NORMAL] + [CAT2CLS[c] for c in categories]
+    cat2cls = cat2cls or CAT2CLS
+    normal = NORMAL if normal is None else normal
+    classes = [normal] + [cat2cls[c] for c in categories]
 
     if rule == "topk_frac":
         idx = np.where(mask)[0]
         s = sims[:, idx]
         top = np.argpartition(-s, topk, axis=1)[:, :topk]
         tc = cls[idx][top]                                   # (N,topk)
-        return np.stack([(tc == CAT2CLS[c]).mean(1) for c in categories], 1).astype(np.float32)
+        return np.stack([(tc == cat2cls[c]).mean(1) for c in categories], 1).astype(np.float32)
 
     if rule == "topmean_margin":
         tm = {}
@@ -74,13 +80,13 @@ def category_scores(sims, cls, categories, rule="iou_std", mask=None,
             if idx.size == 0:
                 raise ValueError(f"class {c} 프롬프트가 mask 로 전부 제거됨")
             tm[c] = _top_mean(sims[:, idx], frac)
-        return np.stack([tm[CAT2CLS[c]] - tm[NORMAL] for c in categories], 1).astype(np.float32)
+        return np.stack([tm[cat2cls[c]] - tm[normal] for c in categories], 1).astype(np.float32)
 
     st = _class_stats(sims, cls, mask, classes)
-    mn, sn, xn = st[NORMAL]
+    mn, sn, xn = st[normal]
     cols = []
     for c in categories:
-        me, se, xe = st[CAT2CLS[c]]
+        me, se, xe = st[cat2cls[c]]
         if rule == "iou_std":
             cols.append(-_std_iou(mn, sn, me, se))
         elif rule == "mean_margin":
@@ -96,7 +102,7 @@ def category_scores(sims, cls, categories, rule="iou_std", mask=None,
             logits = np.stack([st[k][2] for k in classes], 1) / temp
             p = np.exp(logits - logits.max(1, keepdims=True))
             p /= p.sum(1, keepdims=True)
-            cols.append(p[:, classes.index(CAT2CLS[c])])
+            cols.append(p[:, classes.index(cat2cls[c])])
         else:
             raise ValueError(f"unknown rule {rule}")
     return np.stack(cols, 1).astype(np.float32)
@@ -144,12 +150,14 @@ class FastMeanScorer:
     구할 수 있으므로 sims 와 sims² 를 한 번만 만들어 두고 재사용한다 (≈30배).
     """
 
-    def __init__(self, sims, cls, categories):
+    def __init__(self, sims, cls, categories, cat2cls=None, normal=None):
         self.s = np.ascontiguousarray(sims)
         self.s2 = self.s * self.s
         self.cls = cls
         self.categories = categories
-        self.classes = [NORMAL] + [CAT2CLS[c] for c in categories]
+        self.cat2cls = cat2cls or CAT2CLS
+        self.normal = NORMAL if normal is None else normal
+        self.classes = [self.normal] + [self.cat2cls[c] for c in categories]
 
     def _stats(self, mask):
         st = {}
@@ -165,10 +173,10 @@ class FastMeanScorer:
 
     def scores(self, mask, rule="mean_margin"):
         st = self._stats(mask)
-        mn, sn = st[NORMAL]
+        mn, sn = st[self.normal]
         cols = []
         for c in self.categories:
-            me, se = st[CAT2CLS[c]]
+            me, se = st[self.cat2cls[c]]
             if rule == "mean_margin":
                 cols.append(me - mn)
             elif rule == "iou_std":

@@ -70,13 +70,18 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - **배치 불가**: text mxq가 legacy 2입력이라 3입력 Batch16 빌드 필요(HF 최신본도 동일, 벤더 대기). text엔 Multi 번들도 없어 `core_mode=multi`는 text에 주면 안 됨. 라이브러리(2.4.2)는 준비됨 → `reports/performance/NPU_qwen3vl_ttft_resolution_concurrency.md`
 - **YOLO11 객체탐지 (컴파일~추론)**: `tutorial/yolo_npu/README.md` + `demo_yolo11_npu.ipynb` + 패키지 `yolo_npu/`(detect/compile). PE와 달리 **패치 0개**로 컴파일(표준 CNN, `yolo_decode_include`). 모델은 **mxq만 바꾸면**(11n/s/m/l). 단일/지정/`device_ids="auto"` 멀티카드 + `detect_batch`(출력 무결성 검증됨). **추적**: `ByteTrack`(자체 경량, `yolo_npu/track.py`) — 검출 NPU + 추적 CPU. mAP(11m INT8 0.53=fp32의 96%)·4모드×배치·1~7장 스케일링(64ch 198→1072 img/s): `reports/performance/NPU_yolo11_coremode_batch.md`. **기본 진입점 `YOLONPU.load(model, scheme)`** = HF `PIA-SPACE-LAB/MXQ_NPU/yolo/<model>/<scheme>/` 먼저 → 없으면 컴파일 안내
 - **신규 서버 NPU 세팅**: `.claude/skills/npu-setup/` (clone 후 `mobilint-cli status`까지)
-- **PIA_Wave 이벤트탐지(zero-shot) NPU 이식 + TTA 정확도**: 패키지 `wave_npu/` (+ `wave_npu/README.md`).
-  PE-Core 임베딩 × 텍스트 프롬프트 유사도로 falldown/fire/smoke 프레임 판정. 원본은 `third_party/PIA_Wave`(GPU/TRT),
-  프롬프트 최적화는 `third_party/APO-AI-GUI` 아이디어 이식. **third_party/는 gitignore(외부 클론)라 원본 무수정** —
-  NPU 인코더는 `wave_npu/encoder.py`가 레지스트리에 등록만 한다(`--model_type npu`).
-  ★ **핵심 설계 = 임베딩 1회 추출 후 캐시**(200영상×361프레임=72,200개, NPU 4장 21.7분). 이후 프롬프트·규칙·임계값
-  실험은 전부 CPU numpy라 0.15s/평가. TTA 200영상 프레임 F1: falldown 0.981 / fire 0.984 / smoke 0.915(macro 0.960,
-  원본 설정 0.892). 프롬프트는 16,125개 중 **13개**만 사용. → `reports/performance/NPU_wave_tta_event_f1.md`
+- **TTA 이벤트탐지 평가 (PIA_Wave NPU 이식)**: 패키지 `wave_npu/` — **평가 전용 워크스트림**.
+  코드·스펙·산출물·**문서까지 전부 `wave_npu/` 안에서 관리**한다(`reports/`에 분산시키지 않음).
+  진입: `wave_npu/README.md`, 보고서: `wave_npu/docs/tta_event_f1.md`.
+  PE-Core 임베딩 × 텍스트 프롬프트 유사도로 falldown/fire/smoke 프레임 판정 + intrusion은 YOLO11 사람검출.
+  원본은 `third_party/PIA_Wave`(GPU/TRT), 프롬프트 최적화는 `third_party/APO-AI-GUI` 아이디어 이식.
+  **third_party/는 gitignore(외부 클론)라 원본 무수정** — NPU 인코더는 `wave_npu/encoder.py`가 등록만(`--model_type npu`),
+  원본이 `.to("cuda")` 하드코딩이라 런처 `wave_npu/pia_wave.py`가 CPU shim을 넣는다.
+  ★ **핵심 설계 = 임베딩 1회 추출 후 캐시**(200영상×361프레임=72,200개, NPU 4장 22분). 이후 프롬프트·규칙·임계값
+  실험은 전부 CPU numpy라 0.15s/평가. TTA 프레임 F1: falldown 0.981 / fire 0.984 / smoke 0.915(원본 설정 macro 0.892→0.960),
+  intrusion 0.93(자기 영상 내 — 교차 음성 불가, falldown 영상 96%에 사람이 있는데 라벨 0). 프롬프트는 16,125 중 **13개**.
+  ★ **카테고리는 코드가 아니라 스펙**(`wave_npu/specs/*.json`): `source`=pe(장면 상태)/person(객체 등장),
+  `eval_folders`=평가 범위. 카테고리 추가는 문구 6~10개만 쓰면 `wave_npu.extend_prompts`가 확장 — `wave_npu/README.md` 절차 참고.
 - **평가용 데이터셋**: `eval/README.md` + `eval/tta.py`. 실데이터는 git에 안 넣고 HF private에 zip으로 두고
   **토큰만 있으면 재현** — `export HF_TOKEN=... && python -m eval.tta download` → `eval/datasets/TTA_인증용/`(gitignore).
   현재 `TTA_인증용`(HF `PIA-SPACE/AX_NPU_TTA`, dataset·private): 이상행동 4종(falldown/fire/intrusion/smoke)

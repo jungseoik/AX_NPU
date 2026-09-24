@@ -283,8 +283,8 @@ def cmd_diagnose(a):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["baseline", "optimize", "final", "diagnose", "combo", "percat"])
-    ap.add_argument("--emb", default="out/wave/emb_tta")
-    ap.add_argument("--text", default="out/wave/text_feats.npz")
+    ap.add_argument("--emb", default="wave_npu/cache/emb_tta")
+    ap.add_argument("--text", default="wave_npu/cache/text_feats.npz")
     ap.add_argument("--root", default="eval/datasets/TTA_인증용")
     ap.add_argument("--fps", type=float, default=2.0, help="0=전 프레임")
     ap.add_argument("--rules", default=None)
@@ -304,7 +304,7 @@ def main():
     ap.add_argument("--mask", default=None)
     ap.add_argument("--top", type=int, default=15)
     ap.add_argument("--sweep-win", action="store_true", help="percat: --wins 로 카테고리별 창 재탐색")
-    ap.add_argument("--out", default="out/wave/baseline.json")
+    ap.add_argument("--out", default="wave_npu/artifacts/baseline.json")
     a = ap.parse_args()
     a.rule_map = dict(x.split("=") for x in a.rule_map.split(",") if x)
     a.win_map = {k: int(v) for k, v in (x.split("=") for x in a.win_map.split(",") if x)}

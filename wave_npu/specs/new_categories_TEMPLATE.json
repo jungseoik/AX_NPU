@@ -1,0 +1,46 @@
+{
+  "_설명": [
+    "새 카테고리를 붙일 때 사람이 채울 것은 'phrases'(이벤트 문구) 뿐이다.",
+    "장면(25) × 인원상황(15) 축과의 조합은 extend_prompts 가 자동으로 만든다.",
+    "문구는 영어 평서문, 마침표 없이, 8~18단어. 부정문(no/not/without)은 피한다",
+    "(CLIP 계열은 부정을 제대로 인코딩하지 못한다).",
+    "cls 는 기존에 안 쓰인 번호로 (현재 0=normal,1=falldown,2=fire,3=smoke 사용 중).",
+    "사람/차량 '등장' 자체가 이벤트인 카테고리는 source를 person 으로 두고 cls 를 생략한다",
+    "— 그런 카테고리는 다른 폴더 영상에도 사람이 있어 교차 음성이 성립하지 않으므로",
+    "eval_folders 로 평가 범위를 한정해야 한다 (intrusion 사례 참고).",
+    "normal_extra 는 '오탐을 유발하는 정상 장면' 문구다. 이게 성능에 크게 기여한다",
+    "(예: 화재 오탐 방지 → 석양/붉은 조명/렌즈 플레어, 연기 → 안개/먼지)."
+  ],
+  "name": "TTA_11cat",
+  "base_csv": "third_party/PIA_Wave/data/text_features_tuningfree_v2_soil최종.csv",
+  "base_spec": "wave_npu/specs/tta_4cat.json",
+  "out_csv": "wave_npu/specs/prompts_11cat.csv",
+  "out_spec": "wave_npu/specs/tta_11cat.json",
+  "root": "eval/datasets/TTA_인증용",
+  "folders": ["falldown", "fire", "intrusion", "smoke", "새카테고리1", "새카테고리2"],
+
+  "categories": {
+    "예시_violence": {
+      "cls": 4,
+      "source": "pe",
+      "phrases": [
+        "Two people are fighting with each other",
+        "Someone is punching another person",
+        "A physical altercation is taking place",
+        "People are shoving and grappling violently",
+        "Someone is being assaulted on the ground",
+        "A brawl has broken out between several people"
+      ]
+    },
+    "예시_loitering": {
+      "source": "person",
+      "eval_folders": ["loitering"],
+      "signal": "max_conf"
+    }
+  },
+
+  "normal_extra": [
+    "People are greeting each other with a hug",
+    "Someone is waving their arms to say hello"
+  ]
+}

@@ -15,6 +15,25 @@ import sys
 from .encoder import PIA_WAVE, register
 
 
+def _shim_cuda():
+    """원본 스크립트가 `.to("cuda")` / `torch.device('cuda')` 를 하드코딩해서, GPU 없는
+    NPU 서버에서는 그대로 돌지 않는다. 원본 파일을 고치지 않고 런처에서만 CPU 로 리다이렉트한다.
+    (CUDA 가 실제로 있으면 아무것도 하지 않는다.)"""
+    import torch
+    if torch.cuda.is_available():
+        return
+    _to = torch.Tensor.to
+
+    def to(self, *a, **kw):
+        a = tuple("cpu" if isinstance(x, str) and x.startswith("cuda") else x for x in a)
+        if isinstance(kw.get("device"), str) and kw["device"].startswith("cuda"):
+            kw["device"] = "cpu"
+        return _to(self, *a, **kw)
+
+    torch.Tensor.to = to
+    torch.Tensor.cuda = lambda self, *a, **kw: self
+
+
 def main():
     argv = sys.argv[1:]
     if not argv:
@@ -38,6 +57,7 @@ def main():
     if devs != "auto":
         devs = [int(x) for x in devs.split(",")]
 
+    _shim_cuda()
     register(device_ids=devs, scheme=scheme, quant=quant)
     path = os.path.join(PIA_WAVE, "scripts", "VERSION_1",
                         script if script.endswith(".py") else script + ".py")

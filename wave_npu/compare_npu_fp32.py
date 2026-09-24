@@ -17,12 +17,12 @@ from .score import category_scores, sims_matrix, smooth
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--npu", default="out/wave/emb_tta")
-    ap.add_argument("--fp32", default="out/wave/emb_tta_fp32")
+    ap.add_argument("--npu", default="wave_npu/cache/emb_tta")
+    ap.add_argument("--fp32", default="wave_npu/cache/emb_tta_fp32")
     ap.add_argument("--root", default="eval/datasets/TTA_인증용")
-    ap.add_argument("--text", default="out/wave/text_feats.npz")
-    ap.add_argument("--mask", default="out/wave/mask_mean.npz")
-    ap.add_argument("--combo", default="out/wave/combo_24fps.json")
+    ap.add_argument("--text", default="wave_npu/cache/text_feats.npz")
+    ap.add_argument("--mask", default="wave_npu/artifacts/mask_mean.npz")
+    ap.add_argument("--combo", default="wave_npu/artifacts/combo_24fps.json")
     ap.add_argument("--fps", type=float, default=0.5)
     a = ap.parse_args()
 

@@ -1,0 +1,32 @@
+{
+ "name": "TTA_인증용",
+ "root": "eval/datasets/TTA_인증용",
+ "folders": [
+  "falldown",
+  "fire",
+  "intrusion",
+  "smoke"
+ ],
+ "prompt_csv": "third_party/PIA_Wave/data/text_features_tuningfree_v2_soil최종.csv",
+ "normal_class": 0,
+ "categories": {
+  "falldown": {
+   "cls": 1,
+   "source": "pe"
+  },
+  "fire": {
+   "cls": 2,
+   "source": "pe"
+  },
+  "smoke": {
+   "cls": 3,
+   "source": "pe"
+  },
+  "intrusion": {
+   "source": "person",
+   "eval_folders": [
+    "intrusion"
+   ]
+  }
+ }
+}

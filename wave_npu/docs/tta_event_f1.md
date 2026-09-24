@@ -1,9 +1,13 @@
-# PIA_Wave zero-shot 이벤트 탐지 NPU 이식 + TTA 프레임 F1 (falldown/fire/smoke)
+# TTA 이벤트 탐지 평가 — falldown / fire / smoke / intrusion 프레임 F1 (ARIES NPU)
 
 `third_party/PIA_Wave`(GPU/TensorRT)의 zero-shot 이벤트 탐지를 ARIES NPU(PE-Core MXQ, full NPU)로
 옮기고, `eval/datasets/TTA_인증용` 200영상에서 **프레임 레벨 per-category F1**을 측정·최적화했다.
+intrusion 은 성격이 달라 YOLO11(NPU) 사람 검출을 쓴다(§10).
 프롬프트 최적화는 `third_party/APO-AI-GUI`의 부분집합 선택 아이디어를 이 목적함수에 맞춰 이식했다.
-코드는 전부 `wave_npu/` (third_party는 gitignore라 원본 무수정).
+
+> **평가 워크스트림 문서.** 코드·스펙·산출물·문서를 전부 `wave_npu/` 안에서 관리한다.
+> 진입점은 [`../README.md`](../README.md), 문서 인덱스는 [`README.md`](README.md).
+> (`third_party/`는 gitignore 대상인 외부 레포 클론이라 원본은 수정하지 않는다.)
 
 측정 서버: NPU 8장 중 **4장(aries1/3/4/5)만 유휴**, 나머지는 타 프로세스 점유. GPU 없음(CPU 96코어).
 
@@ -11,21 +15,26 @@
 
 ## 1. 결론
 
-**목표(3종 모두 F1 90% 이상) 달성.** native 24fps 전 프레임 72,200개, 전체 200영상 교차 음성.
+**목표(F1 90% 이상) 4종 모두 달성.** native 24fps 전 프레임.
 
-| 카테고리 | **F1** | P | R | 규칙 | 평활창 | 양성비율 | "전부 양성" 자명 F1 |
-|---|---|---|---|---|---|---|---|
-| falldown | **0.9805** | 0.9926 | 0.9686 | `mean_margin` | 25f (1.0s) | 9.8 % | 0.178 |
-| fire | **0.9841** | 0.9918 | 0.9765 | `zmean_margin` | 13f (0.5s) | 22.4 % | 0.366 |
-| smoke | **0.9153** | 0.9269 | 0.9040 | `topmean_margin` | 25f (1.0s) | 42.9 % | 0.601 |
-| **macro** | **0.9600** | | | | | | |
+| 카테고리 | **F1** | P | R | 신호 | 규칙 | 평활창 | 평가 범위 | 양성비율 | "전부 양성" 자명 F1 |
+|---|---|---|---|---|---|---|---|---|---|
+| falldown | **0.9805** | 0.993 | 0.969 | PE | `mean_margin` | 25f | 전체 200영상 교차 | 9.8 % | 0.178 |
+| fire | **0.9841** | 0.992 | 0.977 | PE | `zmean_margin` | 13f | 전체 200영상 교차 | 22.4 % | 0.366 |
+| smoke | **0.9153** | 0.927 | 0.904 | PE | `topmean_margin` | 25f | 전체 200영상 교차 | 42.9 % | 0.601 |
+| intrusion | **0.9316** | 0.922 | 0.941 | YOLO11 person | max_conf | 49f | **intrusion 50영상 내** | 58.4 % | 0.738 |
+| **macro** | **0.9529** | | | | | | | | |
 
-- 원본 PIA_Wave 설정(규칙 `iou_std` + 프롬프트 16,125개 전부)의 macro **0.8919 → 0.9600**.
-- 임계값·프롬프트를 train 영상에서만 정하고 **한 번도 안 본 test 영상**에서 재도 macro
-  **0.9525~0.9540** (§5) — 이 숫자는 in-sample 상한에만 기대고 있는 게 아니다.
-- 프롬프트는 16,125개 중 **13개**만 쓴다. 텍스트 임베딩 비용도 그만큼 줄어든다.
-- 남은 병목은 **smoke**(0.915). 오차의 대부분은 연기가 옅은 영상 전체 미탐과, fire 영상에서
-  연기 라벨 구간 밖 오탐 — 라벨 경계 불일치가 섞여 있어 순수 모델 오차만은 아니다(§8).
+> **intrusion 만 평가 범위가 다르다.** "사람 등장 = 이벤트"라 falldown 영상(96.2%에 사람이 있으나
+> intrusion 라벨 0)과 교차 음성으로는 원리적으로 구분되지 않는다 — 라벨 누락이지 모델 한계가 아니다.
+> 근거와 대안 수치는 §10. 나머지 3종은 전체 200영상 교차 음성이다.
+
+- 원본 PIA_Wave 설정(규칙 `iou_std` + 프롬프트 16,125개 전부)의 3종 macro **0.8919 → 0.9600**.
+- 임계값·프롬프트를 train 영상에서만 정하고 **한 번도 안 본 test 영상**에서 재도 3종 macro
+  **0.9525~0.9540** (§6) — in-sample 상한에만 기대고 있는 게 아니다.
+- 프롬프트는 16,125개 중 **13개**만 쓴다.
+- **NPU 양자화 손실은 관측되지 않는다** — CPU fp32 대조군 대비 macro 차이 +0.0029 (§12).
+- 남은 병목은 **smoke**(0.915). 오차에 라벨 경계 불일치가 섞여 있어 순수 모델 오차만은 아니다(§9).
 
 ## 2. 평가 프로토콜 (이 문서의 숫자를 읽는 법)
 
@@ -46,7 +55,20 @@
 이벤트가 15초 영상의 85%를 덮기 때문에, 해당 카테고리 영상만 모아 재면 fire·smoke는
 **아무 모델 없이 "항상 이벤트"만 찍어도 90%를 넘는다.** 그래서 교차 음성(전체 200영상)을 쓴다.
 
-## 3. 구조 — 임베딩을 한 번만 뽑는다
+## 3. 산출물 위치
+
+이건 **평가 워크스트림**이라 코드·스펙·산출물·문서를 전부 `wave_npu/` 안에서 관리한다
+(레포 전역 `reports/` 에 분산시키지 않는다). 재생성 가능한 무거운 캐시만 git 에서 제외한다.
+
+| 무엇 | 어디 | git |
+|---|---|---|
+| 코드 | `wave_npu/` | ✅ |
+| 카테고리 스펙 (`source`/`eval_folders`/프롬프트 클래스) | `wave_npu/specs/*.json` | ✅ |
+| 결정 산출물 (프롬프트 마스크·배포 설정·결과 json) | `wave_npu/artifacts/` | ✅ |
+| 임베딩·텍스트·검출 캐시 (수백 MB) | `wave_npu/cache/` | ❌ (재생성 22+6+15분) |
+| 문서 (이 문서 포함) | `wave_npu/docs/` | ✅ |
+
+## 4. 구조 — 임베딩을 한 번만 뽑는다
 
 무거운 단계는 `비디오 → 프레임 → PE-Core 임베딩(NPU)` 하나뿐이다. 이걸 캐시하면 프롬프트·결정규칙·
 임계값·평활 실험이 전부 캐시 위 numpy 연산이라 초 단위로 반복된다. 이 분리가 이번 작업에서
@@ -62,7 +84,7 @@
 탐색 루프용 고속 경로(`FastMeanScorer`)는 클래스 평균·분산을 마스크 벡터와의 행렬-벡터 곱으로
 구해 gather를 없앴다 — 기존 대비 **비트 동일, 5배** (0.81 s → 0.15 s/평가).
 
-## 4. 무엇이 점수를 올렸나
+## 5. 무엇이 점수를 올렸나
 
 기여를 큰 순서로. 모든 수치는 전체 200영상 in-sample macro F1.
 
@@ -132,7 +154,7 @@ smoke     : Dense smoke is filling the area  (1개)
 - **카테고리별 독립 프롬프트 선택**(카테고리마다 마스크를 따로 탐색): macro 0.9600 — 단일 마스크 +
   카테고리별 규칙(0.9600)과 **동일**. 복잡도만 늘어 채택하지 않았다.
 
-## 5. 과적합 검증 — 프롬프트 선택까지 train 에서만
+## 6. 과적합 검증 — 프롬프트 선택까지 train 에서만
 
 확정 프로토콜은 200영상 in-sample 튜닝이지만, 13개로 붕괴한 선택이 브리틀한지 확인하기 위해
 **영상 단위 8:2 층화분할**로 프롬프트 선택·임계값 결정을 train 에서만 하고 test 에서 측정했다.
@@ -145,7 +167,7 @@ smoke     : Dense smoke is filling the area  (1개)
 train→test 하락이 0.003 이내이고, 프롬프트를 420개로 늘려 붙잡아도 차이가 없다.
 **13개로 줄인 것은 과적합이 아니다.** 미지 영상에서도 세 카테고리 모두 0.91 이상을 유지한다.
 
-## 6. NPU 이식 — 무엇을 어떻게 바꿨나
+## 7. NPU 이식 — 무엇을 어떻게 바꿨나
 
 원본 PIA_Wave는 `encoders.py`에 pluggable 인코더 레지스트리가 있어서, **vision tower만 갈아끼우면**
 나머지 파이프라인은 그대로다. NPU 전처리(`pe_npu.preprocess`)와 PIA_Wave 전처리가 이미 동일
@@ -160,24 +182,44 @@ train→test 하락이 0.003 이내이고, 프롬프트를 420개로 늘려 붙�
 NPU 처리량(유휴 4장, W8A16 / single, 배치 64~256): **64 img/s** (카드당 16 img/s, CLAUDE.md 기록과 일치).
 배치 크기를 64→256으로 키워도 변화 없어 NPU 바운드다. 200영상 전 프레임 72,200장 = 21.7분.
 
-## 7. 재현
+## 8. 재현
 
 ```bash
 set -a; . ./.env; set +a          # HF_TOKEN (MXQ private 레포)
 PY=~/miniconda3/envs/pe_npu_host/bin/python
 
-mobilint-cli status                                   # 유휴 카드 확인 후 --device-ids 지정
-$PY -m wave_npu.embed  --device-ids 1,3,4,5 --batch 128    # 21.7분
-$PY -m wave_npu.text                                        # 6분
-$PY -m wave_npu.run baseline --fps 2 --wins 1,3,5,7,9,13 --cals none,median
-$PY -m wave_npu.run optimize --fps 2 --rule mean_margin --win 5 --rounds 3 --out out/wave/mask_mean.npz
-$PY -m wave_npu.run combo    --fps 0 --mask out/wave/mask_mean.npz --wins 1,13,25,37,49,61,73
-$PY -m wave_npu.run optimize --fps 2 --rule mean_margin --win 5 --rounds 3 --holdout   # 일반화 확인
+mobilint-cli status                                        # 유휴 카드 확인 후 지정
+$PY -m wave_npu.embed  --device-ids 1,3,4,5 --batch 128    # 22분
+$PY -m wave_npu.text                                        # 6분 (CPU)
+$PY -m wave_npu.person --fps 0 --device-ids 1,3,4,5         # 15분 (intrusion 용)
+
+# 전체 파이프라인 한 줄 — 프롬프트 선택 → 카테고리별 규칙·창 → 카테고리별 F1
+$PY -m wave_npu.pipeline --spec wave_npu/specs/tta_4cat.json --fps 0 \
+     --person wave_npu/cache/person_tta_full
 ```
 
-산출물: `out/wave/` (임베딩 캐시 190 MB, 텍스트 임베딩, 마스크, 결과 json).
+단계별로 뜯어보려면:
 
-## 8. 남은 오차 — smoke 0.915 를 뜯어보면
+```bash
+$PY -m wave_npu.run baseline --fps 2 --wins 1,3,5,7,9,13 --cals none,median   # 규칙 스윕
+$PY -m wave_npu.run optimize --fps 2 --rule mean_margin --win 5 --rounds 3    # 프롬프트 선택
+$PY -m wave_npu.run optimize --fps 2 --rule mean_margin --win 5 --holdout     # 일반화 확인
+$PY -m wave_npu.run combo    --fps 0 --mask wave_npu/artifacts/mask_mean.npz  # 카테고리별 규칙
+$PY -m wave_npu.run diagnose --fps 0 --mask wave_npu/artifacts/mask_mean.npz  # 오차 영상 목록
+$PY -m wave_npu.compare_npu_fp32                                              # 양자화 영향
+```
+
+원본 PIA_Wave 스크립트를 NPU 로 돌리려면 (원본 무수정):
+
+```bash
+$PY -m wave_npu.pia_wave 02_Inference --model_type npu --npu-devices 1,3,4,5 \
+     -v <video_dir> -o results -c fire -t <text_features.json> --analysis
+```
+
+**새 카테고리 추가 절차**는 `wave_npu/README.md` 의 "새 카테고리 추가 절차" 참고
+(문구 6~10개만 쓰면 `extend_prompts` 가 프롬프트 확장 + 스펙 생성까지 한다).
+
+## 9. 남은 오차 — smoke 0.915 를 뜯어보면
 
 `diagnose` 기준 오차가 있는 영상은 200개 중 106개, 그중 상위는 두 부류로 갈린다.
 
@@ -196,7 +238,89 @@ $PY -m wave_npu.run optimize --fps 2 --rule mean_margin --win 5 --rounds 3 --hol
 3. **양자화 스킴** — 현재 W8A16. `reports/performance/NPU_pe_quant_tuning_matrix_120.md` 의
    **W8A16+튜닝(cos 0.9946)** 은 크기·속도가 같은 무상 교체 후보다. mxq만 갈아끼우면 된다.
 
-## 9. 주의
+## 10. intrusion — 신호 원천이 다르고, 프로토콜도 달라야 한다
+
+intrusion 은 "사람이 등장하면 이벤트"다. 같은 PE 유사도 방식으로는 풀리지 않고, **교차 음성
+프로토콜 자체가 성립하지 않는다**는 것이 실측으로 확인됐다.
+
+### (1) 프롬프트 방식은 프레임 국소화를 못 한다
+
+기존 풀의 "인원상황" 축(사람 유무 문장 15개)을 present/absent 두 묶음으로 나눠 대비시키면
+AUC 0.877 이 나오지만(부호는 역방향), F1 은 0.566 에 그친다. 비디오별 기준선 보정도 악화시킨다.
+→ 이 신호는 **"이 영상이 intrusion 폴더인가"** 를 맞히는 것이지 "지금 침입자가 화면에 있는가"가 아니다.
+
+### (2) 교차 음성이 원리적으로 불가능하다
+
+YOLO11(NPU)로 프레임별 사람 검출을 뽑아 보면:
+
+| 폴더 | 사람 검출 프레임 비율 (conf≥0.25) | intrusion GT 양성비율 |
+|---|---|---|
+| falldown | **96.2 %** | **0 %** |
+| fire | 30.3 % | 0 % |
+| smoke | 35.5 % | 0 % |
+| intrusion | 57.6 % | 56.8 % |
+
+falldown 영상은 "쓰러진 사람"이라 거의 모든 프레임에 사람이 있는데 intrusion 라벨은 하나도 없다.
+**라벨 누락**이지 모델이 못 맞히는 게 아니다. 음성 집합을 바꿔가며 같은 신호(YOLO11 person max_conf)로 재면:
+
+| 음성 집합 | 양성비율 | 자명 F1 | 실측 F1 | P | R |
+|---|---|---|---|---|---|
+| 전체 200영상 (다른 3종과 동일 프로토콜) | 14.2 % | 0.249 | 0.406 | 0.271 | 0.800 |
+| falldown 제외 150영상 | 18.9 % | 0.318 | 0.625 | 0.514 | 0.797 |
+| **intrusion 50영상 내 (채택)** | 56.8 % | 0.724 | **0.929** | 0.935 | 0.924 |
+
+(위 표는 2fps·평활 없음 기준. 최종 설정 = 24fps 전 프레임 + 평활창 49f 에서 **F1 0.9316**, P 0.922 / R 0.941.)
+
+→ intrusion 은 `eval_folders: ["intrusion"]` 로 **자기 영상 안에서만** 평가한다(결정 사항).
+자명 F1 0.724 대비 0.929 이므로 지표가 자명하게 달성되는 경우는 아니지만, **다른 3종과 프로토콜이
+다르다는 점을 결과표에 항상 함께 적는다.** 제한구역(ROI) 정보가 있으면 "제한구역 내 사람"으로
+정의해 교차 음성으로 되돌릴 수 있지만, TTA 데이터에는 ROI 폴리곤이 없다.
+
+### 일반화되는 교훈
+
+카테고리는 두 부류이고 **신호 원천과 프로토콜이 둘 다 달라진다**:
+
+| 유형 | 예 | 신호 | 교차 음성 |
+|---|---|---|---|
+| 장면 상태 (화면이 그 상태인가) | fire, smoke, falldown | PE 유사도 | ✅ 성립 |
+| 객체 등장 (무언가 나타났나) | intrusion, loitering | 검출기(YOLO11) | ❌ 다른 폴더에도 그 객체가 있음 |
+
+이 구분을 `wave_npu/config.py` 의 스펙(`source`, `eval_folders`)으로 다루도록 했다.
+
+## 11. 원본 구현과의 대조 (검증)
+
+보고한 수치는 `wave_npu/` 의 재구현에서 나온 것이지 `02_Inference.py` 를 돌린 것이 아니다.
+같은 값을 내는지 직접 대조했다 — 원본 스크립트를 NPU 인코더로 실행(`wave_npu.pia_wave` 런처)해
+`--analysis` IoU CSV 를 뽑고 재구현의 `iou_std` 와 비교:
+
+```
+3영상 × 30프레임 × 3카테고리 = 270개 값,  max|diff| = 7.9e-05,  mean|diff| = 1.1e-06
+```
+
+임계값 간격보다 3자리 작고, 원인은 임베딩 캐시를 float16 으로 저장하기 때문이다. **동일 구현.**
+
+이 과정에서 원본이 `frame_t.to("cuda")` 를 하드코딩해 **GPU 없는 서버에서는 돌지 않는다**는 것을
+발견했다. 원본을 수정하지 않고 런처(`wave_npu/pia_wave.py`)에서 CPU 로 리다이렉트하는 shim 을 넣었다.
+
+## 12. NPU 양자화가 정확도를 깎는가 — 안 깎는다
+
+GPU 가 없는 서버라 같은 가중치를 **CPU fp32** 로 돌린 값을 "양자화 전" 대조군으로 삼았다
+(CPU 는 0.7 emb/s 라 전량은 비현실적 → 200영상 전부 유지하되 0.5fps, 1,600프레임. NPU 쪽도
+**같은 프레임**으로 맞춰 비교).
+
+| | 임베딩 cos(NPU, fp32) | falldown | fire | smoke | macro |
+|---|---|---|---|---|---|
+| NPU (MXQ W8A16) | mean 0.9884 / p1 0.9769 / min 0.9727 | 0.9881 | 0.9849 | 0.8982 | **0.9571** |
+| CPU fp32 | — | 0.9881 | 0.9787 | 0.8959 | **0.9542** |
+
+**macro 차이 +0.0029 (NPU 가 근소 우위).** 1,600프레임 기준이라 이 정도는 측정 노이즈이고,
+결론은 **양자화로 인한 손실이 관측되지 않는다**는 것이다. 임베딩 cos 0.99 가 이 과제의 판정
+마진을 흔들 정도가 아니라는 뜻 — 판정이 카테고리 간 **상대** 유사도 차이만 쓰기 때문이다.
+
+> 이 표의 절대값은 0.5fps·평활 없음 조건이라 §1 최종표(24fps·평활 적용)와 직접 비교하지 말 것.
+> 여기서 볼 것은 두 행의 **차이**뿐이다.
+
+## 13. 주의
 
 - 이 문서의 수치는 **프레임 레벨**이다. 이벤트 단위(구간 검출) 지표가 필요하면 별도로 정의해야 한다.
 - 임계값은 카테고리마다 하나씩, 200영상 전체에서 고른 값이다. 실배포 임계값이 아니라 **평가셋 최적치**다.
