@@ -1,0 +1,26 @@
+{
+ "falldown": {
+  "rule": "mean_margin",
+  "win": 25,
+  "thr": 0.06965282098168389,
+  "k": 15
+ },
+ "fire": {
+  "rule": "zmean_margin",
+  "win": 13,
+  "thr": 1.4208992456732548,
+  "k": 15
+ },
+ "smoke": {
+  "rule": "topmean_margin",
+  "win": 25,
+  "thr": -0.008781060728158136,
+  "k": 15
+ },
+ "intrusion": {
+  "rule": "yolo11_person",
+  "win": 49,
+  "thr": 0.32424589521006525,
+  "k": 15
+ }
+}

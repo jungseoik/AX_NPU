@@ -6,7 +6,8 @@
 
 | 문서 | 내용 |
 |------|------|
-| [tta_event_f1.md](tta_event_f1.md) | ★ 본 보고서 — 평가 프로토콜, 점수를 올린 요인, 과적합 검증, intrusion 처리, 원본 대조, 양자화 영향 |
+| [tta_event_f1.md](tta_event_f1.md) | ★ **정확도 근거** — 평가 프로토콜, 점수를 올린 요인, 과적합 검증, intrusion 처리, 원본 대조, 양자화 영향 |
+| [tta_cert_runbook.md](tta_cert_runbook.md) | ★ **인증 시험 실행 절차서** — TTA-26-03361 규격 요약, `wave_npu.tta_cert` 사용법, 화면 표시 내용, 산출 파일, 시험 전 체크리스트 |
 
 관련: [`../README.md`](../README.md) (패키지 개요·사용법·새 카테고리 추가 절차),
 [`../artifacts/README.md`](../artifacts/README.md) (결정 산출물 목록).

@@ -47,6 +47,10 @@ NPU(MXQ, full NPU)로 갈아끼워** 돌리고, TTA 인증용 데이터셋에서
 | `optimize` | 프롬프트 선택 최적화 (세 축 좌표상승법) |
 | `run` | 실험 드라이버 (baseline / optimize / final) |
 | `encoder`, `pia_wave` | PIA_Wave 원본 스크립트를 NPU 인코더로 실행하는 어댑터·런처 |
+| `person` | YOLO11(NPU) 사람 검출 신호 추출 — intrusion 계열 |
+| `pipeline` | 스펙 하나로 프롬프트 선택 → 카테고리별 규칙·창 → F1 (튜닝용) |
+| `extend_prompts` | 새 카테고리 문구 → 프롬프트 CSV 확장 + 스펙 생성 |
+| **`tta_cert`** | **TTA 인증 시험 실행** — 시험절차서 ①~⑦, 진행률 표시, 건별 원시 로그·집계표 산출 |
 
 ## 평가 프로토콜 (확정)
 

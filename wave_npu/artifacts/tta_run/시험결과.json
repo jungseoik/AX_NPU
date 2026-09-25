@@ -1,0 +1,188 @@
+{
+ "시험신청번호": "TTA-26-03361",
+ "시험일시": "2026-09-25 17:21:11",
+ "환경": {
+  "시험일시": "2026-09-25 17:21:11",
+  "장비모델": "ESC8000-E12",
+  "OS": "Ubuntu 22.04.3 LTS",
+  "커널": "5.15.0-187-generic",
+  "아키텍처": "x86_64",
+  "CPU": "Intel(R) Xeon(R) 6527P",
+  "CPU스레드": "96",
+  "MEM": "125 GB",
+  "NPU드라이버": "1.13.0",
+  "NPU펌웨어": "1.2.5",
+  "NPU런타임": "v1.2.0",
+  "NPU장치": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "python": "3.11.16",
+  "torch": "2.13.0+cpu",
+  "torchvision": "0.28.0+cpu",
+  "numpy": "2.2.6",
+  "cv2": "5.0.0",
+  "모델": {
+   "PE-Core MXQ": {
+    "경로": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/47b4c19ff8945d0d8683dac6dbe3196008530054/W8A16/single/pe_full.mxq",
+    "md5": "bc022878c054aef2f6c673d91cb2e887",
+    "크기bytes": 327223268
+   },
+   "YOLO11 MXQ": {
+    "경로": "/home/gpuadmin/.cache/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/53169840b5c94a47c53941e959b1725fa3176084/yolo/yolo11m/single/yolo11m.mxq",
+    "md5": "bd25a68f7c2b383705d63bee6b8e0430",
+    "크기bytes": 23033760
+   },
+   "프롬프트 마스크": {
+    "경로": "/home/gpuadmin/AX_NPU/wave_npu/artifacts/pipeline_mask.npz",
+    "md5": "5bbc3b94538f8ef86c800ce6da702fbf",
+    "크기bytes": 277
+   },
+   "판정 설정": {
+    "경로": "/home/gpuadmin/AX_NPU/wave_npu/specs/decision_4cat.json",
+    "md5": "4c9d770dd2c488ece6579a5c74313aa0",
+    "크기bytes": 391
+   }
+  }
+ },
+ "결과": [
+  {
+   "시험항목ID": "T1",
+   "항목명": "쓰러짐 탐지",
+   "평가건수": 200,
+   "양성": 50,
+   "음성": 150,
+   "클립": {
+    "TP": 50,
+    "FP": 0,
+    "FN": 0,
+    "TN": 150,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 100.0
+   },
+   "프레임": {
+    "TP": 6826,
+    "FP": 51,
+    "FN": 221,
+    "precision": 0.992584,
+    "recall": 0.968639,
+    "f1_score": 98.05
+   },
+   "기준": 90.0,
+   "판정": "PASS",
+   "설정": {
+    "rule": "mean_margin",
+    "win": 25,
+    "thr": 0.06965282098168389,
+    "k": 15
+   },
+   "건별결과": "wave_npu/artifacts/tta_run/T1_falldown_건별결과.csv"
+  },
+  {
+   "시험항목ID": "T2",
+   "항목명": "화재 탐지",
+   "평가건수": 200,
+   "양성": 50,
+   "음성": 150,
+   "클립": {
+    "TP": 50,
+    "FP": 2,
+    "FN": 0,
+    "TN": 148,
+    "precision": 0.961538,
+    "recall": 1.0,
+    "f1_score": 98.04
+   },
+   "프레임": {
+    "TP": 15794,
+    "FP": 130,
+    "FN": 380,
+    "precision": 0.991836,
+    "recall": 0.976506,
+    "f1_score": 98.41
+   },
+   "기준": 90.0,
+   "판정": "PASS",
+   "설정": {
+    "rule": "zmean_margin",
+    "win": 13,
+    "thr": 1.4208992456732548,
+    "k": 15
+   },
+   "건별결과": "wave_npu/artifacts/tta_run/T2_fire_건별결과.csv"
+  },
+  {
+   "시험항목ID": "T3",
+   "항목명": "연기 탐지",
+   "평가건수": 200,
+   "양성": 100,
+   "음성": 100,
+   "클립": {
+    "TP": 100,
+    "FP": 2,
+    "FN": 0,
+    "TN": 98,
+    "precision": 0.980392,
+    "recall": 1.0,
+    "f1_score": 99.01
+   },
+   "프레임": {
+    "TP": 28009,
+    "FP": 2210,
+    "FN": 2975,
+    "precision": 0.926867,
+    "recall": 0.903983,
+    "f1_score": 91.53
+   },
+   "기준": 90.0,
+   "판정": "PASS",
+   "설정": {
+    "rule": "topmean_margin",
+    "win": 25,
+    "thr": -0.008781060728158136,
+    "k": 15
+   },
+   "건별결과": "wave_npu/artifacts/tta_run/T3_smoke_건별결과.csv"
+  },
+  {
+   "시험항목ID": "T4",
+   "항목명": "침입 탐지",
+   "평가건수": 50,
+   "양성": 50,
+   "음성": 0,
+   "클립": {
+    "TP": 50,
+    "FP": 0,
+    "FN": 0,
+    "TN": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 100.0
+   },
+   "프레임": {
+    "TP": 9929,
+    "FP": 838,
+    "FN": 619,
+    "precision": 0.92217,
+    "recall": 0.941316,
+    "f1_score": 93.16
+   },
+   "기준": 90.0,
+   "판정": "PASS",
+   "설정": {
+    "rule": "yolo11_person",
+    "win": 49,
+    "thr": 0.32424589521006525,
+    "k": 15
+   },
+   "건별결과": "wave_npu/artifacts/tta_run/T4_intrusion_건별결과.csv"
+  }
+ ]
+}

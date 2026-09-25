@@ -82,6 +82,10 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   intrusion 0.93(자기 영상 내 — 교차 음성 불가, falldown 영상 96%에 사람이 있는데 라벨 0). 프롬프트는 16,125 중 **13개**.
   ★ **카테고리는 코드가 아니라 스펙**(`wave_npu/specs/*.json`): `source`=pe(장면 상태)/person(객체 등장),
   `eval_folders`=평가 범위. 카테고리 추가는 문구 6~10개만 쓰면 `wave_npu.extend_prompts`가 확장 — `wave_npu/README.md` 절차 참고.
+  ★ **TTA 인증 시험**(TTA-26-03361, 이상상황 12종 × 100건, 항목별 F1 ≥ 90점): `python -m wave_npu.tta_cert` 한 줄로
+  시험절차서 ①~⑦ 수행(환경·모델 md5 기록 → NPU 일괄추론(tqdm 진행률) → 정답 대조 → TP/FP/FN → F1 → 판정 → 제출자료).
+  ★ **판정 단위는 클립(영상) 1건**("〈이벤트〉 발생 여부")이고 프레임 F1은 참고로 병기한다 — **둘을 혼동하지 말 것**.
+  절차·체크리스트·실측: `wave_npu/docs/tta_cert_runbook.md`
 - **평가용 데이터셋**: `eval/README.md` + `eval/tta.py`. 실데이터는 git에 안 넣고 HF private에 zip으로 두고
   **토큰만 있으면 재현** — `export HF_TOKEN=... && python -m eval.tta download` → `eval/datasets/TTA_인증용/`(gitignore).
   현재 `TTA_인증용`(HF `PIA-SPACE/AX_NPU_TTA`, dataset·private): 이상행동 4종(falldown/fire/intrusion/smoke)
