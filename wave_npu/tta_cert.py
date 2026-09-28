@@ -36,7 +36,7 @@ from tqdm import tqdm
 
 from . import data
 from .config import Spec
-from .gt import frame_labels, load_labels
+from .gt import frame_labels, frame_labels_csv, load_labels, load_labels_csv
 
 LINE = "=" * 82
 SUB = "-" * 82
@@ -333,7 +333,9 @@ def infer_videos(spec, a, eng: Engines):
 def build_scores(spec, a, raw: dict, cfgs: dict):
     """추론 산출물 → 카테고리별 프레임 점수열 + 정답(프레임/클립)."""
     from .score import category_scores, sims_matrix, smooth
-    labels_gt = load_labels(spec.root, tuple(spec.names), spec.folders)
+    csv_mode = spec.label_format == "csv"
+    labels_gt = (load_labels_csv if csv_mode else load_labels)(
+        spec.root, tuple(spec.names), spec.folders)
     allrecs = [r for v in raw.values() for r in v]
 
     pe_cats = [c for c in spec.names if spec.categories[c].get("source", "pe") == "pe"]
@@ -367,7 +369,9 @@ def build_scores(spec, a, raw: dict, cfgs: dict):
         for r in allrecs:
             if ef and r["폴더"] not in ef:
                 continue
-            fl = frame_labels(labels_gt[r["파일"]]["events"], r["frames"], r["fps"], (c,))[:, 0]
+            ent = labels_gt[r["파일"]]
+            fl = (frame_labels_csv(ent, len(r["frames"]), (c,))[:, 0] if csv_mode
+                  else frame_labels(ent["events"], r["frames"], r["fps"], (c,))[:, 0])
             rc.append({"파일": r["파일"], "해상도": r["해상도"], "프레임수": len(r["frames"]),
                        "scores": scores[c][r["파일"]], "frame_gt": fl, "gt": bool(fl.any())})
         rows[c] = rc

@@ -1,0 +1,35 @@
+{
+ "name": "TTA_3종_엘쓰_에쓰_엘폭",
+ "root": "eval/datasets/TTA_3종_엘쓰_에쓰_엘폭",
+ "folders": [
+  "elv_falldown",
+  "esc_falldown",
+  "elv_violence"
+ ],
+ "prompt_csv": "third_party/PIA_Wave/data/text_features_tuningfree_v2_soil최종.csv",
+ "normal_class": 0,
+ "label_format": "csv",
+ "categories": {
+  "elv_falldown": {
+   "cls": 4,
+   "source": "pe",
+   "eval_folders": [
+    "elv_falldown"
+   ]
+  },
+  "esc_falldown": {
+   "cls": 5,
+   "source": "pe",
+   "eval_folders": [
+    "esc_falldown"
+   ]
+  },
+  "elv_violence": {
+   "cls": 6,
+   "source": "pe",
+   "eval_folders": [
+    "elv_violence"
+   ]
+  }
+ }
+}

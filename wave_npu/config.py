@@ -10,6 +10,7 @@
   "folders": ["falldown", "fire", "intrusion", "smoke"],
   "prompt_csv": "third_party/PIA_Wave/data/....csv",
   "normal_class": 0,
+  "label_format": "json",
   "categories": {
     "falldown":  {"cls": 1, "source": "pe"},
     "intrusion": {"source": "person", "negatives_exclude": ["falldown"]}
@@ -21,6 +22,8 @@
 - `source`   : "pe"(PE-Core 임베딩 × 프롬프트 유사도) | "person"(YOLO11 사람 검출)
 - `negatives_exclude` : 이 카테고리의 음성 집합에서 제외할 폴더. 라벨 누락으로 원리적으로
   구분 불가능한 폴더가 있을 때 쓴다.
+- `label_format` : `"json"`(TTA_인증용: events[].timestamp 초 단위) 또는
+  `"csv"`(TTA_clip: `clip_frame,<event>` 프레임 0/1). CSV 가 원본 그대로라 fps 혼재 시 정확하다.
 - `eval_folders` : 평가를 이 폴더들로 **한정**한다(negatives_exclude 보다 강한 제약).
   intrusion 이 그 예다 — falldown 영상은 96%에 사람이 있는데 intrusion 라벨이 0이라
   교차 음성으로는 원리적으로 구분되지 않는다(reports 참고). 프로토콜이 달라지므로
@@ -43,6 +46,7 @@ class Spec:
     folders: tuple = ("falldown", "fire", "intrusion", "smoke")
     prompt_csv: str = DEFAULT_CSV
     normal_class: int = 0
+    label_format: str = "json"           # "json" | "csv"
     categories: dict = field(default_factory=lambda: {
         "falldown": {"cls": 1, "source": "pe"},
         "fire": {"cls": 2, "source": "pe"},
@@ -83,13 +87,14 @@ class Spec:
         d = json.load(open(path, encoding="utf-8"))
         return cls(name=d.get("name", "spec"), root=d["root"],
                    folders=tuple(d["folders"]), prompt_csv=d.get("prompt_csv", DEFAULT_CSV),
-                   normal_class=int(d.get("normal_class", 0)), categories=d["categories"])
+                   normal_class=int(d.get("normal_class", 0)),
+                   label_format=d.get("label_format", "json"), categories=d["categories"])
 
     def save(self, path: str):
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         json.dump({"name": self.name, "root": self.root, "folders": list(self.folders),
                    "prompt_csv": self.prompt_csv, "normal_class": self.normal_class,
-                   "categories": self.categories}, open(path, "w", encoding="utf-8"),
+                   "label_format": self.label_format, "categories": self.categories}, open(path, "w", encoding="utf-8"),
                   ensure_ascii=False, indent=1)
 
 

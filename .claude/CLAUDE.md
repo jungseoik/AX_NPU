@@ -87,10 +87,17 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   ★ **판정 단위는 클립(영상) 1건**("〈이벤트〉 발생 여부")이고 프레임 F1은 참고로 병기한다 — **둘을 혼동하지 말 것**.
   절차·체크리스트·실측: `wave_npu/docs/tta_cert_runbook.md`
 - **평가용 데이터셋**: `eval/README.md` + `eval/tta.py`. 실데이터는 git에 안 넣고 HF private에 zip으로 두고
-  **토큰만 있으면 재현** — `export HF_TOKEN=... && python -m eval.tta download` → `eval/datasets/TTA_인증용/`(gitignore).
-  현재 `TTA_인증용`(HF `PIA-SPACE/AX_NPU_TTA`, dataset·private): 이상행동 4종(falldown/fire/intrusion/smoke)
-  영상 200 + 라벨 json 200 + 이벤트 clips 252, 총 2.2GB. 원천은 NAS192TB `10.128.30.36:/volume1/AI_data`의
-  `TTA/TTA_인증용_재인코딩/`(재인코딩본을 씀). 갱신은 `pack` → `ZIP_SHA256` 반영 → `upload`.
+  **토큰만 있으면 재현** — `export HF_TOKEN=... && python -m eval.tta download [-d <이름>]`.
+  HF `PIA-SPACE/AX_NPU_TTA`(dataset·private)는 **데이터셋마다 폴더 하나**(`<이름>/<이름>.zip` + `<이름>/README.md`).
+  `python -m eval.tta list`로 목록 확인. 새 데이터셋은 `DATASETS`에 `DatasetSpec` 한 줄 + 카드 md 하나.
+  - `TTA_인증용`: 이상행동 4종(falldown/fire/intrusion/smoke) 15초 영상 200 + **json 초 단위** 라벨 + clips 252, 2.2GB.
+    원천 NAS192TB `10.128.30.36:/volume1/AI_data`의 `TTA/TTA_인증용_재인코딩/`. ★ **음성(정상) 영상이 0건**이라
+    카테고리별로 보면 "무조건 이벤트"가 만점을 받는다 — 교차 음성(전체 200영상)으로 평가해야 의미가 있다.
+  - `TTA_3종_엘쓰_에쓰_엘폭`: 엘리베이터 쓰러짐/에스컬레이터 쓰러짐/엘리베이터 폭력(TTA **T9·T10·T6**)
+    10초 클립 450(항목당 150 = 양성 60 + 정상 54 + **하드네거티브** 36, 40:60) + **csv 프레임 0/1** 라벨, 1.6GB.
+    원천 NAS200TB `10.128.30.51:/volume1/home/sj.park/tta_dataset`(반입 `python -m wave_npu.import_clips`, helmet은 TTA 12종에 없어 제외).
+    ★ **라벨이 프레임 CSV인 이유 = fps가 7~50 혼재**라 초 변환 시 경계 오차. `wave_npu`는 두 형식 다 읽는다(스펙 `label_format`).
+    ★ 정답은 원본 `gt_label.zip`을 쓸 것 — 폴더 안 `per_frame/*.csv`는 subtype별 컬럼명이 달라(폭력 하드네거티브가 `sittingdown`) 라벨이 어긋난다.
 - **분석/원리** (전체 인덱스는 `reports/README.md`):
   - `reports/vendor/mobilint_resolution_attn_pool.md` — ★ attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.99
   - `reports/performance/NPU_pe_throughput_modes_full.md` — ★ 다채널 처리량·모드선택 (올바른 1모델+멀티스레드 sync 패턴, 출력검증) ← **다채널 서비스 짤 때 필독**
