@@ -23,7 +23,11 @@
 | 단계 | 필요 | 가능 여부 |
 | --- | --- | --- |
 | **추론 재현** (제공된 MXQ 로 용량 측정) | MLA100 + 드라이버 | ✅ |
-| 컴파일 재현 (MBLT → MXQ) | **CUDA 12.8 GPU** | ❌ GPU 없음 → GPU 서버 |
+| 컴파일 재현 (MBLT → MXQ) | **CUDA 12.8 GPU** | ❌ 이 서버 GPU 없음 → **GPU 서버에서** |
+
+GPU 서버용 구성은 짝으로 있다 — `Dockerfile.compile` + `run_compile.sh`.
+절차는 [`../../reports/RUNBOOK_qwen3vl_bs32_compile.md`](../../reports/RUNBOOK_qwen3vl_bs32_compile.md).
+★ 벤더 패키지(9.8GB tarball)는 gitignore 라 **레포 clone 만으로는 안 간다.** 별도로 옮겨야 한다.
 
 제공 MXQ 4개(`reference/mxq/`)는 `Format 0x70000(v7)` / `Hardware Aries2` 로
 **드라이버 1.13 과 호환**된다(확인 완료). 컴파일 없이 바로 추론 대조가 가능하다.

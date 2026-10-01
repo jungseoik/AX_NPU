@@ -1,0 +1,49 @@
+{
+ "단건_ms": {
+  "1": 187.4,
+  "2": 179.1,
+  "3": 169.4
+ },
+ "ask_batch20_ms": {
+  "1": 1290.0,
+  "2": 821.3,
+  "3": 724.4
+ },
+ "concurrent20_ms": {
+  "1": 1258.7,
+  "2": 739.6,
+  "3": 632.6
+ },
+ "before_fix_concurrent20_ms": {
+  "1": 1478.3,
+  "2": 1093.5,
+  "3": 1325.8
+ },
+ "window_sweep_1card": {
+  "0ms": {
+   "single": 162.9,
+   "batch20": 3337.5
+  },
+  "5ms": {
+   "single": 193.4,
+   "batch20": 1365.7
+  },
+  "20ms": {
+   "single": 195.5,
+   "batch20": 1314.3
+  },
+  "50ms": {
+   "single": 228.7,
+   "batch20": 1320.4
+  },
+  "adaptive_probe2_win10": {
+   "single": 176.5,
+   "batch20": 1354.7
+  }
+ },
+ "legacy_baseline": {
+  "single_ms": 183.8,
+  "ch20_ms": 2997.6,
+  "capacity_1card": 6
+ }
+}

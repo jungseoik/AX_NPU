@@ -273,9 +273,20 @@ track_out.mp4
 # NAS 마운트 포인트 (192TB, 10.128.30.36)
 nas192tb/
 
+# NAS 마운트 포인트 모음 (200TB 10.128.30.51 / 192TB .36 / 32TB .37)
+nas/
+
+# 정부과제·공공기관 제출용 문서 (gov-doc 스킬 산출물)
+# 제출 전 편집본 + 근거 원시자료(구현 사본·폰트·로그)라 커밋하지 않는다.
+# 서버 이동 시에는 폴더째 직접 복사할 것. 인덱스는 gov_docs/README.md.
+gov_docs/
+
 # eval 데이터셋 실데이터 (HF PIA-SPACE-LAB/AX_NPU_TTA 로 배포, eval/README.md 참고)
 eval/datasets/
 
 # third_party/ — 외부 레포 클론 (각자 독립 git). 내용은 추적 안 하고 README만 추적
 third_party/*
 !third_party/README.md
+
+# HF 업로드 스테이징(심볼릭 링크). 추적하지 않는다.
+.hfstage/

@@ -72,6 +72,9 @@ YOLO11 침입감지 서비스 모듈 e2e를 측정→진단→재측정한 스�
 | [test_results.md](testing/test_results.md) | 컴파일/추론 테스트 결과 종합 |
 | [sdk_v11_compat.md](testing/sdk_v11_compat.md) | ★ SDK 1.1v 호환성 — 기존 HF mxq는 런타임 1.4.0에서 재컴파일 불필요(cos 0.993/15.4 img/s), 컴파일은 cpu 이미지로 충분 |
 | [NPU_pe_quant_schemes.md](performance/NPU_pe_quant_schemes.md) | ★ 양자화 스킴 비교 W8A16/W4A16/W4A8 × 코어모드 4종 × 1~20채널 지연 + cos. W4A16 동작 확인(크기 −42%, 처리량 +13%), W4A8은 붕괴 |
+| [NPU_qwen3vl_mblt_export.md](NPU_qwen3vl_mblt_export.md) | ★★ [Qwen3-VL] **체크포인트 → MBLT export 규명** — 벤더 문서에 없는 `mblt_compile()` 호출법 6가지 함정, 스톡으로 벤더와 크기 동일 재현(+0.00%), `split_legacy_deepstack` 불필요 판명. 신규 학습본 컴파일의 전제 |
+| [RUNBOOK_qwen3vl_bs32_compile.md](RUNBOOK_qwen3vl_bs32_compile.md) | ★ [Qwen3-VL] GPU 서버에서 batch32 MXQ **재컴파일 절차서** — 벤더 패키지 반입(9.8GB, gitignore)·CUDA 12.8 필수·바이트 동일 미보장·**파인튜닝 시 mxq만 갈아끼우면 안 되는 이유** |
+| [NPU_qwen3vl_bs32_server.md](performance/NPU_qwen3vl_bs32_server.md) | ★ [Qwen3-VL] 벤더 배치32 빌드로 만든 검증서버(`validation_server_bs32`) — **20채널 2장 739.6ms**(batch1 2997.6ms 대비 4.1배) — 단 **운영 프롬프트(182토큰)면 3장 필요**(지연을 지배하는 건 프롬프트 길이). 적응형 수집창·프롬프트별 묶음·`inflight` 카드선택 |
 | [NPU_qwen3vl_vendor_vs_legacy.md](performance/NPU_qwen3vl_vendor_vs_legacy.md) | ★ 벤더 최적화 빌드 vs 기존 HF 빌드 동일조건 비교 — 20채널 224×224 **1107.8ms vs 8126.4ms(7.3배)**, 기존 mxq는 벤더 코드로 실행 불가(pos_embed 분리), **HF 모델 09-23 갱신(W4V8/컴파일러1.3.0, 입력5개라 model-zoo 2.4.2 거부)** |
 | [NPU_qwen3vl_ttft_resolution_concurrency.md](performance/NPU_qwen3vl_ttft_resolution_concurrency.md) | ★ Qwen3-VL 실측 — **해상도는 TTFT 무관**(vision mxq 1024토큰 고정), 카드당 2~4스레드로 **1.4~1.65배**, 배치는 text mxq가 legacy 2입력이라 불가(Batch16 대기) |
 | [vendor/mobilint_update_vlm_batch_coremode.md](vendor/mobilint_update_vlm_batch_coremode.md) | ★ Qwen3-VL 벤더회신 확인 — 배치컴파일은 1.2.0에 없음(차기 예정), **코어모드는 mxq에 4종 다 있고 런타임 변경 가능**(우리 문서 정정), 카드 분할 동시성 가능성 |

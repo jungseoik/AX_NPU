@@ -1,0 +1,53 @@
+# Mobilint customer-capacity-repro — 컴파일 전용 이미지 (Qwen3-VL batch32 MXQ 재생성)
+#
+# ★ 런타임 이미지(Dockerfile.runtime)와 **절대 합치면 안 된다.**
+#   컴파일러는 torch 2.7.1+cu128, 런타임은 2.9.0 을 요구한다. 벤더도 "별도 가상환경" 을 지시한다.
+#
+# ★ **CUDA 12.8 NVIDIA GPU 가 반드시 필요하다.** 벤더 scripts/compile.py 가 하드 블록한다:
+#       if not torch.cuda.is_available():
+#           p.error('A CUDA GPU is required by this recorded recipe.')
+#   GPU 없는 호스트(예: NPU 서버)에서는 빌드는 되지만 실행이 불가능하다.
+#   device='cpu' 로 우회하지 말 것 — 네이티브 모듈이 CUDA 빌드이고, 레시피를 바꾸면
+#   "재현" 자체가 무의미해진다(TOOLCHAIN.json 이 sha256 까지 고정해 둔 이유).
+#
+#   docker build -f setup/vlm_repro/Dockerfile.compile -t mblt_vlm_repro:compile \
+#       download/vendor/customer-capacity-repro      # ← 빌드 컨텍스트 = 재현 패키지
+#
+# ※ BuildKit 불필요(secret mount 를 쓰지 않는다). buildx 가 없는 호스트에서는
+#   DOCKER_BUILDKIT=0 을 붙여야 한다 — 안 그러면
+#   "BuildKit is enabled but the buildx component is missing or broken" 로 죽는다.
+#   bash setup/vlm_repro/run_compile.sh --part all
+#
+# 베이스는 CUDA 12.8 런타임 이미지. torch 휠이 cu128 이라 드라이버만 맞으면 된다
+# (컨테이너 안에 CUDA 툴킷 전체는 불필요).
+FROM nvidia/cuda:12.8.0-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive PIP_NO_CACHE_DIR=1 PYTHONUNBUFFERED=1
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3.10 python3.10-venv python3-pip \
+        libgomp1 libgl1 libglib2.0-0 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /repro
+# requirements 와 휠만 먼저 복사해 레이어 캐시를 살린다(qbcompiler 휠이 939MB).
+COPY requirements-compiler.txt /repro/
+COPY wheels/qbcompiler-1.3.4+pia.capacity3-cp310-cp310-linux_x86_64.whl /repro/wheels/
+
+# ★ 벤더 README "3. 컴파일 환경 설치" 절차 그대로. 순서와 --no-deps 를 바꾸지 말 것.
+#   qbcompiler 휠은 tensorflow/onnx 등을 의존으로 걸고 있어서, --no-deps 없이 설치하면
+#   **torch 를 최신(2.14)으로 덮어쓴다** → compile.py 의 2.7.1 검사에 걸려 죽는다.
+#   (런타임 이미지도 같은 이유로 --no-deps 를 쓴다.)
+RUN python3.10 -m pip install --upgrade pip \
+ && python3.10 -m pip install torch==2.7.1 torchvision==0.22.1 \
+        --index-url https://download.pytorch.org/whl/cu128 \
+ && python3.10 -m pip install -r requirements-compiler.txt \
+ && python3.10 -m pip install --no-deps \
+        /repro/wheels/qbcompiler-1.3.4+pia.capacity3-cp310-cp310-linux_x86_64.whl \
+ && python3.10 -c "import importlib.metadata as md, torch; \
+v=md.version('qbcompiler'); \
+assert v=='1.3.4+pia.capacity3', 'qbcompiler '+v+' must be the vendor custom build, not public 1.3.0'; \
+assert torch.__version__.startswith('2.7.1') and torch.version.cuda=='12.8', torch.__version__; \
+print('qbcompiler', v, '| torch', torch.__version__, torch.version.cuda)"
+
+ENV PYTHONPATH=/repro/src
+CMD ["/bin/bash"]
