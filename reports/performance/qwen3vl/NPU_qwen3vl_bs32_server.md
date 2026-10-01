@@ -3,7 +3,7 @@
 Mobilint가 용량 문의(문의 06)에 대응해 제공한 **배치 프리필 빌드**를 기존 검증서버 형태
 그대로 쓸 수 있게 만든 기록. 대상: `third_party/Product-AI-mono/.../npu_pe_2stage/validation_server_bs32`.
 
-- 비교 대상(비포): `validation_server`(batch1) — `reports/performance/NPU_qwen3vl_vendor_vs_legacy.md`
+- 비교 대상(비포): `validation_server`(batch1) — `reports/performance/qwen3vl/NPU_qwen3vl_vendor_vs_legacy.md`
 - 측정 환경: 이 서버 / NPU `/dev/aries1~3` / 컨테이너 cpuset **8코어** / 224×224 / 1토큰 출력
 - 벤더 패키지를 수정하지 않고 볼륨 마운트로만 썼다(무결성 검사 769/769 유지).
 

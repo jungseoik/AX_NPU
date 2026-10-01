@@ -12,7 +12,7 @@
 >   `--calib-data-path` 를 안 넘기는 버그 발견·수정(random calib으로 돌던 문제 — C 의 에러로 드러남).
 > - **§4 NPU 검증 완료 (2026-09-04)** — HF 24종 전부 측정. 튜닝이 3개 양자화 모두에서 정확도 상승,
 >   코어모드는 정확도 무관. 회귀 기준을 **24점 전부로 재앵커링**(표준 이미지셋 기준).
->   결과: [`performance/NPU_pe_quant_tuning_matrix_120.md`](performance/NPU_pe_quant_tuning_matrix_120.md).
+>   결과: [`performance/pe/NPU_pe_quant_tuning_matrix_120.md`](performance/pe/NPU_pe_quant_tuning_matrix_120.md).
 >   W4A8 초기 기준값 0.8932 는 A16 누락 산출물이었고 정정값은 **0.9420**.
 >   **남은 것**: C 의 stats-load 산출물(`out/validate_cli/pe_W4A16_none_single_statsload.mxq`)이
 >   GPU 서버에만 있어 "통계 재사용 시 cos 동일" 확인이 미완. 그 파일만 넘겨주면 즉시 판정 가능.
@@ -22,7 +22,7 @@
 
 > **왜 다시 돌리나**: 기존 24종은 qbcompiler **1.1.2** 로 컴파일했고, 그 버전의 OPTQ/SearchWeightScale
 > 구현 문제로 튜닝본이 열화돼 있었다. 1.2.0 에서는 반대로 정확도가 올라간다.
-> 근거: [`performance/NPU_pe_quant_tuning_compiler_version.md`](performance/NPU_pe_quant_tuning_compiler_version.md)
+> 근거: [`performance/pe/NPU_pe_quant_tuning_compiler_version.md`](performance/pe/NPU_pe_quant_tuning_compiler_version.md)
 >
 > 이 문서는 **GPU 서버에서 레포를 clone 한 상태에서 그대로 따라가면 재현되도록** 쓴 절차서다.
 
@@ -408,7 +408,7 @@ python setup/upload_tuning_matrix_to_hf.py --src-dir out/matrix_120
 
 **코어모드 4종(single/multi/global4/global8)의 cos 는 소수 4자리까지 동일하다** — 코어모드는
 정확도가 아니라 지연 특성만 바꾼다. 상세·채널 지연:
-[`performance/NPU_pe_quant_tuning_matrix_120.md`](performance/NPU_pe_quant_tuning_matrix_120.md)
+[`performance/pe/NPU_pe_quant_tuning_matrix_120.md`](performance/pe/NPU_pe_quant_tuning_matrix_120.md)
 
 허용 오차 ±0.005. **회귀 판정은 cos 와 크기로만 한다.**
 
@@ -453,7 +453,7 @@ m = MXQInferenceFull(full_mxq_path="pe_W4A16_sws_optq_single.mxq", device_id=0)
 - [ ] **베이스라인 버전 무관성**을 W8A16·W4A8 에서도 확인 — 지금은 W4A16 하나만 확인됐다
       (0.9110 → 0.9126). W8A16 `none` 이 1.2.0 에서도 ≈0.9937 이어야 한다
 - [ ] **코어모드 4종 전부**의 cos — 코어모드는 정확도에 영향이 없어야 하지만 검증된 바 없다
-- [ ] 1~20채널 배치 지연 — 배포 결정용 ([`performance/NPU_pe_quant_schemes.md`](performance/NPU_pe_quant_schemes.md) 형식)
+- [ ] 1~20채널 배치 지연 — 배포 결정용 ([`performance/pe/NPU_pe_quant_schemes.md`](performance/pe/NPU_pe_quant_schemes.md) 형식)
 
 ---
 

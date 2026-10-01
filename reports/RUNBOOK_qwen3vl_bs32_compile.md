@@ -4,7 +4,7 @@
 > 도는지부터 확인한다. 가중치를 바꾸기 전에 파이프라인 검증이 순서다.
 >
 > 대상 산출물: `decoder-b1.mxq` / `decoder-b32.mxq` / `vision.mxq` / `vision8192.mxq`
-> 관련: `reports/performance/NPU_qwen3vl_bs32_server.md` (이 mxq 를 쓰는 검증서버)
+> 관련: `reports/performance/qwen3vl/NPU_qwen3vl_bs32_server.md` (이 mxq 를 쓰는 검증서버)
 
 ---
 

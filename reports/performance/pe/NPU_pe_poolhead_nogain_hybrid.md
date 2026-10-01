@@ -2,7 +2,7 @@
 
 > **[UPDATE 2026-06]** 이 문서는 **hybrid 시절 CPU pool head**에 대한 것. 이후 attn_pool의 QKᵀ를
 > 16bit로 올려 **full NPU**(attn_pool도 NPU, cos 0.99)가 되면서 **CPU pool head 자체가 사라졌다** →
-> 이 배치화 고민은 더 이상 해당 없음. → [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md)
+> 이 배치화 고민은 더 이상 해당 없음. → [`../vendor/mobilint_resolution_attn_pool.md`](../../vendor/mobilint_resolution_attn_pool.md)
 
 (아래는 hybrid 당시 기록) CPU로 도는 **pool head(attn_pool + proj)**를 채널마다(per-item) 도는 방식
 대신 **`(B,577,1024)`로 한 번에 배치 처리**하면 빨라질 것 같지만 — **재보니 오히려 ~20% 느리다.**
@@ -45,5 +45,5 @@
 
 ## 연관
 
-- `reports/performance/NPU_pe_multicard_62ch_hybrid.md` — 멀티카드 분산 (이 pool head가 도는 맥락)
-- `reports/performance/NPU_preprocess_1_parallel.md` — 고채널 CPU 병목(전처리)
+- `reports/performance/pe/NPU_pe_multicard_62ch_hybrid.md` — 멀티카드 분산 (이 pool head가 도는 맥락)
+- `reports/performance/pe/NPU_preprocess_1_parallel.md` — 고채널 CPU 병목(전처리)

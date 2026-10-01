@@ -82,7 +82,7 @@ target_clusters: Optional[List[Union[int, "Cluster"]]] = None
 > **미검증**: 위는 벤더 예시와 API 시그니처에서 도출한 것이고 **우리가 실측하지 않았다.**
 > 코어를 쪼개면 인스턴스당 지연은 늘어난다(global8→single). 동시성 이득이 지연 손해를 넘는지는
 > 측정해야 한다. 기존 실측(64동시 1장 12s → 7장 2.2s)은 카드별 1인스턴스 기준이다.
-> → [`../performance/NPU_qwen3vl_multicard_batch.md`](../performance/NPU_qwen3vl_multicard_batch.md)
+> → [`../performance/NPU_qwen3vl_multicard_batch.md`](../performance/qwen3vl/NPU_qwen3vl_multicard_batch.md)
 
 ## 4. 다음에 할 것
 

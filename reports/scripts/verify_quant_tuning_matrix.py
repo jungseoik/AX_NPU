@@ -16,7 +16,7 @@ NPU 없는 컴파일 서버(GPU)에서 만든 mxq를 이 서버(NPU 보유)에�
     pe_W4A16_sws_optq_single.mxq  →  quant=W4A16  tuning=sws_optq  scheme=single
 
 관련: reports/RUNBOOK_quant_matrix_120.md (재현 절차 + 기대값)
-      reports/performance/NPU_pe_quant_tuning_compiler_version.md (1.1.2 vs 1.2.0)
+      reports/performance/pe/NPU_pe_quant_tuning_compiler_version.md (1.1.2 vs 1.2.0)
 """
 from __future__ import annotations
 import argparse, json, os, statistics, sys, time
@@ -37,7 +37,7 @@ TUNINGS = ["sws_optq", "optq", "sws", "none"]
 SCHEMES = ["global4", "global8", "single", "multi"]
 
 #: 1.2.0 매트릭스 24종 NPU 실측(2026-09-04, GPU 컴파일 + 표준 이미지셋 download/coco/val2017 앞 20장).
-#: 재컴파일 후 회귀 판정용. → reports/performance/NPU_pe_quant_tuning_matrix_120.md
+#: 재컴파일 후 회귀 판정용. → reports/performance/pe/NPU_pe_quant_tuning_matrix_120.md
 BASELINE_120 = {
     ("W8A16", "none", "single"): 0.9937,
     ("W8A16", "none", "multi"): 0.9937,

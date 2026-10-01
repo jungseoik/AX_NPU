@@ -5,7 +5,7 @@
 
 - 배경(왜 버전이 결과를 바꾸는가): [`NPU_pe_quant_tuning_compiler_version.md`](NPU_pe_quant_tuning_compiler_version.md)
 - 1.2.0 매트릭스 상세: [`NPU_pe_quant_tuning_matrix_120.md`](NPU_pe_quant_tuning_matrix_120.md)
-- 재현 절차: [`../RUNBOOK_quant_matrix_120.md`](../RUNBOOK_quant_matrix_120.md)
+- 재현 절차: [`../RUNBOOK_quant_matrix_120.md`](../../RUNBOOK_quant_matrix_120.md)
 
 ## 0. 두 빌드의 출처 (provenance)
 

@@ -2,7 +2,7 @@
 
 배치 컴파일 문의(2026-09-05 벤더 회신)를 계기로, **지금 자산으로 무엇이 되고 안 되는지**를
 실측한 기록. 배경·코어모드 구조는
-[`../vendor/mobilint_update_vlm_batch_coremode.md`](../vendor/mobilint_update_vlm_batch_coremode.md).
+[`../vendor/mobilint_update_vlm_batch_coremode.md`](../../vendor/mobilint_update_vlm_batch_coremode.md).
 
 | 항목 | 값 |
 | --- | --- |

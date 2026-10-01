@@ -70,6 +70,6 @@ python ../../scratchpad_repro/profile_full_modes.py \
   single:<single.mxq> multi:<multi.mxq> global4:<g4.mxq> global8:<g8.mxq>
 ```
 - 모드별 MXQ: `python -m pe_npu.compile --mode compile --save pe_full_<mode>.mxq --qk16 --scheme <mode> --calib-data-path <calib_hwc>`
-- 관련: [`NPU_pe_pipeline_e2e_hybrid.md`](NPU_pe_pipeline_e2e_hybrid.md)(비포·hybrid), [`NPU_pe_hybrid_vs_full.md`](NPU_pe_hybrid_vs_full.md), [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md)
+- 관련: [`NPU_pe_pipeline_e2e_hybrid.md`](NPU_pe_pipeline_e2e_hybrid.md)(비포·hybrid), [`NPU_pe_hybrid_vs_full.md`](NPU_pe_hybrid_vs_full.md), [`../vendor/mobilint_resolution_attn_pool.md`](../../vendor/mobilint_resolution_attn_pool.md)
 
 *작성 2026-06. full NPU(QKᵀ 16bit) 4모드 동일 COCO calib, cos 0.99 (COCO holdout 0.9905 / 도메인 0.9889). 7×ARIES2 실측 (COCO 자산). 레이턴시는 calib 무관.*

@@ -5,7 +5,7 @@
 - **W4A16은 동작한다** — 크기 −42%, 20채널 처리량 +13%, 단건 지연 −12%. 대가는 cos 0.9936 → 0.9135.
 - **W4A8 + A16 5개는 실패** — cos 0.2609로 붕괴. 배포하지 않는다.
 - 과거 "4bit 불가(no-op)" 판정은 **`mixed_precision` 필드 한정**이었고, 역할별 비트폭 지정
-  (`BitConfig.Transformer.Weight(...=4)`)은 정상 동작한다. → [`NPU_batch_latency.md`](NPU_batch_latency.md) §6 정정
+  (`BitConfig.Transformer.Weight(...=4)`)은 정상 동작한다. → [`NPU_batch_latency.md`](../common/NPU_batch_latency.md) §6 정정
 
 측정: 2026-09-02 / NPU 1장(`/dev/aries7`) / calib COCO val2017 200장 / 정확도 = 원본 PyTorch 임베딩 대비
 코사인 유사도(COCO 20장 평균) / 지연 = 채널 N개를 한 배치로 넣어 전부 끝나는 시간, 3회 중앙값
@@ -78,7 +78,7 @@ W8A16은 보정 없이도 cos 0.99가 나와 두 옵션을 쓴 적이 없었다(
 
 벤더 예제는 두 옵션을 **함께** 켠다. SWS 단독이 역효과였던 것은 OPTQ와 병용해야 의미가 있기 때문일
 가능성이 있어 문의 05로 확인 중이다 →
-[`../inquiries/05_a16_selection_followup/EMAIL.md`](../inquiries/05_a16_selection_followup/EMAIL.md)
+[`../inquiries/05_a16_selection_followup/EMAIL.md`](../../inquiries/05_a16_selection_followup/EMAIL.md)
 
 ## 4. 컴파일 비용 (이 서버: GPU 없음, 96코어)
 
@@ -94,7 +94,7 @@ W8A16은 보정 없이도 cos 0.99가 나와 두 옵션을 쓴 적이 없었다(
 `--threads $(nproc / 동시실행수)` 로 나눠 준다.
 
 **GPU 서버면 크게 빨라진다.** `--device gpu` 는 calibration 연산을 GPU로 보낸다. 기존 측정
-([`compile_benchmark.md`](compile_benchmark.md))의 "GPU 이득 6%"는 **random calib 1샘플** 조건이라
+([`compile_benchmark.md`](../common/compile_benchmark.md))의 "GPU 이득 6%"는 **random calib 1샘플** 조건이라
 calibration이 짧았던 경우다. calib 200장 + OPTQ에서는 무거운 연산(대형 행렬곱, 헤시안 누적·분해)이
 전부 GPU 대상이라 수 배 단축이 기대된다. 실행: `bash setup/compile_in_docker.sh --gpu ...`
 
@@ -110,4 +110,4 @@ python reports/scripts/bench_quant_schemes.py --device 7
 ```
 
 - 배포된 스킴 선택: `MXQInferenceFull.from_hf(scheme="global4", quant="W4A16")` (기본 `W8A16`)
-- 벤더 회신 원문·재현: [`../inquiries/04_vit_quantization_speed/REPLY.md`](../inquiries/04_vit_quantization_speed/REPLY.md)
+- 벤더 회신 원문·재현: [`../inquiries/04_vit_quantization_speed/REPLY.md`](../../inquiries/04_vit_quantization_speed/REPLY.md)

@@ -15,17 +15,17 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
 
 - **컴파일·추론 모두 동작. image→embedding 전부 NPU (full NPU).** trunk 24 block + attn_pool head 모두 NPU. 원본 pth 대비 **cos 0.99**. → `MXQInferenceFull`.
   - **핵심 해결**: attn_pool은 그냥 INT8로 하면 QKᵀ matmul outlier로 깨졌는데(full-NPU cos 0.46), 그 **score matmul만 16bit**로 올리면 복구(Mobilint 해결책, 컴파일 시 `--qk16`). → `reports/vendor/mobilint_resolution_attn_pool.md`
-  - **레거시 hybrid**(NPU trunk + CPU attn_pool, cos 0.997)는 `MXQInferenceHybrid`로 유지(비교/하위호환). full이 CPU pool 병목 제거 → `reports/performance/NPU_pe_hybrid_vs_full.md`.
+  - **레거시 hybrid**(NPU trunk + CPU attn_pool, cos 0.997)는 `MXQInferenceHybrid`로 유지(비교/하위호환). full이 CPU pool 병목 제거 → `reports/performance/pe/NPU_pe_hybrid_vs_full.md`.
 - **자기완결(self-contained)**: PE 모델 코드는 `pe_npu/pe_vendor/`에 vendor 복사 → 외부 레포(Product-AI-mono) 의존 없음. 가중치만 HF `facebook/PE-Core-L14-336` 자동 다운로드.
 - 핵심 패키지 = **`pe_npu/`**.
-- **멀티카드**: `MXQInferenceFull`이 단일/멀티 통합 — `device_id`(단일) / `device_ids=[..]`(지정) / `device_ids="auto"`(전 카드). 카드당 1모델 + **코어모드별 슬롯(single8/global4:2/global8:1)×카드** 스레드풀로 배치 자동 분산(출력 cos 1.0). 7대=56코어(`reports/performance/NPU_pe_multicard_62ch_full.md`), 고채널 병목은 CPU 전처리(`reports/performance/NPU_preprocess_1_parallel.md`).
+- **멀티카드**: `MXQInferenceFull`이 단일/멀티 통합 — `device_id`(단일) / `device_ids=[..]`(지정) / `device_ids="auto"`(전 카드). 카드당 1모델 + **코어모드별 슬롯(single8/global4:2/global8:1)×카드** 스레드풀로 배치 자동 분산(출력 cos 1.0). 7대=56코어(`reports/performance/pe/NPU_pe_multicard_62ch_full.md`), 고채널 병목은 CPU 전처리(`reports/performance/pe/NPU_preprocess_1_parallel.md`).
 
 ## ★ 다채널 동시성 (반드시 지킬 것 — 안 그러면 출력 깨짐)
 
 - **한 모델에 `infer_async` 여러 건 동시 제출 = 출력 깨짐**(async 파이프라인 1개 공유, N=1만 안전 → 첫 건만 맞고 나머지 0/garbage). **latency 측정엔 쓸 수 있어도 실제 출력엔 절대 쓰지 말 것.**
 - **정확+고속 패턴 = 카드당 1모델 + 멀티스레드 동기 `infer()`.** 런타임이 동시 sync 호출을 코어에 안전 분배 → 출력 정확(cos 1.0). `MXQInferenceFull`이 코어모드별 슬롯(single8/global4:2/global8:1)×카드로 스레드풀 자동 구성 → 배치 주면 알아서 병렬. (multi-model 인스턴스는 처리량 동일·메모리만 낭비 → 불필요.)
 - **모드 선택**(1카드 실측, 출력검증): 처리량=**global4(16 img/s)**/single, 단건 저지연=**global8(71ms)**, multi 비권장. **8장/62채널**: 카드당 1모델+8스레드, global4 기준 ≈130 img/s → ~0.5s.
-- 상세·재현: **`reports/performance/NPU_pe_throughput_modes_full.md`** (동시성 패턴 규명 + 모드선택 확정).
+- 상세·재현: **`reports/performance/pe/NPU_pe_throughput_modes_full.md`** (동시성 패턴 규명 + 모드선택 확정).
 
 ## pe_npu 패키지
 
@@ -43,14 +43,14 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - **양자화 스킴 선택**: `from_hf(scheme="global4", quant="W4A16")` — 기본 `W8A16`(기존 배포본과 동일).
     HF 경로 `<quant>/<scheme>/pe_full.mxq`, 신규 경로 없으면 기존 최상위 경로로 자동 폴백.
   - HF `PIA-SPACE-LAB/MXQ_NPU`는 **코어모드 폴더별**: `single/` `multi/` `global4/` `global8/`(각 `pe_full.mxq` + `CALIBRATION.md`). `scheme=`로 선택. 단건 latency=global8, throughput=single/global4. (레거시 hybrid: 루트 `pe_feat.mxq`+`pe_pool_head.pt`)
-  - 4모드 동일 calib(COCO val2017 200장), 전부 cos 0.99. 모드 선택: `reports/performance/NPU_pe_pipeline_e2e_full.md`.
+  - 4모드 동일 calib(COCO val2017 200장), 전부 cos 0.99. 모드 선택: `reports/performance/pe/NPU_pe_pipeline_e2e_full.md`.
 
 ## 헷갈리지 말 것
 
 - **컴파일은 NPU가 아니라 호스트 CPU/GPU(`--device`)에서** 한다. NPU는 추론 전용.
 - **양자화 비트폭은 조절된다(2026-09-01 정정).** 기존 MXQ는 순수 INT8이 아니라 **W8A16**(Activation 기본값이 output/ffn=16bit)이고,
   `BitConfig.Transformer.Weight(...=4)`로 **W4A16도 동작**한다(크기 −42%, 처리량 +43%, cos 0.9136 — 정확도 보정 옵션 검토 중).
-  단 `mixed_precision`(비율 방식) 필드는 여전히 no-op. → `reports/performance/NPU_pe_quant_schemes.md`, `reports/performance/NPU_batch_latency.md`
+  단 `mixed_precision`(비율 방식) 필드는 여전히 no-op. → `reports/performance/pe/NPU_pe_quant_schemes.md`, `reports/performance/common/NPU_batch_latency.md`
 - 컴파일 = docker qbcompiler 이미지, 추론 = 호스트 conda `pe_npu_host`(qbruntime, py3.10~3.12) 또는 docker.
   - **컴파일에 GPU 불필요** — 벤더가 버전별 `-cpu`/`-cuda` 이미지를 쌍으로 배포하고 코드가 CPU로 자동 폴백한다.
     GPU 없는 서버는 `mobilint/qbcompiler:1.1-cpu-ubuntu22.04`(SDK 1.0v) / `1.2-cpu-ubuntu22.04`(1.1v).
@@ -64,10 +64,10 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
 ## 문서 라우팅
 
 - **따라하기**(설치~컴파일~추론, 옵션 A/B): `tutorial/pe_npu/README.md`
-- **Qwen3-VL(멀티모달 LLM) 추론**: `tutorial/pe_npu/README_VLM_qwen3.md` + `demo_vlm_qwen3.ipynb` + 헬퍼 `tutorial/pe_npu/vlm_npu.py` + skill `.claude/skills/qwen3-vl/`. 이미지+프롬프트→텍스트. PE-Core와 별개로, Mobilint가 올린 `mobilint/Qwen3-VL-*` MXQ를 표준 HF API(`AutoModelForImageTextToText`+`mblt-model-zoo`)로 그대로 가져와 씀(포팅 불필요). **코어모드**: mxq는 `inference_scheme="all"`로 컴파일돼 **4종(single/multi/global4/global8)을 모두 담고 있다** — `config.json`의 `core_mode:global8`은 기본값일 뿐 **런타임 변경 가능**(`cfg.vision_config.core_mode` / `text_config.core_mode`, `target_clusters`/`target_cores`; `mblt-model-zoo`의 `npu_backend.py`가 4종 다 받음). `max_batch_size=1`(배치 컴파일은 qbcompiler 1.2.0에 없음, 차기 릴리즈 예정). 설치 핀: `mblt-model-zoo==1.3.1` + `transformers>=4.57`. **멀티카드**: 현재는 카드별 1인스턴스 분산(`VLMPool(device_ids="auto")`, `config.vision/text.dev_no`)이지만, **코어를 쪼개면 카드당 여러 인스턴스도 가능**(벤더 예시: vision=global4/cluster0, text=single/core1:0) — 미실측. → `reports/vendor/mobilint_update_vlm_batch_coremode.md`. 실측(2B VQA 1토큰): 단건 ~180ms, 64동시 1장 12s→7장 2.2s → `reports/performance/NPU_qwen3vl_multicard_batch.md`
+- **Qwen3-VL(멀티모달 LLM) 추론**: `tutorial/pe_npu/README_VLM_qwen3.md` + `demo_vlm_qwen3.ipynb` + 헬퍼 `tutorial/pe_npu/vlm_npu.py` + skill `.claude/skills/qwen3-vl/`. 이미지+프롬프트→텍스트. PE-Core와 별개로, Mobilint가 올린 `mobilint/Qwen3-VL-*` MXQ를 표준 HF API(`AutoModelForImageTextToText`+`mblt-model-zoo`)로 그대로 가져와 씀(포팅 불필요). **코어모드**: mxq는 `inference_scheme="all"`로 컴파일돼 **4종(single/multi/global4/global8)을 모두 담고 있다** — `config.json`의 `core_mode:global8`은 기본값일 뿐 **런타임 변경 가능**(`cfg.vision_config.core_mode` / `text_config.core_mode`, `target_clusters`/`target_cores`; `mblt-model-zoo`의 `npu_backend.py`가 4종 다 받음). `max_batch_size=1`(배치 컴파일은 qbcompiler 1.2.0에 없음, 차기 릴리즈 예정). 설치 핀: `mblt-model-zoo==1.3.1` + `transformers>=4.57`. **멀티카드**: 현재는 카드별 1인스턴스 분산(`VLMPool(device_ids="auto")`, `config.vision/text.dev_no`)이지만, **코어를 쪼개면 카드당 여러 인스턴스도 가능**(벤더 예시: vision=global4/cluster0, text=single/core1:0) — 미실측. → `reports/vendor/mobilint_update_vlm_batch_coremode.md`. 실측(2B VQA 1토큰): 단건 ~180ms, 64동시 1장 12s→7장 2.2s → `reports/performance/qwen3vl/NPU_qwen3vl_multicard_batch.md`
   - ★ **해상도는 TTFT에 영향 없음**(720p/1080p 최저 162.2 vs 161.3ms) — 프로세서 static 모드가 **입력을 224×224로 고정 리사이즈** → 해상도 무관 **시각토큰 64개**. **원본 Qwen3-VL은 720p 880개/1080p 2040개**(14~32배) — 정확도 상한 우려, size/min_pixels 오버라이드는 거부됨. 속도 수치는 전부 이 최소해상도 조건의 값. 차이는 CPU 전처리 +8.7ms뿐 → 업스트림에서 줄여 보낼 것
   - ★ **카드당 2~4스레드로 1.4~1.65배**(720p 4.70→6.62 img/s, 1080p 3.96→6.53). NPU는 in-flight 1이지만 전처리가 NPU 대기 뒤에 숨는다. 포화점 720p=2스레드/1080p=4스레드. 현재 `VLMPool`은 카드 간 분산만 해서 미적용
-  - **배치 불가**: text mxq가 legacy 2입력이라 3입력 Batch16 빌드 필요(HF 최신본도 동일, 벤더 대기). text엔 Multi 번들도 없어 `core_mode=multi`는 text에 주면 안 됨. 라이브러리(2.4.2)는 준비됨 → `reports/performance/NPU_qwen3vl_ttft_resolution_concurrency.md`
+  - **배치 불가**: text mxq가 legacy 2입력이라 3입력 Batch16 빌드 필요(HF 최신본도 동일, 벤더 대기). text엔 Multi 번들도 없어 `core_mode=multi`는 text에 주면 안 됨. 라이브러리(2.4.2)는 준비됨 → `reports/performance/qwen3vl/NPU_qwen3vl_ttft_resolution_concurrency.md`
 - **Qwen3-VL 신규 학습본 재컴파일**: `qwen3vl_recompile/` — 체크포인트 하나 주면 **batch32 mxq 까지** 한 번에(`run_all.sh --checkpoint <경로> --out <경로>`). ①export(49초) ②캘리브 ③컴파일(vision 27분/decoder 8분) ④포장 ⑤NPU A/B. ★ 벤더 패키지는 **이미 export 된 .mblt 에서 시작**해서 신규 가중치엔 못 쓴다 — 그 앞단을 채운 것. **학습본(`PIA-SPACE/AX_NPU_VL3_2B`)으로 NPU 까지 검증 완료**: 라벨 8/8·8/8·20/20 벤더와 일치, 지연 ±1.5%, mxq 크기 −0.04%.
   - ★★ **`embed_tokens` 는 `@ rotation.pth` 회전해서 포장해야 한다.** 벤더 `model.safetensors` 가 생 가중치가 아니라 회전본이다(스톡 원본에 R 곱하면 최대오차 0.0). decoder 가 SpinR1 기저라서다. 생으로 넣으면 **지연·컴파일 다 정상인데 로짓만 ~5배 눌려**(no 47→9) 엉뚱한 토큰이 나온다 — W8·OPTQ 로는 안 고쳐진다. 조립은 `pack_model_dir.py`, 진단은 `dump_logits.py`(로짓 *크기* 로 기저 어긋남과 양자화 열화를 구분).
   - export 규약 6가지: 전체 모델 금지(서브모듈 래퍼)·모델 객체 직접 전달·RoPE 호스트 선계산·**`use_cache=True` + `past_key_values` 를 feed_dict 로**(끄면 `StatefulKVCacheWrapper` 56개가 빠져 죽는다)·**`logits_to_keep=1`**(빠지면 로짓 전 위치 + mxq 17% 비대)·래퍼는 `Projection` **상속**.
@@ -75,8 +75,8 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
   - ★ **mxq 만 갈아끼우는 drop-in 은 안 된다** — 우리 export 는 비전 입력 순서(데이터플로우라 제어 불가)와 출력/rope 이름이 벤더와 달라서, 로더에 `artifact_order.py` 어댑터가 필요하다. 벤더 설정의 이름 기반 지정(비전 `activation16Bits`)도 그냥 두면 무시되므로 `compile_mxq.py` 가 우리 이름으로 교체한다.
   - ★ **스톡 통제군**(스톡 가중치를 우리 파이프라인에 태워 벤더와 A/B)이 결함 5개 중 4개를 잡았다. "학습본이 깨진다" 만으로는 파이프라인 결함인지 체크포인트 특성인지 못 가른다.
   - `split_legacy_deepstack.py` 는 **레거시 전용이라 불필요**(신규 export 는 deepstack 이 이미 분리). `rotation.pth`·`configs/` 는 재사용, 캘리브는 재생성 필수. → `reports/NPU_qwen3vl_mblt_export.md`
-- **Qwen3-VL 배치 검증서버(다채널)**: `third_party/Product-AI-mono/.../npu_pe_2stage/validation_server_bs32/`. 기존 `validation_server`(batch1)와 **HTTP 계약 동일**, 내부만 벤더 배치32 빌드(qbcompiler 1.3.4+pia.capacity3 / qbruntime 1.4.0+repack1 / **py3.10**). **20채널(짧은 프롬프트): 1장 1258.7ms / 2장 739.6ms / 3장 632.6ms**(batch1은 2997.6ms, 카드당 6채널이 한계). ★**지연을 지배하는 건 프롬프트 길이** — 운영 `fire_ret`(182토큰)은 2장 1266.9ms / 3장 1050.9ms 라 **3장 필요**(39토큰이면 2장 911.5ms). 핵심 제약 3가지 — ①`burst()` 동시호출 금지(카드당 워커 1개) ②한 묶음의 토큰 길이가 같아야 함(**프롬프트별로 묶어야** 함) ③카드 선택은 `qsize` 말고 `inflight`. → `reports/performance/NPU_qwen3vl_bs32_server.md`
-- **YOLO11 객체탐지 (컴파일~추론)**: `tutorial/yolo_npu/README.md` + `demo_yolo11_npu.ipynb` + 패키지 `yolo_npu/`(detect/compile). PE와 달리 **패치 0개**로 컴파일(표준 CNN, `yolo_decode_include`). 모델은 **mxq만 바꾸면**(11n/s/m/l). 단일/지정/`device_ids="auto"` 멀티카드 + `detect_batch`(출력 무결성 검증됨). **추적**: `ByteTrack`(자체 경량, `yolo_npu/track.py`) — 검출 NPU + 추적 CPU. mAP(11m INT8 0.53=fp32의 96%)·4모드×배치·1~7장 스케일링(64ch 198→1072 img/s): `reports/performance/NPU_yolo11_coremode_batch.md`. **기본 진입점 `YOLONPU.load(model, scheme)`** = HF `PIA-SPACE-LAB/MXQ_NPU/yolo/<model>/<scheme>/` 먼저 → 없으면 컴파일 안내
+- **Qwen3-VL 배치 검증서버(다채널)**: `third_party/Product-AI-mono/.../npu_pe_2stage/validation_server_bs32/`. 기존 `validation_server`(batch1)와 **HTTP 계약 동일**, 내부만 벤더 배치32 빌드(qbcompiler 1.3.4+pia.capacity3 / qbruntime 1.4.0+repack1 / **py3.10**). **20채널(짧은 프롬프트): 1장 1258.7ms / 2장 739.6ms / 3장 632.6ms**(batch1은 2997.6ms, 카드당 6채널이 한계). ★**지연을 지배하는 건 프롬프트 길이** — 운영 `fire_ret`(182토큰)은 2장 1266.9ms / 3장 1050.9ms 라 **3장 필요**(39토큰이면 2장 911.5ms). 핵심 제약 3가지 — ①`burst()` 동시호출 금지(카드당 워커 1개) ②한 묶음의 토큰 길이가 같아야 함(**프롬프트별로 묶어야** 함) ③카드 선택은 `qsize` 말고 `inflight`. → `reports/performance/qwen3vl/NPU_qwen3vl_bs32_server.md`
+- **YOLO11 객체탐지 (컴파일~추론)**: `tutorial/yolo_npu/README.md` + `demo_yolo11_npu.ipynb` + 패키지 `yolo_npu/`(detect/compile). PE와 달리 **패치 0개**로 컴파일(표준 CNN, `yolo_decode_include`). 모델은 **mxq만 바꾸면**(11n/s/m/l). 단일/지정/`device_ids="auto"` 멀티카드 + `detect_batch`(출력 무결성 검증됨). **추적**: `ByteTrack`(자체 경량, `yolo_npu/track.py`) — 검출 NPU + 추적 CPU. mAP(11m INT8 0.53=fp32의 96%)·4모드×배치·1~7장 스케일링(64ch 198→1072 img/s): `reports/performance/yolo/NPU_yolo11_coremode_batch.md`. **기본 진입점 `YOLONPU.load(model, scheme)`** = HF `PIA-SPACE-LAB/MXQ_NPU/yolo/<model>/<scheme>/` 먼저 → 없으면 컴파일 안내
 - **신규 서버 NPU 세팅**: `.claude/skills/npu-setup/` (clone 후 `mobilint-cli status`까지)
 - **TTA 이벤트탐지 평가 (PIA_Wave NPU 이식)**: 패키지 `wave_npu/` — **평가 전용 워크스트림**.
   코드·스펙·산출물·**문서까지 전부 `wave_npu/` 안에서 관리**한다(`reports/`에 분산시키지 않음).
@@ -107,42 +107,48 @@ Mobilint **ARIES MLA100 PCIe Card**(Aries2)에서 딥러닝 모델을 NPU로 추
     ★ **라벨이 프레임 CSV인 이유 = fps가 7~50 혼재**라 초 변환 시 경계 오차. `wave_npu`는 두 형식 다 읽는다(스펙 `label_format`).
     ★ 정답은 원본 `gt_label.zip`을 쓸 것 — 폴더 안 `per_frame/*.csv`는 subtype별 컬럼명이 달라(폭력 하드네거티브가 `sittingdown`) 라벨이 어긋난다.
 - **분석/원리** (전체 인덱스는 `reports/README.md`):
+  - ★ `reports/` 구조: `performance/`는 **워크스트림별 하위 폴더**(`pe/` `qwen3vl/` `yolo/` `intrusion/` `common/`),
+    정확도 평가는 `evaluation/`, 나머지는 `quantization/` `design/` `vendor/` `inquiries/` `testing/`.
+    새 문서는 평평하게 두지 말고 해당 폴더에 넣을 것(`wave_npu`만 예외로 `wave_npu/docs/`).
+  - `reports/evaluation/NPU_tta4ax_pe_vs_vlm.md` — ★ TTA_4종_AX 300장 정확도. PE 1차 vs VLM 2차(bs32/ft),
+    2단계 직렬, 입력 크기 224×224 vs 256×192. **ft + 256×192 권장**(정탐 +8·오탐 −1), smoke는 2차 생략이 낫다.
+    ★ **같은 설정도 실행마다 답이 0~4건 바뀐다** — 설정 비교는 3회 이상 돌려 범위가 겹치는지 볼 것. 재현 `eval/tta4ax/`
   - `reports/vendor/mobilint_resolution_attn_pool.md` — ★ attn_pool INT8 붕괴 원인(QKᵀ outlier)·해결(score matmul 16bit) → full NPU cos 0.99
-  - `reports/performance/NPU_pe_throughput_modes_full.md` — ★ 다채널 처리량·모드선택 (올바른 1모델+멀티스레드 sync 패턴, 출력검증) ← **다채널 서비스 짤 때 필독**
-  - `reports/performance/NPU_pe_hybrid_vs_full.md` — full NPU vs hybrid, CPU pool 병목 제거 실측
-  - `reports/performance/NPU_pe_pipeline_e2e_full.md` — full NPU 코어모드 4종 × 채널 스윕 단계별 (latency)
-  - `reports/performance/NPU_pe_multicard_62ch_full.md` — full NPU 멀티카드 1→62ch (비포와 동일 구조)
-  - `reports/performance/NPU_pe_1card_coremode_full.md` — 1장 코어모드×1~16ch 순수추론(슬롯 거동, latency)
+  - `reports/performance/pe/NPU_pe_throughput_modes_full.md` — ★ 다채널 처리량·모드선택 (올바른 1모델+멀티스레드 sync 패턴, 출력검증) ← **다채널 서비스 짤 때 필독**
+  - `reports/performance/pe/NPU_pe_hybrid_vs_full.md` — full NPU vs hybrid, CPU pool 병목 제거 실측
+  - `reports/performance/pe/NPU_pe_pipeline_e2e_full.md` — full NPU 코어모드 4종 × 채널 스윕 단계별 (latency)
+  - `reports/performance/pe/NPU_pe_multicard_62ch_full.md` — full NPU 멀티카드 1→62ch (비포와 동일 구조)
+  - `reports/performance/pe/NPU_pe_1card_coremode_full.md` — 1장 코어모드×1~16ch 순수추론(슬롯 거동, latency)
   - `reports/design/SOLUTION_single_io_compile.md` — [비포] 단일 입출력 컴파일 + hybrid(0.997)
-  - `reports/performance/NPU_pe_quant_tuning_compiler_version.md` — ★★ **OPTQ·SWS 열화는 qbcompiler 1.1.2 버그**(2026-09-03).
+  - `reports/performance/pe/NPU_pe_quant_tuning_compiler_version.md` — ★★ **OPTQ·SWS 열화는 qbcompiler 1.1.2 버그**(2026-09-03).
     1.2.0으로 컴파일하면 부호가 뒤집혀 **정확도가 올라간다**: W4A16 0.8795→**0.9654**, W8A16 0.9747→**0.9946**, W4A8+A16×5 0.8560→**0.9420**.
     튜닝 끈 베이스라인은 두 버전 동일(0.9110→0.9126) → 차이는 전적으로 튜닝 구현. 벤더 회신 수치(0.973/0.905)도 1.2.0에서 재현됨.
     `aries-rb`=Aries2(mxq v7 동일)라 **1.2.0 컴파일본이 드라이버 1.13에서 그대로 돈다** — 추론 코드 변경 0(`inference.py`에 버전 의존 없음, mxq만 교체).
     컴파일 타겟은 `pe_npu/target_device.py`가 `qbcompiler.__version__`으로 **자동 판별**(1.1.x→aries2 / 1.2.x→aries-rb, `--target-device`/`AX_NPU_TARGET_DEVICE`로 덮어쓰기 가능)
-  - `reports/performance/NPU_pe_mxq_sdk_version_matrix.md` — ★ **버전별 대조표**. mxq가 어떤 SDK/컴파일러/타겟 산출물인지 명시(1.0v=1.1.2/aries2, 1.1v=1.2.0/aries-rb)하고
+  - `reports/performance/pe/NPU_pe_mxq_sdk_version_matrix.md` — ★ **버전별 대조표**. mxq가 어떤 SDK/컴파일러/타겟 산출물인지 명시(1.0v=1.1.2/aries2, 1.1v=1.2.0/aries-rb)하고
     두 빌드의 cos·채널지연(1/8/12/20ch)을 나란히. `none`은 버전 무관, `sws_optq`만 크게 갈린다(W4A16 +0.086). 코어모드: 1ch=global4, 8ch↑=single, multi 비권장
-  - `reports/performance/NPU_pe_quant_tuning_matrix_120.md` — ★★ **1.2.0 매트릭스 24종 NPU 전수 검증(2026-09-04)**. 튜닝이 3개 양자화 모두에서 정확도 상승,
+  - `reports/performance/pe/NPU_pe_quant_tuning_matrix_120.md` — ★★ **1.2.0 매트릭스 24종 NPU 전수 검증(2026-09-04)**. 튜닝이 3개 양자화 모두에서 정확도 상승,
     **코어모드는 정확도 무관**(4모드 cos 동일, 지연만 다름). 배포 후보: **W8A16+튜닝 0.9946**(현행 0.9937과 크기·속도 동일 → 공짜 교체) / W4A16+튜닝 0.9654(−42%, +35%) / W4A8+튜닝 0.9420(가장 빠름).
     코어모드(저부하 재측정): **단건=global8 61~73ms**, 배치는 W8A16→global4 / W4계열→single, `multi`는 전구간 최악(20ch 5.6~7.4s) 비권장.
     ★ **지연은 공유 카드 측정이라 다른 날 값끼리 비교 금지** — 버전 비교는 같은 세션 교차측정으로만(그렇게 재면 single 동일, global4만 1.2.0이 5~6% 느림). ★ 이전 W4A8 값 0.8932는 A16 5개 누락 산출물이었고 정정값이 0.9420
     **배치 출력 무결성 72/72 비트 동일**(양자화3×모드4×배치 1/4/8/12/16/20) — `infer(batch)`는 동기 infer 스레드풀이라 안전. 검증: `reports/scripts/verify_pe_batch_output.py`
   - `reports/RUNBOOK_quant_matrix_120.md` — ★ **GPU 서버 재현 절차서**. clone→.env→SDK 1.1v→docker→calib→24조합(양자화3×튜닝2×**코어모드4**)→NPU 검증.
     `verify_quant_tuning_matrix.py --src-dir <dir>`가 **회귀 기준 24점**(표준 이미지셋 `download/coco/val2017` 앞 20장 기준)을 ±0.005로 자동 대조, 이탈 시 exit 1
-  - `reports/performance/NPU_pe_quant_tuning_verify.md` — [1.1.2 한정] 양자화×튜닝 24종 NPU 실측(9/9 cos 악화). **위 문서에서 원인 규명·정정됨** — 배포 판단 근거로 쓰지 말 것. W4A8_L5A16은 cos 0.879로 보유·미배포
-  - `reports/performance/NPU_pe_quant_schemes.md` — ★ 양자화 스킴(W8A16/W4A16/W4A8) × 코어모드 × 1~20채널 실측.
+  - `reports/performance/pe/NPU_pe_quant_tuning_verify.md` — [1.1.2 한정] 양자화×튜닝 24종 NPU 실측(9/9 cos 악화). **위 문서에서 원인 규명·정정됨** — 배포 판단 근거로 쓰지 말 것. W4A8_L5A16은 cos 0.879로 보유·미배포
+  - `reports/performance/pe/NPU_pe_quant_schemes.md` — ★ 양자화 스킴(W8A16/W4A16/W4A8) × 코어모드 × 1~20채널 실측.
     배포 기본은 **W8A16**(cos 0.9936), W4A16은 크기 −42%·처리량 +13%·cos 0.9135, W4A8은 붕괴(미배포)
-  - `reports/performance/NPU_pe_quant_tuning_compile.md` — [컴파일] 양자화 3종 × SWS/OPTQ 온오프 × single·global4 24종 GPU 스윕(조합당 5~8분). HF `<quant>/<tuning>/<scheme>/pe_full.mxq` + 루트 `TUNING_MATRIX.md`(컴파일 환경 표기). cos는 NPU 검증 대기
-  - `reports/performance/NPU_batch_latency.md` — 배치 지연/멀티코어/Multi 모드/bit4 양자화 한계 (실측, §6 정정 포함)
-  - `reports/performance/NPU_pe_multicard_62ch_hybrid.md` — [비포·hybrid] 멀티카드 62채널 (trunk만)
-  - `reports/performance/NPU_preprocess_1_parallel.md` — 고채널 병목인 CPU 전처리 병렬화 벤치
-  - `reports/performance/NPU_preprocess_2_uint8_offload.md` — 전처리 NPU 오프로드(uint8 입력) 실험: normalize는 폴딩되나 resize 불가라 전처리 이득 없음(정확도 0.99 유지). + 남은 최적화 정리
-  - `reports/performance/NPU_preprocess_3_cv2_decision.md` — 전처리 최적화 의사결정(e2e 기준): 리소스 원천=resize, torchvision→cv2(INTER_LINEAR) 전환으로 56ch e2e -25%·CPU 5배↓(정확도 0.99→0.97, opt-in), 워커16, 파이프라이닝 미채택.
+  - `reports/performance/pe/NPU_pe_quant_tuning_compile.md` — [컴파일] 양자화 3종 × SWS/OPTQ 온오프 × single·global4 24종 GPU 스윕(조합당 5~8분). HF `<quant>/<tuning>/<scheme>/pe_full.mxq` + 루트 `TUNING_MATRIX.md`(컴파일 환경 표기). cos는 NPU 검증 대기
+  - `reports/performance/common/NPU_batch_latency.md` — 배치 지연/멀티코어/Multi 모드/bit4 양자화 한계 (실측, §6 정정 포함)
+  - `reports/performance/pe/NPU_pe_multicard_62ch_hybrid.md` — [비포·hybrid] 멀티카드 62채널 (trunk만)
+  - `reports/performance/pe/NPU_preprocess_1_parallel.md` — 고채널 병목인 CPU 전처리 병렬화 벤치
+  - `reports/performance/pe/NPU_preprocess_2_uint8_offload.md` — 전처리 NPU 오프로드(uint8 입력) 실험: normalize는 폴딩되나 resize 불가라 전처리 이득 없음(정확도 0.99 유지). + 남은 최적화 정리
+  - `reports/performance/pe/NPU_preprocess_3_cv2_decision.md` — 전처리 최적화 의사결정(e2e 기준): 리소스 원천=resize, torchvision→cv2(INTER_LINEAR) 전환으로 56ch e2e -25%·CPU 5배↓(정확도 0.99→0.97, opt-in), 워커16, 파이프라이닝 미채택.
     ★ **단 이 cv2 전환은 실서비스 경로(`_detect`)에서 동작하지 않고 있었다** — ROI 크롭이 프레임을 torch로 넘겨 `isinstance(img, np.ndarray)` 분기가 항상 거짓. → ④에서 규명·수정
-  - `reports/performance/NPU_preprocess_4_roi_crop.md` — ★★ **[전처리 ④] CPU 전처리 병목 제거**. ROI 크롭 torch→cv2(`fillPoly`+스레드풀, ROI 미지정 시 크롭 스킵) **62ch 2602→4.6ms**,
+  - `reports/performance/pe/NPU_preprocess_4_roi_crop.md` — ★★ **[전처리 ④] CPU 전처리 병목 제거**. ROI 크롭 torch→cv2(`fillPoly`+스레드풀, ROI 미지정 시 크롭 스킵) **62ch 2602→4.6ms**,
     전처리를 스레드 resize + 배치 normalize로 분리 176→40ms, 전처리가 NPU 네이티브 **NHWC**로 바로 내보내 CHW↔HWC 왕복 제거(추론 −61ms).
     **62ch e2e 3422→569ms(6.0배)**, 1fps 수용 채널 18ch→62ch+. 출력 비트 동일(폴리곤 ROI만 경계 0.2%, cos 0.9988).
     적용은 Product-AI-mono `pe_npu`(PR #610/AIPROD-313), 본 문서는 근거 기록
-  - `reports/performance/compile_benchmark.md` — 컴파일 시간 GPU vs CPU
+  - `reports/performance/common/compile_benchmark.md` — 컴파일 시간 GPU vs CPU
   - `reports/quantization/quantization_reference.md`, `reports/quantization/QUANT_TUNING_guide.md` — 양자화 배경
 - **Mobilint 문의 스레드**: `reports/inquiries/` — 번호가 문의 순서(클수록 최신). 인덱스 `reports/inquiries/README.md`.
   - ★ **대외 표기 규약**: 벤더 문의에는 모델 실명을 쓰지 않는다. PE-Core-L14-336 → **"PIA custom ViT-L/14"**,

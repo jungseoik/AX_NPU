@@ -6,6 +6,33 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 > QKᵀ matmul 16bit로 해결됨 → [vendor/mobilint_resolution_attn_pool.md](vendor/mobilint_resolution_attn_pool.md).
 > 그 이전 hybrid(NPU trunk + CPU pool) 분석 문서들은 히스토리로 보존.
 
+## 디렉터리 구조
+
+```
+reports/
+├── performance/     성능 (지연·처리량·병렬화·컴파일) — **워크스트림별 하위 폴더**
+│   ├── pe/          PE-Core-L14-336 (19)   전처리 최적화 포함
+│   ├── qwen3vl/     Qwen3-VL VLM (4)
+│   ├── yolo/        YOLO11 (1)
+│   ├── intrusion/   intrusion e2e (3)
+│   └── common/      워크스트림 공통 (3)
+├── evaluation/      정확도 평가 (성능이 아니라 **맞췄는지**)
+├── quantization/    양자화 배경·가이드
+├── design/          설계 결정
+├── vendor/          Mobilint 회신·해결책
+├── inquiries/       Mobilint 문의 스레드 (번호가 순서)
+└── testing/         호환성·회귀 테스트
+```
+
+> 워크스트림별 문서는 그 워크스트림 폴더 안에만 둔다. `wave_npu` 는 예외로
+> 코드와 함께 `wave_npu/docs/` 에서 관리한다.
+
+## 🎯 evaluation/ — 정확도 평가
+
+| 문서 | 내용 |
+|------|------|
+| [NPU_tta4ax_pe_vs_vlm.md](evaluation/NPU_tta4ax_pe_vs_vlm.md) | ★ TTA_4종_AX 300장 — PE 1차 vs VLM 2차(벤더 bs32 / 사내 ft), 2단계 직렬, 입력 크기 224×224 vs 256×192. **같은 설정도 실행마다 0~4건 바뀐다**는 변동폭 측정 포함. 재현 `eval/tta4ax/` |
+
 ## 📊 performance/ — 성능 (지연·처리량·병렬화·컴파일)
 
 > **네이밍 규칙** — 파일명은 `NPU_<주제>_<단계>` 꼴. before/after 스토리는 접미사(`_hybrid`=before / `_full`=after,
@@ -15,45 +42,45 @@ PE-Core-L14-336 NPU 추론 프로젝트의 실측/분석 문서를 주제별로 
 attn_pool의 QKᵀ를 16bit로 올려 CPU pool을 없애고 전부 NPU로 옮긴 스토리. `_hybrid`=이전, `_full`=현재.
 | 문서 | 내용 |
 |------|------|
-| [NPU_pe_hybrid_vs_full.md](performance/NPU_pe_hybrid_vs_full.md) | ★ **[비교]** full NPU vs hybrid — CPU attn_pool 병목 제거 실측 (QKᵀ 16bit) |
-| [NPU_pe_pipeline_e2e_full.md](performance/NPU_pe_pipeline_e2e_full.md) | ★ [full·after] 코어모드 4종 × 채널 스윕 단계별 e2e (Pool 단계 제거) |
-| [NPU_pe_multicard_62ch_full.md](performance/NPU_pe_multicard_62ch_full.md) | ★ [full·after] 멀티카드 1→62ch 배치 지연 (hybrid와 동일 구조, attn_pool도 NPU) |
-| [NPU_pe_throughput_modes_full.md](performance/NPU_pe_throughput_modes_full.md) | ★ [full·after] 다채널 처리량·모드선택 (올바른 1모델+멀티스레드 sync 패턴, 출력검증) |
-| [NPU_pe_1card_coremode_full.md](performance/NPU_pe_1card_coremode_full.md) | ★ [full·after] NPU 1장 코어모드 4종 × 1~16채널 순수추론 증가폭 (슬롯 거동) |
-| [NPU_pe_pipeline_e2e_hybrid.md](performance/NPU_pe_pipeline_e2e_hybrid.md) | [hybrid·before] 코어모드 3종 × 단계별 × 채널(최대 56) — NPU 병목 어디서 커지는지 |
-| [NPU_pe_multicard_62ch_hybrid.md](performance/NPU_pe_multicard_62ch_hybrid.md) | [hybrid·before] 멀티카드(7×ARIES=56코어) 1→62채널 분산 추론 지연 (full의 짝) |
-| [NPU_pe_stage_latency_hybrid.md](performance/NPU_pe_stage_latency_hybrid.md) | [hybrid·before] _detect 단계별(전처리/NPU/pool/event) + e2e 지연, 채널 스윕(1~16) |
-| [NPU_pe_poolhead_nogain_hybrid.md](performance/NPU_pe_poolhead_nogain_hybrid.md) | [hybrid·before] CPU pool head 배치/스레드 최적화가 무효한 이유 (짝 없음, full에서 소멸) |
+| [NPU_pe_hybrid_vs_full.md](performance/pe/NPU_pe_hybrid_vs_full.md) | ★ **[비교]** full NPU vs hybrid — CPU attn_pool 병목 제거 실측 (QKᵀ 16bit) |
+| [NPU_pe_pipeline_e2e_full.md](performance/pe/NPU_pe_pipeline_e2e_full.md) | ★ [full·after] 코어모드 4종 × 채널 스윕 단계별 e2e (Pool 단계 제거) |
+| [NPU_pe_multicard_62ch_full.md](performance/pe/NPU_pe_multicard_62ch_full.md) | ★ [full·after] 멀티카드 1→62ch 배치 지연 (hybrid와 동일 구조, attn_pool도 NPU) |
+| [NPU_pe_throughput_modes_full.md](performance/pe/NPU_pe_throughput_modes_full.md) | ★ [full·after] 다채널 처리량·모드선택 (올바른 1모델+멀티스레드 sync 패턴, 출력검증) |
+| [NPU_pe_1card_coremode_full.md](performance/pe/NPU_pe_1card_coremode_full.md) | ★ [full·after] NPU 1장 코어모드 4종 × 1~16채널 순수추론 증가폭 (슬롯 거동) |
+| [NPU_pe_pipeline_e2e_hybrid.md](performance/pe/NPU_pe_pipeline_e2e_hybrid.md) | [hybrid·before] 코어모드 3종 × 단계별 × 채널(최대 56) — NPU 병목 어디서 커지는지 |
+| [NPU_pe_multicard_62ch_hybrid.md](performance/pe/NPU_pe_multicard_62ch_hybrid.md) | [hybrid·before] 멀티카드(7×ARIES=56코어) 1→62채널 분산 추론 지연 (full의 짝) |
+| [NPU_pe_stage_latency_hybrid.md](performance/pe/NPU_pe_stage_latency_hybrid.md) | [hybrid·before] _detect 단계별(전처리/NPU/pool/event) + e2e 지연, 채널 스윕(1~16) |
+| [NPU_pe_poolhead_nogain_hybrid.md](performance/pe/NPU_pe_poolhead_nogain_hybrid.md) | [hybrid·before] CPU pool head 배치/스레드 최적화가 무효한 이유 (짝 없음, full에서 소멸) |
 
 ### 전처리 최적화 (① 시도 → ② 실험 → ③ 채택)
 고채널 병목인 CPU 전처리를 줄이는 과정. 번호가 읽는 순서, ③이 최종 채택안.
 | 문서 | 내용 |
 |------|------|
-| [NPU_preprocess_1_parallel.md](performance/NPU_preprocess_1_parallel.md) | [전처리 ①] 병렬화(스레드/멀티프로세스) — 1차 시도 |
-| [NPU_preprocess_2_uint8_offload.md](performance/NPU_preprocess_2_uint8_offload.md) | [전처리 ②] NPU 오프로드(uint8) 실험: normalize는 폴딩되나 resize 불가라 이득 없음 |
-| [NPU_preprocess_3_cv2_decision.md](performance/NPU_preprocess_3_cv2_decision.md) | [전처리 ③ 채택] 의사결정(e2e): 비용 원천=resize, torchvision→cv2(56ch −25%·CPU↓, 정확도 0.99→0.97 opt-in) |
-| [NPU_preprocess_4_roi_crop.md](performance/NPU_preprocess_4_roi_crop.md) | ★ [전처리 ④] **CPU 전처리 병목 제거** — ROI 크롭 torch→cv2(62ch 2602→4.6ms) + resize/normalize 분리(176→40ms) + NHWC 직행(왕복 −72ms). e2e 8카드 62ch 3422→569ms, 수용 18→62ch+. 양자화/튜닝 모델 선택 env 추가 |
+| [NPU_preprocess_1_parallel.md](performance/pe/NPU_preprocess_1_parallel.md) | [전처리 ①] 병렬화(스레드/멀티프로세스) — 1차 시도 |
+| [NPU_preprocess_2_uint8_offload.md](performance/pe/NPU_preprocess_2_uint8_offload.md) | [전처리 ②] NPU 오프로드(uint8) 실험: normalize는 폴딩되나 resize 불가라 이득 없음 |
+| [NPU_preprocess_3_cv2_decision.md](performance/pe/NPU_preprocess_3_cv2_decision.md) | [전처리 ③ 채택] 의사결정(e2e): 비용 원천=resize, torchvision→cv2(56ch −25%·CPU↓, 정확도 0.99→0.97 opt-in) |
+| [NPU_preprocess_4_roi_crop.md](performance/pe/NPU_preprocess_4_roi_crop.md) | ★ [전처리 ④] **CPU 전처리 병목 제거** — ROI 크롭 torch→cv2(62ch 2602→4.6ms) + resize/normalize 분리(176→40ms) + NHWC 직행(왕복 −72ms). e2e 8카드 62ch 3422→569ms, 수용 18→62ch+. 양자화/튜닝 모델 선택 env 추가 |
 
 ### npu_intrusion 침입 서비스 e2e (before → 최적화 → after)
 YOLO11 침입감지 서비스 모듈 e2e를 측정→진단→재측정한 스토리.
 | 문서 | 내용 |
 |------|------|
-| [NPU_npu_intrusion_e2e_before.md](performance/NPU_npu_intrusion_e2e_before.md) | ★ [e2e·before] 실제 _detect 5단계(ROIcrop→전처리→추론→NMS→교집합+알람) 채널 스윕×카드 1→7 — NPU 아닌 CPU가 병목, ROI crop 마스킹이 최대비용 |
-| [NPU_npu_intrusion_e2e_opt.md](performance/NPU_npu_intrusion_e2e_opt.md) | ★ [e2e·최적화] 문제(마스킹/오버서브/argmax)→해결(rect슬라이스+스레드 / 풀분리 / person-only fast-path). e2e 424→121ms(3.5×), 알람 16/16 동일 |
-| [NPU_npu_intrusion_e2e_after.md](performance/NPU_npu_intrusion_e2e_after.md) | ★ [e2e·after] 최적화 후 동일 재측정 — 단계별 before/after, 카드 스케일링 회복(56ch 384→113ms), 처리량 151→531 img/s |
+| [NPU_npu_intrusion_e2e_before.md](performance/intrusion/NPU_npu_intrusion_e2e_before.md) | ★ [e2e·before] 실제 _detect 5단계(ROIcrop→전처리→추론→NMS→교집합+알람) 채널 스윕×카드 1→7 — NPU 아닌 CPU가 병목, ROI crop 마스킹이 최대비용 |
+| [NPU_npu_intrusion_e2e_opt.md](performance/intrusion/NPU_npu_intrusion_e2e_opt.md) | ★ [e2e·최적화] 문제(마스킹/오버서브/argmax)→해결(rect슬라이스+스레드 / 풀분리 / person-only fast-path). e2e 424→121ms(3.5×), 알람 16/16 동일 |
+| [NPU_npu_intrusion_e2e_after.md](performance/intrusion/NPU_npu_intrusion_e2e_after.md) | ★ [e2e·after] 최적화 후 동일 재측정 — 단계별 before/after, 카드 스케일링 회복(56ch 384→113ms), 처리량 151→531 img/s |
 
 ### 모델별 (YOLO11 · Qwen3-VL)
 | 문서 | 내용 |
 |------|------|
-| [NPU_yolo11_coremode_batch.md](performance/NPU_yolo11_coremode_batch.md) | ★ [YOLO11] 4사이즈(n/s/m/l)×4모드 컴파일(패치0)·코어모드×배치 1→64·카드수(1~7)×배치 스케일링·mAP(INT8 vs fp32) |
-| [NPU_qwen3vl_multicard_batch.md](performance/NPU_qwen3vl_multicard_batch.md) | [Qwen3-VL] 멀티카드×배치(동시요청) VQA 1토큰 지연 (dev_no 카드지정, VLMPool) |
+| [NPU_yolo11_coremode_batch.md](performance/yolo/NPU_yolo11_coremode_batch.md) | ★ [YOLO11] 4사이즈(n/s/m/l)×4모드 컴파일(패치0)·코어모드×배치 1→64·카드수(1~7)×배치 스케일링·mAP(INT8 vs fp32) |
+| [NPU_qwen3vl_multicard_batch.md](performance/qwen3vl/NPU_qwen3vl_multicard_batch.md) | [Qwen3-VL] 멀티카드×배치(동시요청) VQA 1토큰 지연 (dev_no 카드지정, VLMPool) |
 
 ### 공통·기타 (스토리 무관)
 | 문서 | 내용 |
 |------|------|
-| [NPU_batch_latency.md](performance/NPU_batch_latency.md) | 단일 NPU 배치 지연/처리량, 코어 모드, bit4 양자화 한계 (실측) |
-| [NPU_coremode_benchmark.md](performance/NPU_coremode_benchmark.md) | 코어모드 4종(Single/Multi/Global4/Global8) × 다채널 지연·메모리 (현재 서버 실측) |
-| [compile_benchmark.md](performance/compile_benchmark.md) | 컴파일 시간 GPU vs CPU |
+| [NPU_batch_latency.md](performance/common/NPU_batch_latency.md) | 단일 NPU 배치 지연/처리량, 코어 모드, bit4 양자화 한계 (실측) |
+| [NPU_coremode_benchmark.md](performance/common/NPU_coremode_benchmark.md) | 코어모드 4종(Single/Multi/Global4/Global8) × 다채널 지연·메모리 (현재 서버 실측) |
+| [compile_benchmark.md](performance/common/compile_benchmark.md) | 컴파일 시간 GPU vs CPU |
 
 ## 🔢 quantization/ — 양자화
 | 문서 | 내용 |
@@ -71,19 +98,19 @@ YOLO11 침입감지 서비스 모듈 e2e를 측정→진단→재측정한 스�
 |------|------|
 | [test_results.md](testing/test_results.md) | 컴파일/추론 테스트 결과 종합 |
 | [sdk_v11_compat.md](testing/sdk_v11_compat.md) | ★ SDK 1.1v 호환성 — 기존 HF mxq는 런타임 1.4.0에서 재컴파일 불필요(cos 0.993/15.4 img/s), 컴파일은 cpu 이미지로 충분 |
-| [NPU_pe_quant_schemes.md](performance/NPU_pe_quant_schemes.md) | ★ 양자화 스킴 비교 W8A16/W4A16/W4A8 × 코어모드 4종 × 1~20채널 지연 + cos. W4A16 동작 확인(크기 −42%, 처리량 +13%), W4A8은 붕괴 |
+| [NPU_pe_quant_schemes.md](performance/pe/NPU_pe_quant_schemes.md) | ★ 양자화 스킴 비교 W8A16/W4A16/W4A8 × 코어모드 4종 × 1~20채널 지연 + cos. W4A16 동작 확인(크기 −42%, 처리량 +13%), W4A8은 붕괴 |
 | [NPU_qwen3vl_mblt_export.md](NPU_qwen3vl_mblt_export.md) | ★★ [Qwen3-VL] **체크포인트 → MBLT export 규명** — 벤더 문서에 없는 `mblt_compile()` 호출법 6가지 함정, 스톡으로 벤더와 크기 동일 재현(+0.00%), `split_legacy_deepstack` 불필요 판명. 신규 학습본 컴파일의 전제 |
 | [RUNBOOK_qwen3vl_bs32_compile.md](RUNBOOK_qwen3vl_bs32_compile.md) | ★ [Qwen3-VL] GPU 서버에서 batch32 MXQ **재컴파일 절차서** — 벤더 패키지 반입(9.8GB, gitignore)·CUDA 12.8 필수·바이트 동일 미보장·**파인튜닝 시 mxq만 갈아끼우면 안 되는 이유** |
-| [NPU_qwen3vl_bs32_server.md](performance/NPU_qwen3vl_bs32_server.md) | ★ [Qwen3-VL] 벤더 배치32 빌드로 만든 검증서버(`validation_server_bs32`) — **20채널 2장 739.6ms**(batch1 2997.6ms 대비 4.1배) — 단 **운영 프롬프트(182토큰)면 3장 필요**(지연을 지배하는 건 프롬프트 길이). 적응형 수집창·프롬프트별 묶음·`inflight` 카드선택 |
-| [NPU_qwen3vl_vendor_vs_legacy.md](performance/NPU_qwen3vl_vendor_vs_legacy.md) | ★ 벤더 최적화 빌드 vs 기존 HF 빌드 동일조건 비교 — 20채널 224×224 **1107.8ms vs 8126.4ms(7.3배)**, 기존 mxq는 벤더 코드로 실행 불가(pos_embed 분리), **HF 모델 09-23 갱신(W4V8/컴파일러1.3.0, 입력5개라 model-zoo 2.4.2 거부)** |
-| [NPU_qwen3vl_ttft_resolution_concurrency.md](performance/NPU_qwen3vl_ttft_resolution_concurrency.md) | ★ Qwen3-VL 실측 — **해상도는 TTFT 무관**(vision mxq 1024토큰 고정), 카드당 2~4스레드로 **1.4~1.65배**, 배치는 text mxq가 legacy 2입력이라 불가(Batch16 대기) |
+| [NPU_qwen3vl_bs32_server.md](performance/qwen3vl/NPU_qwen3vl_bs32_server.md) | ★ [Qwen3-VL] 벤더 배치32 빌드로 만든 검증서버(`validation_server_bs32`) — **20채널 2장 739.6ms**(batch1 2997.6ms 대비 4.1배) — 단 **운영 프롬프트(182토큰)면 3장 필요**(지연을 지배하는 건 프롬프트 길이). 적응형 수집창·프롬프트별 묶음·`inflight` 카드선택 |
+| [NPU_qwen3vl_vendor_vs_legacy.md](performance/qwen3vl/NPU_qwen3vl_vendor_vs_legacy.md) | ★ 벤더 최적화 빌드 vs 기존 HF 빌드 동일조건 비교 — 20채널 224×224 **1107.8ms vs 8126.4ms(7.3배)**, 기존 mxq는 벤더 코드로 실행 불가(pos_embed 분리), **HF 모델 09-23 갱신(W4V8/컴파일러1.3.0, 입력5개라 model-zoo 2.4.2 거부)** |
+| [NPU_qwen3vl_ttft_resolution_concurrency.md](performance/qwen3vl/NPU_qwen3vl_ttft_resolution_concurrency.md) | ★ Qwen3-VL 실측 — **해상도는 TTFT 무관**(vision mxq 1024토큰 고정), 카드당 2~4스레드로 **1.4~1.65배**, 배치는 text mxq가 legacy 2입력이라 불가(Batch16 대기) |
 | [vendor/mobilint_update_vlm_batch_coremode.md](vendor/mobilint_update_vlm_batch_coremode.md) | ★ Qwen3-VL 벤더회신 확인 — 배치컴파일은 1.2.0에 없음(차기 예정), **코어모드는 mxq에 4종 다 있고 런타임 변경 가능**(우리 문서 정정), 카드 분할 동시성 가능성 |
-| [NPU_pe_mxq_sdk_version_matrix.md](performance/NPU_pe_mxq_sdk_version_matrix.md) | ★ **SDK/컴파일러 버전별 대조표** — 어떤 SDK·컴파일러·타겟으로 만든 mxq인지 명시하고 1.0v(1.1.2/aries2) vs 1.1v(1.2.0/aries-rb) 정확도·채널 지연(1/8/12/20ch)을 나란히 |
-| [NPU_pe_quant_tuning_matrix_120.md](performance/NPU_pe_quant_tuning_matrix_120.md) | ★★ 1.2.0 매트릭스 **24종 전수 NPU 검증** — 튜닝 3/3 양자화에서 정확도 상승, 코어모드는 정확도 무관·지연만 상이, 배포 후보 비교(W8A16+튜닝=공짜 교체) |
-| [NPU_pe_quant_tuning_compiler_version.md](performance/NPU_pe_quant_tuning_compiler_version.md) | ★★ **튜닝 열화는 qbcompiler 1.1.2 버그였다** — 1.2.0에서 부호 반전(W4A16 0.8795→0.9642, W8A16 0.9747→0.9951), 베이스라인은 동일, 벤더 수치 재현 |
+| [NPU_pe_mxq_sdk_version_matrix.md](performance/pe/NPU_pe_mxq_sdk_version_matrix.md) | ★ **SDK/컴파일러 버전별 대조표** — 어떤 SDK·컴파일러·타겟으로 만든 mxq인지 명시하고 1.0v(1.1.2/aries2) vs 1.1v(1.2.0/aries-rb) 정확도·채널 지연(1/8/12/20ch)을 나란히 |
+| [NPU_pe_quant_tuning_matrix_120.md](performance/pe/NPU_pe_quant_tuning_matrix_120.md) | ★★ 1.2.0 매트릭스 **24종 전수 NPU 검증** — 튜닝 3/3 양자화에서 정확도 상승, 코어모드는 정확도 무관·지연만 상이, 배포 후보 비교(W8A16+튜닝=공짜 교체) |
+| [NPU_pe_quant_tuning_compiler_version.md](performance/pe/NPU_pe_quant_tuning_compiler_version.md) | ★★ **튜닝 열화는 qbcompiler 1.1.2 버그였다** — 1.2.0에서 부호 반전(W4A16 0.8795→0.9642, W8A16 0.9747→0.9951), 베이스라인은 동일, 벤더 수치 재현 |
 | [RUNBOOK_quant_matrix_120.md](RUNBOOK_quant_matrix_120.md) | ★ **GPU 서버 재현 절차서** — 1.2.0 매트릭스 24조합(양자화3×튜닝2×코어모드4) 컴파일→검증, 회귀 기준값·체크리스트·알려진 함정 |
-| [NPU_pe_quant_tuning_verify.md](performance/NPU_pe_quant_tuning_verify.md) | [1.1.2 한정] 양자화×튜닝 24종 NPU 검증 — 튜닝 9/9 악화(원인=컴파일러 버전, 위 문서에서 정정), W4A8_L5A16 cos 0.8790 |
-| [NPU_pe_quant_tuning_compile.md](performance/NPU_pe_quant_tuning_compile.md) | [컴파일] 양자화 3종 × 튜닝 4종(SWS/OPTQ 온오프) × single·global4 = 24종 GPU 컴파일 스윕 — GPU면 조합당 5~8분, 전량 HF `<quant>/<tuning>/<scheme>/` 업로드(TUNING_MATRIX.md), cos는 NPU 검증 대기 |
+| [NPU_pe_quant_tuning_verify.md](performance/pe/NPU_pe_quant_tuning_verify.md) | [1.1.2 한정] 양자화×튜닝 24종 NPU 검증 — 튜닝 9/9 악화(원인=컴파일러 버전, 위 문서에서 정정), W4A8_L5A16 cos 0.8790 |
+| [NPU_pe_quant_tuning_compile.md](performance/pe/NPU_pe_quant_tuning_compile.md) | [컴파일] 양자화 3종 × 튜닝 4종(SWS/OPTQ 온오프) × single·global4 = 24종 GPU 컴파일 스윕 — GPU면 조합당 5~8분, 전량 HF `<quant>/<tuning>/<scheme>/` 업로드(TUNING_MATRIX.md), cos는 NPU 검증 대기 |
 
 ## 📮 inquiries/ — Mobilint 문의 스레드 (번호 = 문의 순서, 클수록 최신)
 전체 인덱스: [inquiries/README.md](inquiries/README.md)

@@ -1,0 +1,14 @@
+Is there an UNCONTROLLED or HAZARDOUS fire in this image? Answer "yes" only when visible flames or glowing burning embers actually appear in the image.
+
+Answer "yes" only for dangerous or unintended fire, for example:
+- a building, vehicle, or structure on fire
+- burning trash, debris, or vegetation that is spreading or unattended
+- flames escaping their intended container
+
+Answer "no" for controlled flames that are intended and contained, for example:
+- a cooking fire: charcoal grill, brazier, stove, barbecue, or food cart burner
+- a candle, torch, lantern, or gas burner in normal use
+- lights, headlights, sunlight, reflections, or fire-fighting equipment
+- smoke or haze without any visible flame
+
+Answer with exactly one word, "yes" or "no". Do not explain. Do not describe the images.

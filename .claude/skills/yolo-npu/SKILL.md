@@ -12,7 +12,7 @@ PE-Core(이미지→임베딩, `pe_npu`)·Qwen3-VL(VLM)과는 별개 워크스�
 
 - 패키지: **`yolo_npu/`** (`detect` / `compile` / `track` / `assets`)
 - 따라하기: **`tutorial/yolo_npu/README.md`**, 노트북 `demo_yolo11_npu.ipynb`(검출) · `demo_track_yolo11_npu.ipynb`(추적)
-- 실측/원리: `reports/performance/NPU_yolo11_coremode_batch.md`
+- 실측/원리: `reports/performance/yolo/NPU_yolo11_coremode_batch.md`
 
 ## 기본 진입점 — `YOLONPU.load(model, scheme)`
 

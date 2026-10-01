@@ -13,7 +13,7 @@
 > 채널·카드별로 잰다. 최적화 → [`NPU_npu_intrusion_e2e_opt.md`](NPU_npu_intrusion_e2e_opt.md),
 > 최적화 후 재측정 → [`NPU_npu_intrusion_e2e_after.md`](NPU_npu_intrusion_e2e_after.md). **before→opt→after 모두 이 기준.**
 >
-> **⚠️ 층위 구분(비교 베이스 아님)**: [`NPU_yolo11_coremode_batch.md`](NPU_yolo11_coremode_batch.md)는
+> **⚠️ 층위 구분(비교 베이스 아님)**: [`NPU_yolo11_coremode_batch.md`](../yolo/NPU_yolo11_coremode_batch.md)는
 > **AX_NPU `yolo_npu` 패키지(라이브러리)** 의 순수 NPU 추론 배치(전/후처리 제외)라 **다른 레이어**다.
 > 이 문서는 그 라이브러리를 vendor해 올린 **Product 서비스 모듈의 e2e**로, 직접 비교 대상이 아니다.
 > (핵심 발견: 이 서비스 e2e에선 **NPU 추론이 병목이 아니라 CPU(ROIcrop/전처리/NMS)가 ~94%**.)

@@ -13,7 +13,7 @@ GPU 서버에서 1.2.0으로 컴파일한 24조합을 NPU 서버에서 정확도
 | 정확도 | 원본 PyTorch 대비 cos, **`download/coco/val2017` 앞 20장**(표준 경로 — 어느 서버든 동일) |
 | 축 | 양자화 3 × 튜닝 2(none/sws_optq) × 코어모드 4 = 24 |
 | 원자료 | [`../assets/verify_matrix_120.json`](../assets/verify_matrix_120.json) |
-| 재현 | [`../RUNBOOK_quant_matrix_120.md`](../RUNBOOK_quant_matrix_120.md) |
+| 재현 | [`../RUNBOOK_quant_matrix_120.md`](../../RUNBOOK_quant_matrix_120.md) |
 
 ## 1. 결론
 

@@ -58,7 +58,7 @@ python -m pe_npu.compile --mode compile --save pe_npu/out/pe_full.mxq \
 conda activate pe_npu_host
 python reports/scripts/bench_full_vs_hybrid.py pe_npu/out/pe_full.mxq
 ```
-- 관련: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md)(원인·해결),
+- 관련: [`../vendor/mobilint_resolution_attn_pool.md`](../../vendor/mobilint_resolution_attn_pool.md)(원인·해결),
   [`NPU_pe_pipeline_e2e_hybrid.md`](NPU_pe_pipeline_e2e_hybrid.md)(hybrid 시절 CPU 병목 분석)
 
 *작성 2026-06. full MXQ = QKᵀ 16bit override, 원본 대비 cos 0.99 (COCO holdout 0.9905 / 도메인 0.9889). 7×ARIES2 실측 (COCO 자산).*

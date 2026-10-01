@@ -9,7 +9,7 @@
 
 > **내부 메모**
 > - 첨부 수치는 2026-09-07~08 자체 실측. **1·2카드 모두 실측값이며 추정치가 아니다.**
->   리포트 [`../../performance/NPU_qwen3vl_ttft_resolution_concurrency.md`](../../performance/NPU_qwen3vl_ttft_resolution_concurrency.md),
+>   리포트 [`../../performance/NPU_qwen3vl_ttft_resolution_concurrency.md`](../../performance/qwen3vl/NPU_qwen3vl_ttft_resolution_concurrency.md),
 >   원자료 [`../../assets/qwen3vl_channels_cards.json`](../../assets/qwen3vl_channels_cards.json).
 > - **Batch16(3입력) 빌드가 벤더 튜토리얼에 없음을 확인했다.** 튜토리얼 language 컴파일은
 >   RoPE 를 사전 계산해 굽는 방식("Pre-cached RoPE embeddings")이라 구조적으로 2입력만 나온다.

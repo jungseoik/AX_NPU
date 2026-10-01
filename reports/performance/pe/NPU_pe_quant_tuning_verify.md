@@ -93,6 +93,6 @@ NPU 보유 서버에서 정확도·지연으로 채점한 결과.
 
 - 컴파일 스윕(GPU, 24종 생성): [`NPU_pe_quant_tuning_compile.md`](NPU_pe_quant_tuning_compile.md)
 - 양자화 스킴 기본 비교(4모드 × 1~20채널): [`NPU_pe_quant_schemes.md`](NPU_pe_quant_schemes.md)
-- 벤더 회신·후속 문의: [`../inquiries/04_vit_quantization_speed/REPLY.md`](../inquiries/04_vit_quantization_speed/REPLY.md),
-  [`../inquiries/05_a16_selection_followup/EMAIL.md`](../inquiries/05_a16_selection_followup/EMAIL.md)
+- 벤더 회신·후속 문의: [`../inquiries/04_vit_quantization_speed/REPLY.md`](../../inquiries/04_vit_quantization_speed/REPLY.md),
+  [`../inquiries/05_a16_selection_followup/EMAIL.md`](../../inquiries/05_a16_selection_followup/EMAIL.md)
 - 원자료: `reports/assets/pe_quant_tuning_verify.json`

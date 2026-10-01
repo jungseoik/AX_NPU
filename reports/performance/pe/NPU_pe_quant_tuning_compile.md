@@ -72,5 +72,5 @@ python -c "from huggingface_hub import hf_hub_download; \
 ```
 
 관련: [`NPU_pe_quant_schemes.md`](NPU_pe_quant_schemes.md)(무보정 3스킴 NPU 실측),
-[`../inquiries/04_vit_quantization_speed/REPLY.md`](../inquiries/04_vit_quantization_speed/REPLY.md)(벤더 예제),
-[`../inquiries/05_a16_selection_followup/EMAIL.md`](../inquiries/05_a16_selection_followup/EMAIL.md)(SWS 단독 악화 문의)
+[`../inquiries/04_vit_quantization_speed/REPLY.md`](../../inquiries/04_vit_quantization_speed/REPLY.md)(벤더 예제),
+[`../inquiries/05_a16_selection_followup/EMAIL.md`](../../inquiries/05_a16_selection_followup/EMAIL.md)(SWS 단독 악화 문의)

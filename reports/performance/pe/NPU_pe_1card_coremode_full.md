@@ -64,6 +64,6 @@ conda activate pe_npu_host
 python ../scripts/bench_1card_modes.py 1      # device 1장, 4모드 × 1~16채널 순수추론
 ```
 - MXQ = HF `PIA-SPACE-LAB/MXQ_NPU` `<mode>/pe_full.mxq` 자동 다운로드. 원자료: `bench_1card_modes.json`.
-- 관련: [`NPU_coremode_benchmark.md`](NPU_coremode_benchmark.md)(다채널·메모리), [`NPU_pe_pipeline_e2e_full.md`](NPU_pe_pipeline_e2e_full.md)(7장 단계별)
+- 관련: [`NPU_coremode_benchmark.md`](../common/NPU_coremode_benchmark.md)(다채널·메모리), [`NPU_pe_pipeline_e2e_full.md`](NPU_pe_pipeline_e2e_full.md)(7장 단계별)
 
 *작성 2026-06. full NPU(QKᵀ16bit) 1장(aries1) 실측, median of 5.*

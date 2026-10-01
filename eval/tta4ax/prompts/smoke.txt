@@ -1,0 +1,15 @@
+Answer "yes" if there is any real smoke present, INCLUDING:
+- vehicle smoke or exhaust — including black/dark exhaust (e.g. diesel) as well as white or gray exhaust
+- cigarette or vape smoke
+- a smoke plume from burning or fire (white, gray, or black) rising, drifting, or spreading from a source
+
+Answer "no" if there is NO real smoke — for example the image only shows:
+- smoke from a cooking grill, brazier, barbecue, or food cart
+- a bright halo centred on a lamp, signboard light, or light fixture itself, where the glow surrounds the light source rather than rising from the ground or from a vehicle
+- clouds in the sky
+- fog, mist, sea fog, haze, or steam
+- screen blur or haze caused by water droplets, condensation, rain, or a dirty/wet lens
+- generally low-contrast, washed-out, or foggy frames; glare; or overexposure
+- headlight or taillight beams or their reflections on wet roads (these are light, not smoke)
+
+Answer with exactly one word, "yes" or "no". Do not explain. Do not describe the images.

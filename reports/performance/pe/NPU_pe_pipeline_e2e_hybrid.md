@@ -3,7 +3,7 @@
 > **[UPDATE 2026-06]** 이 문서는 **hybrid 시절**(NPU trunk + **CPU attn_pool**, cos 0.997)의 벤치마크다.
 > 여기서 분석한 `Pool(CPU attn_pool)` 병목은 이후 **QKᵀ 16bit → full NPU**(attn_pool도 NPU, cos 0.99)로
 > **제거**되었다. 현재 구성의 동일 측정: [`NPU_pe_pipeline_e2e_full.md`](NPU_pe_pipeline_e2e_full.md).
-> 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md).
+> 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../../vendor/mobilint_resolution_attn_pool.md).
 
 `service._detect` 파이프라인을 단계별로 쪼개, **3개 코어모드 MXQ**로 **채널 1~56(=7카드×8코어 최대배치)**
 까지 e2e·단계별 지연을 실측. NPU 추론 병목이 어디서·언제 커지는지 종합. 현재 7×ARIES(GPU 없음, CPU+NPU).
@@ -96,4 +96,4 @@ conda activate pe_npu_host
 python ../scripts/profile_stages.py --mxq <mode>.mxq --label <mode>   # 모드별 단계 P/T/Pool/E + e2e
 ```
 - 원자료: `../assets/npu_pe_pipeline_e2e_hybrid.csv` · 차트: `../assets/npu_pe_pipeline_e2e_hybrid.png` · 스크립트: `../scripts/profile_stages.py`
-- 관련: [`NPU_coremode_benchmark.md`](NPU_coremode_benchmark.md)(모드 latency·메모리), [`NPU_pe_stage_latency_hybrid.md`](NPU_pe_stage_latency_hybrid.md)(single 단계), [`NPU_preprocess_1_parallel.md`](NPU_preprocess_1_parallel.md)
+- 관련: [`NPU_coremode_benchmark.md`](../common/NPU_coremode_benchmark.md)(모드 latency·메모리), [`NPU_pe_stage_latency_hybrid.md`](NPU_pe_stage_latency_hybrid.md)(single 단계), [`NPU_preprocess_1_parallel.md`](NPU_preprocess_1_parallel.md)

@@ -83,7 +83,7 @@ ROI 조회/등록(`get_roi_info`, 캐시 변경)은 순차로 두고 crop만 스
 → 64ch 전처리 **153 → 45 ms.**
 
 > pe_npu는 이걸 `PE_NPU_SLOTS_PER_CARD`(infer 슬롯, 코어모드 자동) + `PE_NPU_PREPROCESS_WORKERS`(전처리
-> 별도 풀)로 이미 구현해 뒀는데([`NPU_preprocess_1_parallel.md`](NPU_preprocess_1_parallel.md)),
+> 별도 풀)로 이미 구현해 뒀는데([`NPU_preprocess_1_parallel.md`](../pe/NPU_preprocess_1_parallel.md)),
 > npu_intrusion은 단순한 `yolo_npu` 경로를 vendor 해서 이 구조가 없었다. 그걸 이식한 것.
 
 ### ③ 후처리 — 80-class argmax → 단일클래스 fast-path

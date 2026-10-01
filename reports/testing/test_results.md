@@ -5,7 +5,7 @@
 > 멀티카드/전처리/실서비스까지 완료. **그리고 그 hybrid(CPU attn_pool)도 이후 superseded** — attn_pool의
 > QKᵀ matmul을 16bit로 올려 **full NPU**(image→embedding 전부 NPU, cos 0.99)가 현재 기본이다.
 > 최신: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md),
-> [`../performance/NPU_pe_pipeline_e2e_full.md`](../performance/NPU_pe_pipeline_e2e_full.md). 아래 §4·§6은 당시 기록(historical).
+> [`../performance/NPU_pe_pipeline_e2e_full.md`](../performance/pe/NPU_pe_pipeline_e2e_full.md). 아래 §4·§6은 당시 기록(historical).
 
 - 대상 모델: **PE-Core-L14-336** vision encoder (Meta Perception Encoder, CLIP 계열 ViT-L/14)
 - 목표: Product-AI-mono `perception_encoder`의 비전 인코더(현 TensorRT)를 NPU로 대체

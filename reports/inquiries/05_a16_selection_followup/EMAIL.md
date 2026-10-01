@@ -15,7 +15,7 @@
 > **내부 메모 ②**: v1 초안([`EMAIL_v1_보류.md`](EMAIL_v1_보류.md))은 "재현이 안 된다 / 다른 모델로
 > 측정하신 것 아니냐"는 질의였으나, **원인이 우리 쪽 컴파일러 버전(1.1.2)으로 밝혀져 폐기**했다.
 > qbcompiler 1.2.0 으로 재컴파일하니 벤더 수치가 재현된다.
-> → [`../../performance/NPU_pe_quant_tuning_compiler_version.md`](../../performance/NPU_pe_quant_tuning_compiler_version.md)
+> → [`../../performance/NPU_pe_quant_tuning_compiler_version.md`](../../performance/pe/NPU_pe_quant_tuning_compiler_version.md)
 
 ---
 

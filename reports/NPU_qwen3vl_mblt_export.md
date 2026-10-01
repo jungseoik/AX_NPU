@@ -6,7 +6,7 @@ qbcompiler 내부를 읽어 규명하고, **스톡 통제군과 실제 학습본
 
 - 구현: `qwen3vl_recompile/` (export / 캘리브 / 컴파일 / NPU A/B)
 - 환경: GPU 서버 6000-pro (RTX PRO 6000 Blackwell SE ×2) / `mblt_vlm_repro:compile`
-- 관련: `reports/RUNBOOK_qwen3vl_bs32_compile.md`, `reports/performance/NPU_qwen3vl_bs32_server.md`
+- 관련: `reports/RUNBOOK_qwen3vl_bs32_compile.md`, `reports/performance/qwen3vl/NPU_qwen3vl_bs32_server.md`
 
 ---
 

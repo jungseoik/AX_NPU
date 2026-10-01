@@ -83,7 +83,7 @@ ROI는 UI에서 안 그려도 `polygonCoordinates` 필드 자체는 항상 들�
 - **직사각형**(UI가 미지정 시 프레임 네 모서리를 보내는 경우, 또는 사용자가 사각형으로 그린 경우):
   폴리곤 마스크가 bbox를 다 덮어 **지워지는 픽셀이 0개**인데도 `fillPoly` + 마스크 검사를 돈다.
   같은 no-op 마스킹을 `npu_intrusion`에서 이미 제거한 적이 있다
-  ([`NPU_npu_intrusion_e2e_opt.md`](NPU_npu_intrusion_e2e_opt.md) §①).
+  ([`NPU_npu_intrusion_e2e_opt.md`](../intrusion/NPU_npu_intrusion_e2e_opt.md) §①).
 
 ### 4.4 전처리가 이미지 1장씩 torch를 호출한다
 
@@ -96,7 +96,7 @@ ROI는 UI에서 안 그려도 `polygonCoordinates` 필드 자체는 항상 들�
 - 전처리 ③의 벤치 표에는 **ROI 컬럼이 없다**. BGR→RGB / resize / NPU / 유사도만 측정했다.
 - 단계 단독 벤치는 numpy 프레임을 전처리에 직접 넣어 cv2 경로를 탔다. 실경로는 그 앞에 ROI가 붙는다.
 - 같은 함정을 `npu_intrusion`에서는 이미 밟고 고쳤다
-  ([`NPU_npu_intrusion_e2e_opt.md`](NPU_npu_intrusion_e2e_opt.md) §① ROIcrop 210→17 ms). pe_npu에는 반영되지 않았다.
+  ([`NPU_npu_intrusion_e2e_opt.md`](../intrusion/NPU_npu_intrusion_e2e_opt.md) §① ROIcrop 210→17 ms). pe_npu에는 반영되지 않았다.
 - 이 코드는 pe_npu 최초 커밋(`dfe658ad`)부터 torch 변환이었다. **깨진 게 아니라 처음부터 적용된 적이 없다.**
 
 ## 5. 변경 내역
@@ -353,7 +353,7 @@ python $S/bench_pe_transpose_cost.py    # §8.2 CHW→HWC 왕복 비용
 
 - [`NPU_preprocess_3_cv2_decision.md`](NPU_preprocess_3_cv2_decision.md) — cv2 resize 채택(이 문서에서 "실경로 미적용"으로 정정)
 - [`NPU_preprocess_1_parallel.md`](NPU_preprocess_1_parallel.md) — 전처리 스레드/프로세스 병렬화 1차 시도
-- [`NPU_npu_intrusion_e2e_opt.md`](NPU_npu_intrusion_e2e_opt.md) — 같은 ROI 크롭 병목을 침입 모듈에서 먼저 제거한 사례(210→17 ms)
+- [`NPU_npu_intrusion_e2e_opt.md`](../intrusion/NPU_npu_intrusion_e2e_opt.md) — 같은 ROI 크롭 병목을 침입 모듈에서 먼저 제거한 사례(210→17 ms)
 - [`NPU_pe_multicard_62ch_full.md`](NPU_pe_multicard_62ch_full.md) — NPU 추론 단계의 카드 스케일링
 
 ---

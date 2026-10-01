@@ -4,7 +4,7 @@
 > 여기서 "고채널 병목 = CPU단(전처리+pool)"이라 한 그 **Pool(CPU attn_pool) 단계는 이후
 > QKᵀ 16bit → full NPU**로 **제거**됐다(attn_pool도 NPU). full NPU 동일 측정(같은 채널 스윕):
 > [`NPU_pe_pipeline_e2e_full.md`](NPU_pe_pipeline_e2e_full.md)(4모드) · 직접 비포/애프터 한 표:
-> [`NPU_pe_hybrid_vs_full.md`](NPU_pe_hybrid_vs_full.md). 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md).
+> [`NPU_pe_hybrid_vs_full.md`](NPU_pe_hybrid_vs_full.md). 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../../vendor/mobilint_resolution_attn_pool.md).
 
 이미지 리스트(N채널)가 동시에 들어올 때 `service._detect` 파이프라인을 단계별로 쪼개
 각 단계 지연과 end-to-end(e2e)를 실측. (당시 hybrid 구성, 7×ARIES 서버 GPU 없음, CPU+NPU.)
@@ -72,4 +72,4 @@ conda activate pe_npu_host
 python ../scripts/profile_stages.py     # 단계별 P/T/Pool/E + e2e, 채널 스윕
 ```
 - 원자료: `../assets/npu_pe_stage_latency_hybrid.csv` · 차트: `../assets/npu_pe_stage_latency_hybrid.png` · 스크립트: `../scripts/profile_stages.py`
-- 관련: [`NPU_coremode_benchmark.md`](NPU_coremode_benchmark.md)(코어모드 latency), [`NPU_pe_multicard_62ch_hybrid.md`](NPU_pe_multicard_62ch_hybrid.md)(멀티카드), [`NPU_preprocess_1_parallel.md`](NPU_preprocess_1_parallel.md)(전처리 병렬)
+- 관련: [`NPU_coremode_benchmark.md`](../common/NPU_coremode_benchmark.md)(코어모드 latency), [`NPU_pe_multicard_62ch_hybrid.md`](NPU_pe_multicard_62ch_hybrid.md)(멀티카드), [`NPU_preprocess_1_parallel.md`](NPU_preprocess_1_parallel.md)(전처리 병렬)

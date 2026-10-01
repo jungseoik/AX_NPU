@@ -19,7 +19,7 @@
 
 > **vs 비포**: 비포(hybrid)의 I는 trunk(24block)만이고 CPU pool head(attn_pool ~2ms/장)가 별도였다.
 > full NPU는 **attn_pool이 I에 흡수**됐는데도 I 시간이 비포 trunk와 거의 같다(아래) → head NPU 추가비용 ≈0.
-> 정확도: 원본 PyTorch 대비 **cos 0.99**(COCO calib). 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../vendor/mobilint_resolution_attn_pool.md).
+> 정확도: 원본 PyTorch 대비 **cos 0.99**(COCO calib). 원인·해결: [`../vendor/mobilint_resolution_attn_pool.md`](../../vendor/mobilint_resolution_attn_pool.md).
 
 ---
 

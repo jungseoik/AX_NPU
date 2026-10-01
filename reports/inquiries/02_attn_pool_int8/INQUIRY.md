@@ -132,4 +132,4 @@ head를 CPU로 돌려 정확도는 확보했으나, **다채널(배치) 처리 �
 ---
 
 *작성 2026-06. 관련 자체 분석: `reports/design/SOLUTION_single_io_compile.md`(hybrid 해결),
-`reports/performance/NPU_pe_pipeline_e2e_hybrid.md`(attention pooling CPU 병목 실측).*
+`reports/performance/pe/NPU_pe_pipeline_e2e_hybrid.md`(attention pooling CPU 병목 실측).*

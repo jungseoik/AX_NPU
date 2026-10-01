@@ -27,9 +27,9 @@ Hardware Version:  Aries2       # aries-rb 로 컴파일해도 Aries2
 
 | 항목 | 근거 |
 | --- | --- |
-| 1.2.0 빌드 × 드라이버 1.13/런타임 1.2.0 | 양자화3×튜닝2×코어모드4 = 24종 전부 정상, cos 회귀기준 일치 → [`../performance/NPU_pe_quant_tuning_matrix_120.md`](../performance/NPU_pe_quant_tuning_matrix_120.md) |
+| 1.2.0 빌드 × 드라이버 1.13/런타임 1.2.0 | 양자화3×튜닝2×코어모드4 = 24종 전부 정상, cos 회귀기준 일치 → [`../performance/NPU_pe_quant_tuning_matrix_120.md`](../performance/pe/NPU_pe_quant_tuning_matrix_120.md) |
 | 1.1.2 빌드 × 런타임 1.4.0 | 아래 §1 (cos 0.9927, 처리량 −2.3%) |
-| 배치 출력 무결성 | 1.2.0 빌드 72/72 비트 동일 → [`../performance/NPU_pe_quant_tuning_matrix_120.md`](../performance/NPU_pe_quant_tuning_matrix_120.md) §7 |
+| 배치 출력 무결성 | 1.2.0 빌드 72/72 비트 동일 → [`../performance/NPU_pe_quant_tuning_matrix_120.md`](../performance/pe/NPU_pe_quant_tuning_matrix_120.md) §7 |
 
 **미검증 3칸의 이유**: 이 서버에 드라이버 1.14 를 올릴 수 없다. 운영 k8s 추론 파드가 카드를
 물고 있어 커널 모듈을 교체하면 서비스가 끊긴다. §1 의 런타임 1.4.0 테스트도 드라이버는 그대로 두고

@@ -115,8 +115,8 @@ Global Core 중재(target cores 10개) 비용이 든다. ViT trunk는 이미 코
 >
 > 즉 "INT8이 ARIES의 실질 최저 정밀도"도 사실이 아니다. 덧붙여 **기존 MXQ는 순수 INT8이 아니라
 > W8A16**이었다(Activation 기본값이 output/ffn=16bit). 상세·후속은
-> [`NPU_pe_quant_schemes.md`](NPU_pe_quant_schemes.md) 와
-> [`../inquiries/04_vit_quantization_speed/REPLY.md`](../inquiries/04_vit_quantization_speed/REPLY.md) 참조.
+> [`NPU_pe_quant_schemes.md`](../pe/NPU_pe_quant_schemes.md) 와
+> [`../inquiries/04_vit_quantization_speed/REPLY.md`](../../inquiries/04_vit_quantization_speed/REPLY.md) 참조.
 >
 > 아래 원문은 당시 기록으로 보존한다(mixed_precision 필드에 한해 유효).
 

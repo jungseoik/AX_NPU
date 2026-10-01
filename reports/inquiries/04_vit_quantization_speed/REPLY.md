@@ -78,7 +78,7 @@ python compile_w4a8_l5a16.py --calib_images <jpg 폴더 경로> --profile
 - [ ] 예제 3종을 우리 PE-Core-L14-336에 적용해 컴파일 → 속도·cos·정확도 실측 (기준: 현재 full NPU cos 0.99)
 - [ ] W4A16이 우리 파이프라인에서도 속도 이득이 나오는지 확인 (벤더 기준 1.42배)
 - [ ] uint8 입력 컴파일이 고채널 전처리 병목에 실제로 도움이 되는지 확인
-      → 관련 선행 실험: [`../../performance/NPU_preprocess_2_uint8_offload.md`](../../performance/NPU_preprocess_2_uint8_offload.md) (normalize는 폴딩됐으나 resize 불가로 이득 없었음)
+      → 관련 선행 실험: [`../../performance/NPU_preprocess_2_uint8_offload.md`](../../performance/pe/NPU_preprocess_2_uint8_offload.md) (normalize는 폴딩됐으나 resize 불가로 이득 없었음)
 - [ ] single + async 패턴 재현 및 출력 무결성 검증 → 결과에 따라 `.claude/CLAUDE.md` 동시성 규칙 갱신
 - [ ] bit4 no-op 판정 범위 재확인 → `../../performance/NPU_batch_latency.md` 갱신 여부 결정
 

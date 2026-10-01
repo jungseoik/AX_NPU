@@ -1,7 +1,7 @@
 # [실측] Qwen3-VL-2B — 벤더 최적화 빌드 vs 기존 HF 빌드
 
 벤더 재현 패키지(`customer-capacity-repro`)를 도커로 돌려 기존 자산과 **같은 조건**에서 비교한 기록.
-배경·용량표: [`../inquiries/06_qwen3vl_prefill_optimization/REPLY_2.md`](../inquiries/06_qwen3vl_prefill_optimization/REPLY_2.md)
+배경·용량표: [`../inquiries/06_qwen3vl_prefill_optimization/REPLY_2.md`](../../inquiries/06_qwen3vl_prefill_optimization/REPLY_2.md)
 
 | 항목 | 값 |
 | --- | --- |

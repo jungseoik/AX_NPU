@@ -1,0 +1,11 @@
+Determine whether any person in the image has fallen.
+
+Definition: a fall means at least one person's body is lying down roughly horizontal / parallel to the ground or any surface (road, floor, ground, mat, truck bed, bench, etc.).
+
+Rules:
+- Output `no` if a person is bent over, crouched, or leaning down toward the ground or an object (for example picking something up, handling bags, or searching through items). Their torso is angled, not horizontal, so this is not a fall.
+- Output `yes` if at least one person is lying horizontally (body roughly parallel to the surface), REGARDLESS of whether it looks intentional, controlled, resting, sleeping, or working. A horizontal body counts as a fall.
+- Output `no` if every visible person is upright or semi-upright: standing, walking, sitting (including sitting on the ground), crouching, squatting, kneeling, or bending. An upright/vertical torso is not a fall.
+- Ignore intent and context entirely. Only body orientation matters: horizontal lying = yes; sitting or upright = no.
+
+Answer with exactly one word, "yes" or "no". Do not explain. Do not describe the images.

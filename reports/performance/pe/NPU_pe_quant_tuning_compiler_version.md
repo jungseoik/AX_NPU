@@ -110,5 +110,5 @@ GPU 서버에서는 조합당 5~8분이므로, 전체 재검증은 GPU 서버에
    산출물과 일치. (md5 는 다르다 — 6바이트 차이가 저장 파일명 길이 차이와 정확히 일치하며
    mxq 가 save 경로를 내부에 담기 때문. 정확도·비트 구성은 동일)
    검증 스크립트: `reports/scripts/validate_compile_cli.sh`
-5. **재현 절차서**: [`../RUNBOOK_quant_matrix_120.md`](../RUNBOOK_quant_matrix_120.md) —
+5. **재현 절차서**: [`../RUNBOOK_quant_matrix_120.md`](../../RUNBOOK_quant_matrix_120.md) —
    GPU 서버에서 clone 후 그대로 따라가면 24조합이 재현되고, 검증 스크립트가 위 4점을 회귀 기준으로 자동 대조한다.
