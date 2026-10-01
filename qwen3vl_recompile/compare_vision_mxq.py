@@ -1,9 +1,21 @@
 #!/usr/bin/env python3
-"""두 비전 mxq 의 출력을 같은 이미지로 직접 비교한다(PyTorch 기준 불필요).
+"""두 비전 mxq 의 출력을 같은 이미지로 직접 비교한다 — **출력 순서 확정의 표준 도구**.
 
 각 mxq 는 **자기가 선언한 입력 순서**로 먹이고, 출력은 전 쌍 코사인을 찍는다.
 가중치가 같으면 대각선이 1.0 에 가깝고, 학습본 vs 스톡이면 높되 1 미만이다.
 전부 0 근처면 한쪽 산출물이 깨진 것이다.
+
+★ **PyTorch 를 기준으로 쓰려던 방법은 폐기했다.**
+  `model.get_image_features(pixel_values, grid)` 와 비전 mxq 출력은 코사인이 0 근처로
+  나온다 — **벤더 자신의 mxq + 스톡 체크포인트로 대조해도 0 이었다**(전처리 경로가
+  다르다). 즉 그건 산출물 문제가 아니라 기준 계산이 틀린 것이었다.
+  기준이 필요하면 **이미 검증된 mxq**(벤더 산출물)를 쓸 것.
+
+사용:
+    python3 compare_vision_mxq.py --a <검증된 모델 디렉토리> --b <새 모델 디렉토리> \
+        --image <이미지> --card 7
+  행·열 모두에서 최대인 1:1 대응이 나오면 그게 출력 매핑이다
+  (`vision_output_order.json` 에 적는다).
 """
 from __future__ import annotations
 import argparse, os, sys

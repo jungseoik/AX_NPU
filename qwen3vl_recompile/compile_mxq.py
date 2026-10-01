@@ -22,10 +22,24 @@ MMC_SHA256 = {"decoder": "627c35ec0971d764c71fc9a7bfba931dc70c19def58c01ef544100
               "vision":  "0e84af14aa72222a92b873f373d288f14c9b00e46031f7d4bbdacca5fe7cbad1"}
 
 
+def mblt_outputs(path: str) -> list:
+    """mblt 의 출력 이름을 순서대로 읽는다(활성 16bit 예외 지정에 쓴다)."""
+    from mblt.serialize import SerializeMeta
+    md = SerializeMeta.get_model_dict(path)
+    d = md.to_dict() if hasattr(md, "to_dict") else md
+    return list(d["outputs"])
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--part", required=True, choices=["decoder-b1", "decoder-b32", "vision", "vision8192"])
+    # 양자화 민감도 진단/완화용. 기본값은 벤더 레시피 그대로다.
+    p.add_argument("--hessian", choices=["on", "off"], default=None,
+                   help="hessianQuant(OPTQ). 벤더 decoder 는 off, vision 은 on")
+    p.add_argument("--weight-bits", type=int, default=None,
+                   help="transformer 가중치 비트 일괄 지정(벤더 decoder 는 W4)")
+    p.add_argument("--tag", default=None, help="출력 디렉토리 이름(기본: --part)")
     p.add_argument("--mblt-dir", type=Path, required=True, help="export_mblt.py 산출물")
     p.add_argument("--calib-dir", type=Path, required=True, help="make_calib.py 산출물")
     p.add_argument("--vendor", type=Path, required=True, help="벤더 패키지(configs/, inputs/rotation.pth)")
@@ -65,7 +79,7 @@ def main():
     for f in (mblt, calib, rot):
         if not f.is_file(): p.error(f"없음: {f}")
 
-    out = a.out / a.part
+    out = a.out / (a.tag or a.part)
     if out.exists():
         if not a.force:
             p.error(f"{out} 가 이미 있다 — --force 를 주거나 새 디렉토리를 쓸 것")
@@ -82,6 +96,31 @@ def main():
     limit = 8192 if a.part == "vision8192" else 4096
     cfg["llm"]["attributes"].update(maxSequenceLength=limit, maxCacheLength=limit,
                                     maxDataLength=limit, maxCoreDataLength=128)
+    # ★ 비전 설정의 `layerOverrides.activation16Bits` 는 **벤더 그래프의 레이어 이름**이라
+    #   우리 export 산출물에는 하나도 안 걸린다(조용히 무시된다). 목록의 정체는
+    #   비전 출력 4개(merger + deepstack merger 3)를 활성 16bit 로 올려 두는 것이고,
+    #   PE-Core 에서 attn_pool 의 score matmul 만 16bit 로 올려 복구한 것과 같은 처방이다.
+    #   누락되면 출력이 8bit 로 떨어져 조용히 열화한다 → **우리 그래프 출력 이름으로 다시 쓴다.**
+    if not decoder:
+        q = cfg.get("quantization", {})
+        lo = q.get("bit", {}).get("layerOverrides") or q.get("layerOverrides")
+        if lo and "activation16Bits" in lo:
+            outs = mblt_outputs(str(mblt))
+            if len(outs) != len(lo["activation16Bits"]):
+                raise SystemExit(f"❌ 비전 출력 수가 벤더 설정과 다르다: {outs}")
+            print(f"  activation16Bits 를 우리 출력 이름으로 교체:\n" +
+                  "\n".join(f"      {o}" for o in outs), flush=True)
+            lo["activation16Bits"] = outs
+
+    if a.hessian is not None:
+        cfg["advancedQuantization"]["hessianQuant"]["apply"] = (a.hessian == "on")
+        print(f"  hessianQuant.apply = {a.hessian}", flush=True)
+    if a.weight_bits is not None:
+        w = cfg["quantization"]["bit"]["transformer"]["weight"]
+        for k in list(w):
+            w[k] = a.weight_bits
+        print(f"  weight bits = {a.weight_bits} ({sorted(w)})", flush=True)
+
     tr = cfg["advancedQuantization"]["EquivalentTransformation"]
     tr["SpinR1" if decoder else "HeadOutChRotation"]["matrixPath"] = str(rot)
     recipe = out / "requested-config.json"
