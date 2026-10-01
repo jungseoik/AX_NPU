@@ -80,79 +80,88 @@ def main():
         [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": a.prompt}]}],
         tokenize=False, add_generation_prompt=True)
 
-    v_names = mblt_inputs(str(a.mblt_dir / "vision.mblt"))
-    d_names = mblt_inputs(str(a.mblt_dir / "decoder.mblt"))
-    print(f"  vision  입력 {v_names}", flush=True)
-    print(f"  decoder 입력 {d_names}", flush=True)
+    # ★★ 캘리브 규격은 mblt 입력을 그대로 나열하면 안 된다. 벤더 성공 사례 기준:
+    #    · vision  3입력 — sin 을 따로 주지 않고 cos 에 cos|sin 을 **병합(128폭)**
+    #    · 시퀀스 축은 -1 (export 의 dynamic_axes 와 짝) — 고정값이면 거부된다
+    #    4입력으로 주면 `size of info ... not same`, 축을 고정하면 `Input shapes ... not same`.
+    V_NAMES = ["cos", "pos_embeds/reshape", "float_1_channel_last"]
+    V_SHAPES = [[1, 1, -1, 128], [1, 1, -1, 1024], [1, 1, -1, 1536]]
+    # ★ decoder 캘리브는 mblt 입력에 **RoPE cos 를 하나 더** 붙인다(벤더 규격).
+    #   벤더: mblt 2입력 → 캘리브 3개 / split 4입력 → 캘리브 5개. 둘 다 +cos/reshape_0.
+    #   cos 는 vision 과 마찬가지로 cos|sin 병합이라 폭이 2배(128*2=256)다.
+    d_names = mblt_inputs(str(a.mblt_dir / "decoder.mblt")) + ["cos/reshape_0"]
+    D_SHAPES = None
+    print(f"  vision  캘리브 {V_NAMES}", flush=True)
+    print(f"  decoder 캘리브 {d_names}", flush=True)
 
     idx = 0
     rows_v, rows_d = [], []
-    shapes_v, shapes_d = None, None
 
     @torch.inference_mode()
     def tensors(f):
-        """이름 → 텐서 매핑을 만든다. 키는 mblt 입력 이름과 맞춘다."""
         img = Image.open(f).convert("RGB").resize((a.size, a.size), Image.Resampling.BICUBIC)
         x = proc(text=[tpl], images=[img], return_tensors="pt")
         grid, ids = x["image_grid_thw"], x["input_ids"]
-        pos_embeds, cos_v, sin_v = vis.compute_side_inputs(grid)
+        pe, cv, sv = vis.compute_side_inputs(grid)
         folded = P.fold_pixel_values(x["pixel_values"].to(torch.float32))
-        V = {"float_1_channel_last": folded.float(),
-             "pos_embeds/reshape": pos_embeds.float(),
-             "cos": cos_v.float(), "sin": sin_v.float()}
+        N = folded.shape[-1]                       # 시각 패치 수
+        V = [torch.cat([cv, sv], -1).reshape(1, 1, N, 128).float(),
+             pe.reshape(1, 1, N, 1024).float(),
+             folded.permute(0, 2, 3, 1).reshape(1, 1, N, 1536).float()]
 
-        hidden, ds_list = vis(folded, pos_embeds, cos_v, sin_v)
+        hidden, ds_list = vis(folded, pe, cv, sv)
         T = ids.shape[1]
         emb = embed(ids).float().clone()
         mask = (ids == cfg.image_token_id)[0]
         emb[0, mask] = hidden.reshape(-1, emb.shape[-1]).float()
-        D = {"inputs_embeds/reshape": emb}
-        # deepstack: mblt 가 슬라이스별로 분리돼 있으면 레이어별로, 뭉쳐 있으면 스택으로
         full = torch.zeros(1, len(ds_list), T, emb.shape[-1])
         for k2, ds in enumerate(ds_list):
             full[0, k2, mask] = ds.reshape(-1, emb.shape[-1]).float()
+        D = {"inputs_embeds/reshape": emb}
         ds_keys = [n for n in d_names if "deepstack" in n]
         if len(ds_keys) == 1:
             D[ds_keys[0]] = full
         else:
             for k2, n in enumerate(ds_keys):
                 D[n] = full[:, k2]
-        for n in d_names:          # cos 등 나머지 입력이 있으면 채운다
+        for n in d_names:
             if n in D: continue
             if "cos" in n:
                 pos = torch.arange(T).view(1, 1, T).repeat(3, 1, 1)
                 c = P.CachedQwen3VLTextRotaryEmbedding(model.model.language_model.rotary_emb)
                 c.set_rope(pos)
-                D[n] = c.cos[..., torch.arange(T), :].float()
+                idxs = torch.arange(T)
+                D[n] = torch.cat([c.cos[..., idxs, :], c.sin[..., idxs, :]], -1).float()
         return V, D
 
-    for n, rows, names, which in [(a.n_vision, rows_v, v_names, "v"),
-                                  (a.n_decoder, rows_d, d_names, "d")]:
+    for n, rows, which in [(a.n_vision, rows_v, "v"), (a.n_decoder, rows_d, "d")]:
         for k in range(n):
             V, D = tensors(files[k])
-            src = V if which == "v" else D
-            missing = [nm for nm in names if nm not in src]
-            if missing:
-                raise SystemExit(f"❌ mblt 입력 {missing} 에 해당하는 텐서를 못 만들었다. "
-                                 f"make_calib.py 의 tensors() 를 보완할 것.")
-            paths, shp = [], []
-            for nm in names:                      # ★ mblt 입력 순서 그대로
-                t = src[nm].contiguous()
-                fn = f"{idx:04d}.npy"; np.save(data / fn, t.numpy())
-                paths.append(f"data/{fn}"); shp.append(list(t.shape)); idx += 1
+            if which == "v":
+                picked, names = V, V_NAMES
+            else:
+                missing = [nm for nm in d_names if nm not in D]
+                if missing:
+                    raise SystemExit(f"❌ decoder 입력 {missing} 를 못 만들었다")
+                picked, names = [D[nm] for nm in d_names], d_names
+            paths = []
+            for t in picked:
+                fn = f"{idx:04d}.npy"; np.save(data / fn, t.contiguous().numpy())
+                paths.append(f"data/{fn}"); idx += 1
             rows.append(paths)
-            if which == "v" and shapes_v is None: shapes_v = shp
-            if which == "d" and shapes_d is None: shapes_d = shp
+            if which == "d" and D_SHAPES is None:
+                # ★ **시퀀스 축만** -1. hidden(2048) 까지 -1 로 쓰면 컴파일이 거부한다
+                #   (벤더 규격도 [1,-1,2048] 로 hidden 은 고정).
+                Tseq = picked[0].shape[-2]
+                D_SHAPES = [[(-1 if d == Tseq else d) for d in t.shape] for t in picked]
             if (k + 1) % 25 == 0: print(f"    {which} {k+1}/{n}", flush=True)
 
-    for kind, rows, names, shp in [("vision", rows_v, v_names, shapes_v),
-                                   ("decoder", rows_d, d_names, shapes_d)]:
-        dyn = [[-1 if i and d not in (1, 3) else d for i, d in enumerate(s_)] for s_ in shp]
+    for kind, rows, names, shp in [("vision", rows_v, V_NAMES, V_SHAPES),
+                                   ("decoder", rows_d, d_names, D_SHAPES)]:
         (a.out / f"{kind}.json").write_text(json.dumps(
             {"info": {"input names": names, "input shapes": shp},
              "calib paths": rows}, indent=2) + "\n")
-        print(f"  {kind}.json  레코드 {len(rows)}  입력 {names}", flush=True)
-        print(f"              shapes {shp}", flush=True)
+        print(f"  {kind}.json  레코드 {len(rows)}  shapes {shp}", flush=True)
     print(f"  npy {idx}개 / {sum(f.stat().st_size for f in data.glob('*.npy'))/2**30:.2f} GiB", flush=True)
 
 

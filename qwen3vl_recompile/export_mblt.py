@@ -59,13 +59,18 @@ def export(ckpt: str, out: Path, image: str, prompt: str, size: int) -> dict:
     pos_embeds, cos, sin = vis.compute_side_inputs(grid)   # 크기 의존 상수를 그래프 입력으로
     fd_v = {"images": P.fold_pixel_values(x["pixel_values"].to(torch.float32)),
             "pos_embeds": pos_embeds, "cos": cos, "sin": sin}
+    # ★★ dynamic_axes 가 없으면 그래프의 시퀀스 축이 **고정**으로 굳어, 이후 캘리브레이션에서
+    #    어떤 shape 을 줘도 `quantizeFB failed. Input shapes ... not same` 으로 거부된다.
+    #    벤더 그래프는 시퀀스 축이 dynamic=True 다(md.to_dict() 로 확인). 형식은 {이름: [축인덱스]}.
+    DYN_V = {"images": [3], "pos_embeds": [0], "cos": [2], "sin": [2]}
     t = time.perf_counter()
     qbcompiler.mblt_compile(model=vis, backend="torch", target_device="aries-rb",
-                            device="gpu", feed_dict=fd_v,
+                            device="gpu", feed_dict=fd_v, dynamic_axes=DYN_V,
                             mblt_save_path=str(out / "vision.mblt"))
     report["vision"] = {"sec": round(time.perf_counter() - t, 1),
                         "bytes": (out / "vision.mblt").stat().st_size,
-                        "feed": {k: list(v.shape) for k, v in fd_v.items()}}
+                        "feed": {k: list(v.shape) for k, v in fd_v.items()},
+                        "dynamic_axes": DYN_V}
     del m, vis
 
     # ---------- decoder ----------
@@ -97,13 +102,20 @@ def export(ckpt: str, out: Path, image: str, prompt: str, size: int) -> dict:
             "deepstack_visual_embeds": torch.zeros(L, T, H, dtype=torch.float32),
             "visual_pos_masks": (ids == cfg.image_token_id),
             "position_ids": pos, "attention_mask": x["attention_mask"]}
+    # decoder 의 **실제 그래프 입력은 2개뿐**이다. visual_pos_masks / position_ids /
+    # attention_mask 는 추적 중 상수로 접혀 입력에 남지 않는다. 없는 이름을 주면
+    #   ValueError: Unknown input `visual_pos_masks` in dynamic_axes
+    # 로 즉시 거부되므로, 실제 입력만 대상으로 한다(시퀀스 축 = 1).
+    DYN_D = {"inputs_embeds": [1], "deepstack_visual_embeds": [1]}
     t = time.perf_counter()
     qbcompiler.mblt_compile(model=LogitsOnly(inner).eval(), backend="torch",
                             target_device="aries-rb", device="gpu", feed_dict=fd_d,
+                            dynamic_axes=DYN_D,
                             mblt_save_path=str(out / "decoder.mblt"))
     report["decoder"] = {"sec": round(time.perf_counter() - t, 1),
                          "bytes": (out / "decoder.mblt").stat().st_size,
-                         "feed": {k: list(v.shape) for k, v in fd_d.items()}}
+                         "feed": {k: list(v.shape) for k, v in fd_d.items()},
+                         "dynamic_axes": DYN_D}
     report["meta"] = {"checkpoint": ckpt, "size": size, "seq_len": T,
                       "hidden": H, "deepstack_layers": L,
                       "qbcompiler": qbcompiler.__version__, "torch": torch.__version__}
