@@ -35,6 +35,89 @@ def mblt_inputs(path: str) -> list[str]:
     return [getattr(i, "name", str(i)) for i in md.inputs]
 
 
+def rotate_tensor(cos: "torch.Tensor", sin: "torch.Tensor") -> "torch.Tensor":
+    """런타임이 NPU 에 실제로 넣는 **rotateTensor(peSize) 레이아웃**으로 cos/sin 을 합친다.
+
+    캘리브는 "실제로 들어올 값"으로 떠야 한다. 런타임은 단순 concat 이 아니라
+    인터리브된 표를 넣는다(`mblt_model_zoo` 의 `_build_vision_rotate_tensor()` /
+    `MobilintQwen3VLRotaryEmbedding`):
+
+        rt[0:dim:2]       =  cos[:half]
+        rt[1:dim:2]       = -sin[:half]
+        rt[dim:2dim:2]    =  sin[half:]
+        rt[dim+1:2dim:2]  =  cos[half:]
+
+    단순 concat 으로 캘리브를 뜨면 **채널별 양자화 범위가 다른 채널에 배정**된다.
+    그래도 그래프는 멀쩡히 돌아가서(지연 동일) 출력만 조용히 열화한다 —
+    스톡 가중치로 돌려도 벤더가 `no` 라고 답하는 걸 `Yes` 라고 답했다.
+    """
+    cos = cos.reshape(-1, cos.shape[-1]).float()
+    sin = sin.reshape(-1, sin.shape[-1]).float()
+    n, dim = cos.shape
+    half = dim // 2
+    pe = 2 * (((dim + 63) // 64) * 64)
+    rt = torch.zeros(n, pe, dtype=torch.float32)
+    rt[:, 0:dim:2] = cos[:, :half]
+    rt[:, 1:dim:2] = -sin[:, :half]
+    rt[:, dim:2 * dim:2] = sin[:, half:]
+    rt[:, dim + 1:2 * dim:2] = cos[:, half:]
+    return rt
+
+
+def _graph(path: str):
+    from mblt.serialize import SerializeMeta
+    md = SerializeMeta.get_model_dict(path)
+    return md.to_dict() if hasattr(md, "to_dict") else md
+
+
+def _dim(x):
+    """DimValue → 동적이면 -1, 아니면 정수."""
+    if isinstance(x, dict):
+        return -1 if x.get("dynamic") else int(x["value"])
+    return -1 if getattr(x, "dynamic", False) else int(getattr(x, "value", x))
+
+
+def decoder_calib_spec(path: str):
+    """decoder 캘리브의 **이름·shape 를 mblt 에서 직접 읽는다**.
+
+    구성 = 그래프 입력(InputOptions) 전부 + RoPE cos 상수(InputConstant) 1개.
+    cos 가 왜 끼는지: 우리 mblt 입력은 4개인데 컴파일러는 5개를 요구한다
+    (4개만 주면 `quantizeFB failed. The size of info ... are not same`).
+    벤더도 mblt 2입력 → 캘리브 3개로 항상 rope 상수 하나가 더 붙는다.
+
+    ★ 벤더 캘리브 json 을 베끼면 안 된다. 이름도 shape 도 export 경로마다 다르다:
+        벤더  cos/reshape_0                      [1,-1,256]   (cos|sin 병합 1노드)
+        우리  p_language_model_rotary_emb_cos_0  [1,16384,128](cos·sin 별도 노드)
+      이름이 안 맞으면 quantizeFB 는 **개수만 보고 통과**시킨 뒤, 한참 뒤
+      메모리 플래닝에서 `could not find input info in memory: ...` 로 죽는다.
+    """
+    d = _graph(path)
+    g = d["subgraphs"][0]
+    acts = g.get("activations") or d.get("activations")
+
+    def spec(name):
+        for a in acts:
+            ad = a if isinstance(a, dict) else (a.to_dict() if hasattr(a, "to_dict") else vars(a))
+            if ad.get("name") == name:
+                return [_dim(x) for x in ad["shape"]]
+        raise SystemExit(f"❌ 활성 `{name}` 을 mblt 에서 못 찾았다")
+
+    names = list(d["inputs"])
+    cos = [o["name"] for o in g["operators"]
+           if (o.get("options") or {}).get("type") == "InputConstantOptions"
+           and "cos" in o["name"]]
+    if len(cos) != 1:
+        raise SystemExit(f"❌ RoPE cos 상수를 1개로 특정하지 못했다: {cos}")
+    names.append(cos[0])
+    shapes = [spec(n) for n in names]
+    # ★ rope 항목만은 **노드 shape 가 아니다**.
+    #   노드 자체는 [1,16384,128] 상수지만(벤더도 동일), 캘리브가 요구하는 건
+    #   cos|sin 을 이어붙인 [1,-1,256](동적 길이)다. 노드 shape 를 그대로 쓰면
+    #   `quantizeFB failed. Input shapes given in Model and JSON are not same`.
+    shapes[-1] = [1, -1, shapes[-1][-1] * 2]
+    return names, shapes
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -86,11 +169,7 @@ def main():
     #    4입력으로 주면 `size of info ... not same`, 축을 고정하면 `Input shapes ... not same`.
     V_NAMES = ["cos", "pos_embeds/reshape", "float_1_channel_last"]
     V_SHAPES = [[1, 1, -1, 128], [1, 1, -1, 1024], [1, 1, -1, 1536]]
-    # ★ decoder 캘리브는 mblt 입력에 **RoPE cos 를 하나 더** 붙인다(벤더 규격).
-    #   벤더: mblt 2입력 → 캘리브 3개 / split 4입력 → 캘리브 5개. 둘 다 +cos/reshape_0.
-    #   cos 는 vision 과 마찬가지로 cos|sin 병합이라 폭이 2배(128*2=256)다.
-    d_names = mblt_inputs(str(a.mblt_dir / "decoder.mblt")) + ["cos/reshape_0"]
-    D_SHAPES = None
+    d_names, D_SHAPES = decoder_calib_spec(str(a.mblt_dir / "decoder.mblt"))
     print(f"  vision  캘리브 {V_NAMES}", flush=True)
     print(f"  decoder 캘리브 {d_names}", flush=True)
 
@@ -105,7 +184,7 @@ def main():
         pe, cv, sv = vis.compute_side_inputs(grid)
         folded = P.fold_pixel_values(x["pixel_values"].to(torch.float32))
         N = folded.shape[-1]                       # 시각 패치 수
-        V = [torch.cat([cv, sv], -1).reshape(1, 1, N, 128).float(),
+        V = [rotate_tensor(cv, sv).reshape(1, 1, N, 128),
              pe.reshape(1, 1, N, 1024).float(),
              folded.permute(0, 2, 3, 1).reshape(1, 1, N, 1536).float()]
 
@@ -123,15 +202,16 @@ def main():
             D[ds_keys[0]] = full
         else:
             for k2, n in enumerate(ds_keys):
-                D[n] = full[:, k2]
+                D[n] = full[:, k2]          # 활성 스펙이 [1,-1,2048] 이라 랭크 3
         for n in d_names:
             if n in D: continue
             if "cos" in n:
+                # 위 shape 주석대로 cos|sin 을 이어붙여 (1, T, 256) 로 준다.
                 pos = torch.arange(T).view(1, 1, T).repeat(3, 1, 1)
                 c = P.CachedQwen3VLTextRotaryEmbedding(model.model.language_model.rotary_emb)
                 c.set_rope(pos)
                 idxs = torch.arange(T)
-                D[n] = torch.cat([c.cos[..., idxs, :], c.sin[..., idxs, :]], -1).float()
+                D[n] = rotate_tensor(c.cos[..., idxs, :], c.sin[..., idxs, :]).reshape(1, T, -1)
         return V, D
 
     for n, rows, which in [(a.n_vision, rows_v, "v"), (a.n_decoder, rows_d, "d")]:
@@ -149,11 +229,6 @@ def main():
                 fn = f"{idx:04d}.npy"; np.save(data / fn, t.contiguous().numpy())
                 paths.append(f"data/{fn}"); idx += 1
             rows.append(paths)
-            if which == "d" and D_SHAPES is None:
-                # ★ **시퀀스 축만** -1. hidden(2048) 까지 -1 로 쓰면 컴파일이 거부한다
-                #   (벤더 규격도 [1,-1,2048] 로 hidden 은 고정).
-                Tseq = picked[0].shape[-2]
-                D_SHAPES = [[(-1 if d == Tseq else d) for d in t.shape] for t in picked]
             if (k + 1) % 25 == 0: print(f"    {which} {k+1}/{n}", flush=True)
 
     for kind, rows, names, shp in [("vision", rows_v, V_NAMES, V_SHAPES),

@@ -18,6 +18,11 @@ from pathlib import Path
 
 def bench(md: str, card: int, imgs, prompts, sizes, reps: int):
     sys.path.insert(0, os.environ.get("NPU_PE_2STAGE_VENDOR_SRC", "/repro/src"))
+    sys.path.insert(0, str(Path(__file__).parent))
+    # 우리 재컴파일본은 비전 I/O 순서·이름이 벤더와 달라 어댑터가 필요하다
+    # (벤더 산출물에는 항등이다). 상세 근거는 artifact_order.py 참고.
+    import artifact_order
+    artifact_order.install(md)
     from pia_vlm.runtime import Classifier
     r = {}
     clf = Classifier(md, device=card, threads=8, prompt=prompts[0],
