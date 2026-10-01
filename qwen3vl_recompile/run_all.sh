@@ -44,24 +44,34 @@ for part in $PARTS; do
       --calib-dir /out/calib --vendor /vendor --out /out/mxq
 done
 
-echo "═══ ④ 모델 디렉토리 조립 ═══"
-M="$OUT/model"; mkdir -p "$M/variants"
-for f in "$VENDOR"/inputs/support/*; do [ -f "$f" ] && cp -n "$f" "$M/" || true; done
-cp -n "$CKPT"/{config.json,tokenizer*,vocab.json,merges.txt,*.safetensors} "$M/" 2>/dev/null || true
-cp "$VENDOR/inputs/rotation.pth" "$M/" 2>/dev/null || true
-[ -f "$OUT/mxq/decoder-b32/model.mxq" ] && cp "$OUT/mxq/decoder-b32/model.mxq" "$M/decoder.mxq"
-[ -f "$OUT/mxq/vision/model.mxq" ]      && cp "$OUT/mxq/vision/model.mxq"      "$M/vision.mxq"
-[ -f "$OUT/mxq/decoder-b1/model.mxq" ]  && cp "$OUT/mxq/decoder-b1/model.mxq"  "$M/variants/decoder-b1.mxq"
-echo "  → $M"
-ls -la "$M"/*.mxq 2>/dev/null | awk '{printf "    %8.1fMB %s\n",$5/1048576,$9}'
+echo "═══ ④ 모델 디렉토리 조립 ═══ $(date +%T)"
+# ★ 단순 복사로는 안 된다. 두 가지를 반드시 지켜야 한다(pack_model_dir.py 가 처리):
+#   · config.json 은 **벤더 것**(NPU 런타임 설정). 학습본 config 로 덮으면 모델이 안 뜬다.
+#   · embed_tokens 는 **rotation.pth 로 회전**해서 넣는다. 생으로 넣으면 컴파일·지연은
+#     멀쩡한데 로짓만 ~5배 눌려 엉뚱한 토큰이 나온다.
+REF="${REF:-$VENDOR/build/model-reference}"
+[ -d "$REF" ] || { echo "❌ 벤더 레퍼런스 디렉토리 없음: $REF (REF=... 로 지정)"; exit 1; }
+R /tool/pack_model_dir.py --vendor /vendor/build/model-reference --checkpoint /ckpt \
+    --vision-mxq /out/mxq/vision/model.mxq \
+    --decoder-mxq /out/mxq/decoder-b32/model.mxq \
+    --out /out/model
+[ -f "$OUT/mxq/decoder-b1/model.mxq" ] && cp "$OUT/mxq/decoder-b1/model.mxq" "$OUT/model/variants/decoder-b1.mxq"
+M="$OUT/model"
 
 cat <<MSG
 
 ═══ 완료 $(date +%T) ═══
-NPU 가 있는 서버에서 기존 batch32 와 비교:
+NPU 가 있는 서버에서:
 
-  python3 verify_npu.py \\
-      --baseline  <기존 model-reference 경로> \\
-      --candidate $M \\
+① 비전 출력 순서 확정 (이름 매칭이 안 되므로 **수치로** 정한다)
+  python3 compare_vision_mxq.py --a <검증된 model-reference> --b $M \\
+      --image <img.jpg> --card 0
+  → 행·열 모두 최대인 1:1 대응을 $M/vision_output_order.json 에 적는다
+
+② 기존 batch32 와 A/B
+  python3 verify_npu.py --baseline <기존 model-reference> --candidate $M \\
       --images <img1.jpg> <img2.jpg> --card 0
+
+  라벨이 어긋나면 dump_logits.py 로 **로짓 크기**를 먼저 본다 —
+  순서는 맞는데 스케일만 눌렸으면 기저(회전) 문제, 순서가 흐트러졌으면 양자화 문제다.
 MSG
