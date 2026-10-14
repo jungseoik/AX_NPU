@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>실증 전 24시간 에이징 시험 결과 보고</title>
+<style>
+  @font-face { font-family:"KR"; src:url("fonts/NanumGothic-Regular.ttf"); font-weight:400; }
+  @font-face { font-family:"KR"; src:url("fonts/NanumGothic-Bold.ttf");    font-weight:700; }
+  @page { size:A4; margin:16mm 15mm 15mm;
+          @bottom-center { content:"- " counter(page) " -"; font-family:"KR"; font-size:9pt; color:#555; } }
+  * { box-sizing:border-box; }
+  body { font-family:"KR","DejaVu Sans",sans-serif; font-size:10.5pt; line-height:1.6; color:#000; margin:0; }
+  .doctitle { text-align:center; font-size:17pt; font-weight:700; letter-spacing:-0.5pt;
+              padding-bottom:3mm; border-bottom:2.5px solid #000; margin-bottom:1.5mm; }
+  .docsub { text-align:center; font-size:10pt; color:#333; margin-bottom:7mm; }
+  h2 { font-size:12.5pt; margin:7mm 0 2.5mm; font-weight:700; }
+  h2::before { content:"□ "; }
+  h3 { font-size:11pt; margin:4.5mm 0 2mm; font-weight:700; }
+  h3::before { content:"○ "; }
+  ul { margin:1.5mm 0 3mm; padding-left:7mm; list-style:none; }
+  li { margin:0.8mm 0; position:relative; }
+  li::before { content:"- "; position:absolute; left:-4mm; }
+  li ul li::before { content:"· "; }
+  table { width:100%; border-collapse:collapse; margin:2mm 0 4mm; font-size:9.5pt; }
+  th,td { border:1px solid #666; padding:1.8mm 2.5mm; vertical-align:middle; }
+  tr { page-break-inside:avoid; }
+  .keep { page-break-inside:avoid; }
+  th { background:#e8eaed; font-weight:700; text-align:center; }
+  td.c,th.c { text-align:center; }
+  td.n,th.n { text-align:right; font-variant-numeric:tabular-nums; }
+  .lead { border:1.5px solid #000; padding:4mm 5mm; margin:0 0 6mm; background:#f6f7f9; }
+  .lead .t { font-weight:700; font-size:11.5pt; margin-bottom:2mm; }
+  .lead ul { margin:0; }
+  .cols { display:table; width:100%; border-spacing:3mm 0; table-layout:fixed; }
+  .col { display:table-cell; width:50%; border:1px solid #666; vertical-align:top; }
+  .col > .hd { padding:2mm 3mm; font-weight:700; font-size:11pt; text-align:center;
+               border-bottom:1px solid #666; }
+  .col.fp > .hd { background:#e8eaed; }
+  .col.tp > .hd { background:#d8dde3; }
+  .col > .bd { padding:3mm; }
+  .case { margin-bottom:4mm; page-break-inside:avoid; }
+  .case:last-child { margin-bottom:0; }
+  .case .id { font-weight:700; font-size:10pt; }
+  .case .meta { color:#444; font-size:8.5pt; line-height:1.45; margin-bottom:1.5mm; }
+  .case img { width:100%; border:1px solid #666; display:block; }
+  .case .cap { font-size:8.8pt; line-height:1.5; margin-top:1.5mm; }
+  .box { border:1px solid #666; border-left:4px solid #000; padding:2.5mm 3mm;
+         font-size:9.5pt; margin:3mm 0; background:#f6f7f9; }
+  code { font-family:"DejaVu Sans Mono",monospace; font-size:8.8pt; }
+  .path { font-family:"DejaVu Sans Mono",monospace; font-size:8.8pt; background:#f1f2f4;
+          border:1px solid #ccc; padding:2mm 3mm; word-break:break-all; margin:1.5mm 0 3mm; }
+  .brk { page-break-before:always; }
+  .fn { font-size:8.8pt; color:#333; margin-top:1.5mm; }
+  .desc { border:1px solid #999; background:#f1f2f4; padding:2mm 2.5mm; margin:2mm 0 0;
+          font-size:8.5pt; line-height:1.5; }
+  .desc .h { font-weight:700; font-size:8.5pt; margin-bottom:1mm; }
+  .desc .en { font-family:"DejaVu Sans",sans-serif; font-style:italic; color:#111; }
+  .desc .en b { font-style:normal; background:#ddd; padding:0 0.5mm; }
+</style></head><body>
+
+<div class="doctitle">실증 전 24시간 에이징 시험 결과 보고</div>
+<div class="docsub">대구도시철도공사 중앙로역 62채널 · AX NPU 2단계 이상상황 검출 체계 · 2026. 10. 13.</div>
+
+<div class="lead">
+  <div class="t">요 약</div>
+  <ul>
+    <li><b>최종 알람 13건 발생</b>(쓰러짐 8, 침입 5). 전체 <b>정탐 6건, 오탐 7건</b>.</li>
+    <li>쓰러짐 8건 중 <b>정탐 2건, 오탐 6건</b>.</li>
+    <li>침입 5건 중 <b>정탐 4건, 오탐 1건</b>. 오탐 1건은 <b>사람 부재 상태에서 23시간 44분간 162회 반복 발화</b>.</li>
+    <li><b>화재·연기 오탐 0건.</b> 1차 검출기에 화재·연기가 활성화된 상태로 24시간 전 구간을 처리하였으나 오경보 전무.</li>
+    <li>1차 검출기에서 2차로 전달된 건수 <b>102건</b>, 2차 기각 94건(차단율 92.2%), 통과 <b>8건</b>. 통과 8건은 최종 쓰러짐 알람 8건과 일치함.</li>
+    <li><b>2차 검출기가 정탐을 기각한 사례 없음.</b> 기각 94건 전수 확인 결과 실제 쓰러짐 미포함, 정탐은 전량 통과.</li>
+    <li>2차 검출기 응답 실패·폴백 0건, 응답지연 p95 552밀리초. 24시간 연속 무중단 가동 확인.</li>
+    <li>쓰러짐 관련 조치는 <b>엘리베이터 구역 관심영역 설정 1건</b>. 1차 검출기 오탐은 2차가 전량 차단하여 조치 불요.</li>
+  </ul>
+</div>
+
+<h2>1. 시험 개요</h2>
+
+<table>
+<tr><th style="width:25%">구분</th><th>내용</th></tr>
+<tr><td class="c">시험 방식</td><td><b>RTSP 송출 기반 에이징 시험</b> — 저장된 24시간 녹화영상을 62채널 RTSP 스트림으로 실시간 송출하고, 운영 파이프라인이 실제 카메라와 동일하게 수신·처리</td></tr>
+<tr><td class="c">영상 원천</td><td><b>대구도시철도공사 중앙로역 실제 CCTV 녹화영상</b>(연출·합성 영상 아님)</td></tr>
+<tr><td class="c">영상 구성</td><td>62채널 × 24시간. 채널당 1시간 단위 <code>.avi</code> 24개, 00시~24시 전 구간</td></tr>
+<tr><td class="c">녹화 일자</td><td><b>2026. 5. 31.</b> (폴더·파일명에 명시: <code>20260531-000000</code>)</td></tr>
+<tr><td class="c">영상 보관 위치</td><td>NAS <code>10.128.30.51:/volume2/data</code></td></tr>
+<tr><td class="c">시험 수행 구간</td><td>2026. 10. 12. 19:55:33 ~ 10. 13. 19:56:48 (24시간 1분)</td></tr>
+<tr><td class="c">1차 검출기</td><td>PE-Core-L14-336 MXQ(NPU). 쓰러짐·화재·연기 3종 활성, 1 fps, 임계 0.5</td></tr>
+<tr><td class="c">2차 검출기</td><td>Qwen3-VL-2B 학습본 MXQ(NPU). VQA 이진 판정, 입력 256×192 단일 프레임</td></tr>
+<tr><td class="c">침입 검출</td><td>별도 모듈(사람검출 단독). 2차 검증 비대상이며, 판정 내역은 제7항에 기재</td></tr>
+</table>
+
+<h3>영상 경로</h3>
+<div class="path">10.128.30.51:/volume2/data &nbsp;→&nbsp; DTRO/중앙로_영상백업/&lt;채널명&gt;/20260531-000000/<br>
+예시) 중앙로_1코너_회전^20260531-000000_20260531-010000_20260608-165527_0.avi</div>
+<ul>
+  <li>62개 채널 전부 1시간 단위 24개 파일로 00시부터 24시까지 연속 구성</li>
+  <li>전체 1,655개 파일, 1.4테라바이트</li>
+  <li>파일명의 <code>20260531-000000_20260531-010000</code> 이 해당 파일의 시작·종료 시각</li>
+</ul>
+
+<h2>2. 최종 알람 집계</h2>
+
+<table>
+<tr><th>카테고리</th><th class="n" style="width:12%">알람</th><th class="n" style="width:12%">정탐</th><th class="n" style="width:12%">오탐</th><th style="width:32%">비고</th></tr>
+<tr><td><b>쓰러짐</b>(falldown)</td><td class="n"><b>8</b></td><td class="n"><b>2</b></td><td class="n"><b>6</b></td><td>2차 검증 통과분</td></tr>
+<tr><td><b>화재</b>(fire)</td><td class="n">0</td><td class="n">0</td><td class="n"><b>0</b></td><td>1차 후보 자체 0건</td></tr>
+<tr><td><b>연기</b>(smoke)</td><td class="n">0</td><td class="n">0</td><td class="n"><b>0</b></td><td>1차 후보 자체 0건</td></tr>
+<tr><td><b>침입</b>(intrusion)</td><td class="n"><b>5</b></td><td class="n"><b>4</b></td><td class="n"><b>1</b></td><td>1차 단독 판정(2차 검증 비대상)</td></tr>
+<tr><th class="c">계</th><th class="n">13</th><th class="n">6</th><th class="n">7</th><th></th></tr>
+</table>
+
+<div class="box">
+<b>화재·연기 오탐 0건.</b> 1차 검출기 운영 설정에 화재·연기가 활성 상태로 등록되어 62채널 24시간 전 구간을 처리하였으며, 그 결과 화재·연기로 잘못 울린 경보는 1건도 발생하지 않음.
+</div>
+
+<h3>쓰러짐 알람 8건의 카메라별 분포</h3>
+<table>
+<tr><th class="c" style="width:12%">카메라</th><th style="width:38%">설치 위치</th><th class="n" style="width:12%">알람</th><th class="n" style="width:12%">정탐</th><th class="n" style="width:12%">오탐</th></tr>
+<tr><td class="c">837</td><td>dtro_03 1코너_회전</td><td class="n">2</td><td class="n">2</td><td class="n">0</td></tr>
+<tr><td class="c">819</td><td>dtro_42 상선_승강장_EV3</td><td class="n">4</td><td class="n">0</td><td class="n">4</td></tr>
+<tr><td class="c">814</td><td>dtro_48 시점_지상부_EV1</td><td class="n">2</td><td class="n">0</td><td class="n">2</td></tr>
+</table>
+
+<h2 class="brk">3. 쓰러짐 알람 8건 판정 내역</h2>
+
+<div class="cols">
+ <div class="col fp"><div class="hd">오탐 6건</div><div class="bd">
+
+  <div class="case">
+    <div class="id">① 카메라 819 — 4건</div>
+    <div class="meta">dtro_42 상선_승강장_EV3<br>
+      10. 13. 08:44:34 / 08:44:47 / 08:44:59 / 08:45:49<br>
+      알람번호 1172584·1172585·1172586·1172587</div>
+    <img src="images/오탐_819_1172584_1013-084434.jpg">
+    <div class="cap">우측 하단, <b>벽에 등을 대고 바닥에 앉아 휴대전화를 보는 이용객.</b>
+      다리를 뻗은 자세로 저해상도에서 누운 자세와 혼동됨.
+      운영 판정 문안이 &ldquo;바닥에 앉은 자세는 쓰러짐 아님&rdquo;으로 규정한 유형에 해당.</div>
+  </div>
+
+  <div class="case">
+    <img src="images/오탐_819_1172587_1013-084549.jpg">
+    <div class="cap">75초 경과 후 동일 인물. 동 구간 중 08:45:11 1건은 2차에서 기각되어,
+      <b>동일 장면에 대한 판정 불안정</b>이 관측됨.</div>
+    <div class="desc">
+      <div class="h">2차 검출기 서술 출력(원문)</div>
+      <div class="en">08:44:34 &mdash; &ldquo;Two people stand and walk in front of a closed elevator.
+        A third person <b>lies on the floor</b> to the right of the elevator.&rdquo;</div>
+      <div class="en" style="margin-top:1.5mm">08:44:59 &mdash; &ldquo;Two people stand facing a wall in a tiled area.
+        A third person <b>lies flat on the floor</b> in front of a closed metal door.&rdquo;</div>
+      <div style="margin-top:1.5mm">→ 바닥에 <u>앉아 있는</u> 이용객을 모델이 <b>누워 있는 것으로 인식</b>하고 있음.</div>
+    </div>
+  </div>
+
+  <div class="case">
+    <div class="id">② 카메라 814 — 2건</div>
+    <div class="meta">dtro_48 시점_지상부_EV1<br>
+      10. 13. 03:01:25 / 19:13:27<br>
+      알람번호 1172527·1172608</div>
+    <img src="images/오탐_814_1172608_1013-191327.jpg">
+    <div class="cap">승강기 <b>직상부에 설치된 어안 카메라</b>로, 하부 통행자의 몸통이
+      화면 밖으로 잘리고 머리·어깨만 수평으로 압축되어 촬영됨.
+      실제로는 <b>모자를 착용하고 보행 중인 이용객.</b></div>
+  </div>
+
+  <div class="case">
+    <img src="images/오탐_814_1172527_1013-030125.jpg">
+    <div class="cap">동일 카메라의 다른 1건. 구도·발생 원인 동일.</div>
+    <div class="desc">
+      <div class="h">2차 검출기 서술 출력(원문)</div>
+      <div class="en">03:01:25 &mdash; &ldquo;One person is <b>lying on the ground</b> in front of the closed
+        elevator doors.&rdquo;</div>
+      <div class="en" style="margin-top:1.5mm">19:13:27 &mdash; &ldquo;One person <b>lies on the ground</b>
+        in the lower right foreground.&rdquo;</div>
+      <div style="margin-top:1.5mm">→ 카메라 하부를 <u>보행 중인</u> 이용객을 모델이 <b>누워 있는 것으로 인식</b>하고 있음.</div>
+    </div>
+  </div>
+
+ </div></div>
+
+ <div class="col tp"><div class="hd">정탐 2건</div><div class="bd">
+
+  <div class="case">
+    <div class="id">① 알람번호 1172442</div>
+    <div class="meta">카메라 837 · dtro_03 1코너_회전<br>2026. 10. 12. 19:55:33</div>
+    <img src="images/정탐_1172442_cam837_1012-195533.jpg">
+    <div class="cap">계단 하부에 <b>이용객이 바닥에 누워 있고</b> 인접 위치에 다른 인원이 서서 대응 중.
+      누운 자세 명확, 주변 인원 반응 확인됨.</div>
+  </div>
+
+  <div class="case">
+    <div class="id">② 알람번호 1172612</div>
+    <div class="meta">카메라 837 · dtro_03 1코너_회전<br>2026. 10. 13. 19:55:06</div>
+    <img src="images/정탐_1172612_cam837_1013-195506.jpg">
+    <div class="cap">①과 <b>동일 장면.</b> 누운 인원, 인접 인원, 안전표지·사다리 등 배경 일치.
+      인물 위치만 소폭 상이.</div>
+  </div>
+
+  <div class="case">
+    <div class="id">2차 검출기 입력 화면</div>
+    <div class="meta">1차 썸네일 256×192 (4배 확대)</div>
+    <img src="images/정탐_1172612_1차썸네일_256x192.jpg">
+    <div class="cap">2차 검증이 실제로 수신하는 해상도.
+      해당 해상도에서도 누운 자세를 판별하여 <b>정탐을 정상 통과</b>시킴.</div>
+  </div>
+
+  <div class="box" style="margin:0">
+    두 건의 발생 간격은 23시간 59분 33초이나 장면이 동일함.
+    24시간 영상의 시작·종료 경계에 해당하여 <b>동일 구간이 2회 처리된 것으로 추정</b>되며,
+    이 경우 실제 발생 건수는 <b>1건</b>.
+  </div>
+
+ </div></div>
+</div>
+
+<h2 class="brk">3-1. 오탐 발생 원인 — 모델의 자세 인식 결과</h2>
+
+<div class="box">
+<b>오탐 6건은 모델이 해당 자세를 애초에 &ldquo;쓰러짐&rdquo;으로 인식한 결과임.</b>
+운영과 동일한 학습본 모델·판정 문안·입력 해상도(256×192)로 재현 시험을 수행하고,
+동일 입력에 대한 모델의 장면 서술을 추출하여 확인함.
+</div>
+
+<h3>재현 시험 조건</h3>
+<ul>
+  <li>모델: 운영 배포본과 동일(검증용 해시 <code>vision 819dd9f1…</code> / <code>decoder 17215a7d…</code> 일치)</li>
+  <li>실행 환경: 운영 검증서버와 동일 컨테이너(mblt-model-zoo 2.3.0+tta1 / qbruntime 1.4.0+repack1)</li>
+  <li>판정 문안: 운영 문안 원문 그대로 적용, 입력 256×192 고정</li>
+  <li>재현 결과: 1차 후보에 대한 운영 로그의 통과·기각 판정과 <b>전부 일치</b></li>
+</ul>
+
+<h3>판정 로짓의 해석</h3>
+
+<div class="box">
+<b>모델 출력은 확률이 아닌 로짓이며, &lsquo;yes&rsquo;·&lsquo;no&rsquo; 두 로짓의 차이만이 판정에 관여함.</b>
+로짓은 softmax 이전의 원시 점수로 값의 범위에 제한이 없음. 본 모델은 두 토큰의 로짓만 비교하는 이진 판정 구조이므로,
+판정 확률은 두 값의 차이를 로지스틱 함수에 통과시켜 산출함.
+</div>
+
+<div class="path">판정확률 P(yes) = 1 / (1 + e<sup>&minus;(yes로짓 &minus; no로짓)</sup>) = sigmoid(여유도)</div>
+
+<ul>
+  <li>로짓 절대값(관측 범위 36~45)은 단독으로 의미를 갖지 않음.
+      softmax 는 전체 가산 이동에 불변이므로 두 로짓에 같은 값을 더해도 확률은 변하지 않음</li>
+  <li>따라서 본 항은 절대값이 아닌 <b>차이(이하 &lsquo;여유도&rsquo;)</b>를 기재하며, 환산 확률을 병기함</li>
+  <li>여유도 0 = 확률 50%(판정 경계), +1.1 = 75%, +2.2 = 90%, +4.6 = 99%</li>
+</ul>
+
+<h3>모델 서술 출력 및 판정 로짓</h3>
+<table>
+<tr><th class="c" style="width:10%">카메라</th><th class="c" style="width:12%">발생시각</th>
+    <th class="c" style="width:8%">판정</th><th class="n" style="width:10%">여유도</th>
+    <th class="n" style="width:11%">판정확률</th>
+    <th>모델 서술 출력(발췌)</th></tr>
+<tr><td class="c">819</td><td class="c">08:44:34</td><td class="c">통과</td><td class="n">+2.464</td><td class="n">92.2%</td>
+    <td>&ldquo;A third person <b>lies on the floor</b> to the right of the elevator.&rdquo;</td></tr>
+<tr><td class="c">819</td><td class="c">08:44:47</td><td class="c">통과</td><td class="n">+1.760</td><td class="n">85.3%</td>
+    <td>&ldquo;One person <b>lies down on the floor</b> to the right of the elevator.&rdquo;</td></tr>
+<tr><td class="c">819</td><td class="c">08:44:59</td><td class="c">통과</td><td class="n">+3.872</td><td class="n">98.0%</td>
+    <td>&ldquo;A third person <b>lies flat on the floor</b> in front of a closed metal door.&rdquo;</td></tr>
+<tr><td class="c">819</td><td class="c">08:45:11</td><td class="c">기각</td><td class="n">+0.704</td><td class="n">66.9%</td>
+    <td>&ldquo;One person <b>lies flat on the floor</b> to the right.&rdquo; &mdash; 서술은 통과 건과 동일하나 판정 경계에 위치</td></tr>
+<tr><td class="c">819</td><td class="c">08:45:49</td><td class="c">통과</td><td class="n">+1.760</td><td class="n">85.3%</td>
+    <td>&ldquo;A fifth person <b>lies on the floor</b> to the right of the elevator.&rdquo;</td></tr>
+<tr><td class="c">814</td><td class="c">03:01:25</td><td class="c">통과</td><td class="n">+1.760</td><td class="n">85.3%</td>
+    <td>&ldquo;One person is <b>lying on the ground</b> in front of the closed elevator doors.&rdquo;</td></tr>
+<tr><td class="c">814</td><td class="c">19:13:27</td><td class="c">통과</td><td class="n">+0.352</td><td class="n">58.7%</td>
+    <td>&ldquo;One person <b>lies on the ground</b> in the lower right foreground.&rdquo;</td></tr>
+<tr><td class="c">814</td><td class="c">16:07:40</td><td class="c">기각</td><td class="n">&minus;5.280</td><td class="n">0.5%</td>
+    <td>&ldquo;One person <b>stands straight upright</b> inside the cabin.&rdquo;</td></tr>
+<tr><td class="c">814</td><td class="c">16:07:00</td><td class="c">기각</td><td class="n">&minus;6.688</td><td class="n">0.1%</td>
+    <td>&ldquo;<b>A foot of a person is partially visible</b> at the bottom edge. No individuals are present in the cabin.&rdquo;</td></tr>
+</table>
+<div class="fn">여유도 = &lsquo;yes&rsquo; 로짓 &minus; &lsquo;no&rsquo; 로짓. 양수이면 통과, 음수이면 기각. 판정확률은 위 환산식에 의함.</div>
+
+<h3>로짓 출력의 양자화 상태</h3>
+<div class="box">
+<b>로짓이 0.352 단위로 양자화되어 있으며, &lsquo;yes&rsquo; 로짓은 8비트 정수 상한에 포화된 상태임.</b>
+관측된 전 로짓이 0.352 의 정수배이고, &lsquo;yes&rsquo; 로짓은 측정 전 건에서 44.704(= 127 &times; 0.352)로 동일함.
+127 은 8비트 정수의 최대값으로, 신경망처리장치 양자화 출력의 상한에 해당함.
+</div>
+<table>
+<tr><th class="c" style="width:16%">로짓</th><th class="c" style="width:20%">&divide; 0.352</th><th>비고</th></tr>
+<tr><td class="c">44.704</td><td class="c"><b>127</b></td><td><b>8비트 정수 상한 &mdash; &lsquo;yes&rsquo; 로짓 전 건 동일값</b></td></tr>
+<tr><td class="c">44.000</td><td class="c">125</td><td>&lsquo;no&rsquo; 로짓(08:45:11, 기각)</td></tr>
+<tr><td class="c">42.944</td><td class="c">122</td><td>&lsquo;no&rsquo; 로짓</td></tr>
+<tr><td class="c">42.240</td><td class="c">120</td><td>&lsquo;no&rsquo; 로짓</td></tr>
+<tr><td class="c">40.832</td><td class="c">116</td><td>&lsquo;no&rsquo; 로짓</td></tr>
+<tr><td class="c">36.256</td><td class="c">103</td><td>&lsquo;no&rsquo; 로짓</td></tr>
+</table>
+<ul>
+  <li>판정이 사실상 <b>&lsquo;no&rsquo; 로짓의 변동만으로 결정</b>되는 구조임</li>
+  <li>여유도의 최소 분해능이 0.352 로, <b>판정 경계 부근에서 확률 약 8.7%포인트 간격</b>에 해당함
+      (여유도 0 &rarr; 0.352 구간에서 확률 50.0% &rarr; 58.7%)</li>
+  <li>경계값 건의 판정이 뒤집히는 현상은 이 분해능 한계와 관련이 있는 것으로 판단됨</li>
+</ul>
+
+<h3>확인 사항</h3>
+<ul>
+  <li>오탐으로 판정된 전 건에서 모델이 해당 인물을 <b>&ldquo;바닥에 누워 있다(lies on the floor / lying on the ground)&rdquo;로 서술</b>함.
+      즉 판정 문안의 적용 오류가 아니라 <b>자세 인식 단계의 오인</b>에 해당함</li>
+  <li>정상 기각 건에서는 <b>&ldquo;똑바로 서 있다(stands straight upright)&rdquo;</b>,
+      <b>&ldquo;발 일부만 화면에 보인다(a foot partially visible)&rdquo;</b>로 정확히 서술함.
+      모델이 해당 카메라 전체를 오인하는 것이 아니라, <b>화면 하단에 인물이 크게 걸리거나 바닥에 앉은 경우에 한해</b> 수평 자세로 인식함</li>
+  <li>통과 건의 여유도는 +0.352 ~ +3.872(확률 58.7 ~ 98.0%)로, 기각 건(&minus;5.280 ~ &minus;6.688, 확률 0.5 ~ 0.1%) 대비 판정 경계에 근접함. 즉 <b>통과 건은 확신도가 낮은 상태에서 통과</b>한 것임</li>
+  <li>특히 카메라 819의 08:45:11 건은 서술 내용이 통과 건과 동일함에도 확률 66.9%로 경계에 위치하여, <b>동일 장면의 판정이 뒤집히는 원인</b>으로 확인됨</li>
+  <li>운영 응답에 &lsquo;yes&rsquo;·&lsquo;no&rsquo; 로짓이 이미 포함되어 있어 판정확률 임계값(예: 90% 이상만 통과 = 여유도 +2.2) 적용이 기술적으로 가능하나, <b>현 단계의 조치 대상은 아님</b>(제6항).<br>본 시험에서 로짓을 측정한 건은 오탐 6건에 한정되며(정탐 2건 미측정), 해당 6건 중 4건이 90% 미만임. <b>정탐 건의 판정확률을 확인하기 전에는 임계값을 확정할 수 없으며</b>, 정탐이 함께 차단될 경우 미탐으로 전환되므로 임계값 도입 시 정탐 표본 확보가 선행되어야 함</li>
+</ul>
+
+<h2 class="brk">4. 1차 → 2차 검출 흐름</h2>
+
+<table>
+<tr><th style="width:40%">구분</th><th class="n" style="width:16%">건수</th><th>내용</th></tr>
+<tr><td>1차 검출기 통과(2차 전달)</td><td class="n"><b>102</b></td><td>전량 쓰러짐. 화재·연기 후보 0건</td></tr>
+<tr><td>2차 검출기 기각</td><td class="n">94</td><td>차단율 <b>92.2%</b></td></tr>
+<tr><td>2차 검출기 통과</td><td class="n"><b>8</b></td><td>전량 최종 알람 등록. 누수 0건</td></tr>
+<tr><td>최종 알람(쓰러짐)</td><td class="n"><b>8</b></td><td><b>2차 통과 8건과 일치</b></td></tr>
+<tr><td>2차 응답 실패·폴백</td><td class="n">0</td><td>24시간 연속 무중단</td></tr>
+<tr><td>2차 응답지연</td><td class="n">p95 552ms</td><td>최소 413 / 중앙 486 / 최대 644밀리초</td></tr>
+</table>
+
+<div class="fn">집계 범위는 시험 구간 전체(10. 12. 19:55 ~ 10. 13. 20:00)이며 객체저장소 원본 전수를 기준으로 함. 별첨 <code>1차추론기 결과.zip</code> 은 수집이 시험 개시 37분 후(10. 12. 20:32)부터 이루어져 102건 중 100건만 수록되어 있음. 미수록 2건은 10. 12. 19:55:33(카메라 837, 통과)과 10. 12. 19:58:49(카메라 842, 기각)임.</div>
+
+<h3>2차 검출기의 정탐 기각 여부</h3>
+
+<div class="box">
+<b>정탐을 기각한 사례 없음. 2차 검출기가 전량 올바르게 선별함.</b><br>
+기각 94건을 전수 확인하였으며, 영상 유사도(dHash) 기준 14개 장면으로 분류 후 전 장면을 확대 검토한 결과
+<b>실제 쓰러짐은 1건도 포함되어 있지 않음.</b> 기각 94건은 전부 오탐이 맞으며, 실제 쓰러짐은 전량 통과 처리됨.
+</div>
+
+<table>
+<tr><th class="c" style="width:8%">장면</th><th class="c" style="width:11%">카메라</th><th class="n" style="width:9%">건수</th><th class="c" style="width:16%">2차 판정</th><th style="width:28%">실제 장면</th><th>검토 결과</th></tr>
+<tr><td class="c">A</td><td class="c">826</td><td class="n">74</td><td class="c">기각 74</td><td>대합실 탁자에 앉아 엎드린 이용객</td><td>오탐 — 정상 기각</td></tr>
+<tr><td class="c">B</td><td class="c">814</td><td class="n">5</td><td class="c">통과 2 / 기각 3</td><td>어안 카메라 하부 통행자</td><td>오탐</td></tr>
+<tr><td class="c">C</td><td class="c">819</td><td class="n">5</td><td class="c">통과 4 / 기각 1</td><td>바닥에 앉아 휴대전화 사용</td><td>오탐</td></tr>
+<tr><td class="c">D</td><td class="c">844</td><td class="n">4</td><td class="c">기각 4</td><td>원거리 벤치 착석 인원</td><td>오탐 — 정상 기각</td></tr>
+<tr><td class="c">E</td><td class="c">860</td><td class="n">2</td><td class="c">기각 2</td><td>개집표구 원거리 통행자</td><td>오탐 — 정상 기각</td></tr>
+<tr><td class="c">F</td><td class="c">827</td><td class="n">2</td><td class="c">기각 2</td><td>승강장 벤치 착석 2인</td><td>오탐 — 정상 기각</td></tr>
+<tr><td class="c">G</td><td class="c">836</td><td class="n">1</td><td class="c">기각</td><td>화면 하단 경계 통행자</td><td>오탐 — 정상 기각</td></tr>
+<tr><td class="c">H</td><td class="c">854</td><td class="n">1</td><td class="c">기각</td><td>계단 착석 2인</td><td>오탐 — 정상 기각</td></tr>
+<tr><td class="c">I</td><td class="c">819</td><td class="n">1</td><td class="c">기각</td><td>화면 하단 경계 통행자</td><td>오탐 — 정상 기각</td></tr>
+<tr><td class="c">J</td><td class="c">850</td><td class="n">1</td><td class="c">기각</td><td>화면 하단 경계 통행자</td><td>오탐 — 정상 기각</td></tr>
+<tr><td class="c">K</td><td class="c">844</td><td class="n">1</td><td class="c">기각</td><td>원거리 인원</td><td>오탐 — 정상 기각</td></tr>
+<tr><td class="c">L</td><td class="c">825</td><td class="n">1</td><td class="c">기각</td><td>벽면에 기대어 바닥에 착석</td><td>오탐 — 정상 기각<sup>※</sup></td></tr>
+<tr><td class="c">M</td><td class="c">837</td><td class="n">2</td><td class="c">통과 2</td><td>바닥에 누운 인원 및 주변 인원</td><td><b>정탐 — 정상 통과</b></td></tr>
+<tr><td class="c">N</td><td class="c">842</td><td class="n">2</td><td class="c">기각 2</td><td>화면 하단 경계 통행자</td><td>오탐 — 정상 기각</td></tr>
+<tr><th class="c" colspan="2">계</th><th class="n">102</th><th class="c">통과 8 / 기각 94</th><th colspan="2"></th></tr>
+</table>
+
+<div class="fn">장면 M·N 은 24시간 영상이 순환 재생되는 구간 경계에서 동일 장면이 두 차례 처리된 것으로, 발생 간격이 각각 23시간 59분 33초·23시간 59분 46초임.<br>
+※ 장면 L(카메라 825, 10. 13. 15:16:59)은 벽면에 머리를 대고 다리를 뻗은 자세로 &ldquo;기대어 착석&rdquo;으로 판독함. 운영 판정 문안 규정에 따른 기각이 타당함. 다만 기각 건은 알람이 생성되지 않아 고해상도 자료가 없으므로 256×192 기준 판독임을 명기함.</div>
+
+<h2>5. 화재·연기 결과 상세</h2>
+
+<table>
+<tr><th style="width:42%">확인 항목</th><th>결과</th></tr>
+<tr><td>1차 검출기 화재·연기 활성 여부</td><td><b>활성.</b> 운영 설정 <code>node-gpu-model-mappings.json</code> 에 쓰러짐·화재·연기 3종 등록</td></tr>
+<tr><td>검출기 정상 동작 여부</td><td><b>정상.</b> 동일 일자 타 카메라군(429~439)에서 화재 7건·연기 1건 검출 확인</td></tr>
+<tr><td>중앙로 62채널 화재·연기 1차 후보</td><td><b>0건</b></td></tr>
+<tr><td>화재·연기 최종 알람</td><td><b>0건</b></td></tr>
+<tr><td><b>화재·연기 오탐</b></td><td><b>0건</b></td></tr>
+</table>
+
+<ul>
+  <li>검출기 미활성 또는 장애에 기인한 결과가 아님</li>
+  <li>24시간 중 실제 화재·연기 상황이 발생하지 않았고, 이에 대한 오경보도 발생하지 않음</li>
+  <li>오탐 억제 측면에서 화재·연기 검출은 24시간 무오탐 기록</li>
+</ul>
+
+<h2>6. 결론 및 조치사항</h2>
+
+<h3>결론</h3>
+<ul>
+  <li>2단계 검출 체계가 설계 의도대로 동작함을 확인</li>
+  <li>1차 전달 102건 중 실제 쓰러짐은 1~2건이며, 2차가 94건을 차단하는 동시에 실제 쓰러짐은 전량 통과시킴</li>
+  <li><b>정탐 누락 사례 없음</b></li>
+  <li><b>화재·연기 오탐 없음</b></li>
+  <li>오탐 6건은 모델이 해당 자세를 애초에 쓰러짐으로 인식한 결과로, 재현 시험 및 모델 서술 출력으로 확인됨</li>
+  <li>오탐 6건이 전부 엘리베이터 설치 구역 2개 카메라에 집중되어 있어, <b>해당 구역 관심영역 설정 1건으로 조치가 완결됨.</b> 1차 검출기 및 2차 판정 로직은 조치 불요함</li>
+  <li>24시간 연속 가동 중 2차 검출기 장애·폴백 없음</li>
+  <li>침입 검출은 정탐 4건·오탐 1건이며, 2차 검증을 거치지 않아 오탐이 그대로 발화됨. 정탐 4건도 열차 통과·근무자 출입 등 상시 발생 사유에 해당하므로 관심영역 설정 및 알람 종료 조건 점검 필요(제7항)</li>
+</ul>
+
+<h3>조치사항</h3>
+
+<div class="box">
+<b>쓰러짐 관련 조치는 엘리베이터 구역 관심영역 설정 1건에 한정함.</b>
+판단 기준은 <b>2차 검출기를 통과한 최종 알람</b>이며, 1차 검출기 단계의 오탐은 2차가 전량 차단하여
+최종 알람으로 이어지지 않으므로 조치 대상에서 제외함.
+</div>
+
+<table class="keep">
+<tr><th class="c" style="width:8%">순위</th><th style="width:26%">대상</th><th>조치 내용</th></tr>
+<tr><td class="c">1</td><td>카메라 814 · 819<br>(엘리베이터 설치 구역)</td>
+    <td><b>관심영역(ROI)을 엘리베이터 승강구 구역으로 한정 설정.</b><br>
+    최종 오탐 6건이 모두 해당 구역 밖(화면 하단 경계부, 벽면 바닥)에서 발생하였으므로,
+    구역 한정만으로 해소 가능함. 별도의 모델 개선이나 판정 문안 수정은 불요함</td></tr>
+</table>
+
+<h3 class="keep">조치 불요 사항</h3>
+<table class="keep">
+<tr><th style="width:30%">구분</th><th>판단 사유</th></tr>
+<tr><td><b>1차 검출기 오탐</b><br>(후보 102건)</td>
+    <td>1차는 후보 선별 단계로서 과검출이 설계상 허용 범위이며, 2차 검출기가 94건을 전량 차단하여
+    <b>최종 알람이 생성되지 않음.</b> 1차 후보가 가장 많았던 카메라 826(74건)도 전량 기각되어 동일하게 조치 불요함</td></tr>
+<tr><td><b>바닥 착석 자세</b><br>(카메라 819 유형)</td>
+    <td><b>운용상 허용 가능한 오탐 수준으로 수용함.</b> 해당 자세를 쓰러짐이 아닌 것으로 판별하도록
+    모델 또는 판정 문안을 개선할 실익이 낮으며, 과도한 억제는 실제 쓰러짐의 미탐 위험을 수반함</td></tr>
+<tr><td><b>2차 검출기 판정 로직</b></td>
+    <td>현행 유지함. 정탐 누락 0건으로 현 설정이 목적을 달성하고 있음</td></tr>
+</table>
+
+<div class="fn">제3-1항의 판정확률 임계값 적용 및 &lsquo;yes&rsquo; 로짓의 8비트 정수 상한 포화 건은
+현 단계의 조치 대상이 아니며, 정탐 표본이 확보된 이후 검토 가능한 참고 사항임.</div>
+
+<h3>판정 근거의 한계</h3>
+<ul>
+  <li>1차 썸네일은 원본도 256×192이며, 해당 해상도에서는 착석 자세와 누운 자세의 구분이 곤란함</li>
+  <li>2차 검출기도 동일 해상도를 수신하므로, 카메라 819 오탐 4건은 판정 문안이 아닌 <b>입력 해상도</b>에 기인할 가능성이 있음. 다만 해당 유형은 허용 가능한 오탐으로 수용하므로 해상도 상향은 조치 대상이 아님</li>
+  <li>기각 94건은 알람이 생성되지 않아 고해상도 자료가 없으므로, 정탐 누락 0건 판정은 256×192 기준임</li>
+</ul>
+
+<h2 class="brk">7. 침입 검출 결과 (별도 모듈)</h2>
+
+<div class="box">
+<b>침입 알람 5건 발생. 전수 확인 결과 정탐 4건, 오탐 1건.</b>
+침입은 사람검출 단독으로 판정하며 2차 검증을 거치지 않음.
+오탐 1건은 <b>사람 부재 상태에서 23시간 44분에 걸쳐 162회 반복 발화</b>하여 조치가 필요함.
+정탐 4건은 사람검출이 정확히 동작한 건이나, 열차 통과·근무자 출입 등 상시 발생 사유에 해당하여 운용 기준 수립이 필요함.
+</div>
+
+<h3>알람 내역</h3>
+<table>
+<tr><th class="c" style="width:10%">알람번호</th><th class="c" style="width:10%">카메라</th>
+    <th style="width:22%">설치 위치</th><th class="c" style="width:14%">최초 발화</th>
+    <th class="n" style="width:9%">발화<br>횟수</th><th class="c" style="width:11%">지속시간</th>
+    <th class="c">판정</th></tr>
+<tr><td class="c">1172443</td><td class="c">808</td><td>dtro_15 B1F 종점환기실</td>
+    <td class="c">10. 12. 20:12:04</td><td class="n"><b>162</b></td><td class="c"><b>23:44:44</b></td>
+    <td class="c"><b>오탐</b></td></tr>
+<tr><td class="c">1172467</td><td class="c">803</td><td>dtro_41 본선3중앙선로 11K548</td>
+    <td class="c">10. 12. 23:45:43</td><td class="n">1</td><td class="c">0:00:00</td>
+    <td class="c">정탐</td></tr>
+<tr><td class="c">1172469</td><td class="c">811</td><td>dtro_49 신호기계실</td>
+    <td class="c">10. 12. 23:53:27</td><td class="n">1</td><td class="c">0:00:00</td>
+    <td class="c">정탐</td></tr>
+<tr><td class="c">1172604</td><td class="c">811</td><td>dtro_49 신호기계실</td>
+    <td class="c">10. 13. 16:43:42</td><td class="n">1</td><td class="c">0:00:00</td>
+    <td class="c">정탐</td></tr>
+<tr><td class="c">1172607</td><td class="c">803</td><td>dtro_41 본선3중앙선로 11K548</td>
+    <td class="c">10. 13. 18:12:10</td><td class="n">1</td><td class="c">0:00:00</td>
+    <td class="c">정탐</td></tr>
+<tr><th class="c" colspan="4">계 (카메라 3대)</th><th class="n">166</th><th class="c">—</th>
+    <th class="c">정탐 4 / 오탐 1</th></tr>
+</table>
+
+<ul>
+  <li>알람 행 기준 <b>5건</b>, 발화 누적 기준 <b>166회</b></li>
+  <li>발화 166회 중 <b>162회(97.6%)가 단일 알람(1172443)에 집중</b></li>
+</ul>
+
+<h3>오탐 — 사람 부재 상태의 반복 발화(카메라 808)</h3>
+<img src="images/침입_808_종점환기실_162회.jpg" style="width:72%; border:1px solid #666; display:block; margin:2mm 0">
+<ul>
+  <li>환기실 전기 배전반 구역. <b>화면 내 사람 없음</b></li>
+  <li>10. 12. 20:12:04 ~ 10. 13. 19:56:48, <b>23시간 44분간 162회 반복 발화</b></li>
+  <li>알람 종료 조건이 성립하지 않아 단일 알람이 시험 전 구간에 걸쳐 유지됨</li>
+  <li>배관·천장 설비·암막 커튼 등 고정 구조물을 사람으로 오인한 것으로 추정</li>
+</ul>
+
+<h3>정탐 ① 열차 창문 너머 승객 검출(카메라 803)</h3>
+<div class="cols">
+ <div class="col" style="border:none"><div class="bd" style="padding:0">
+   <img src="images/침입_803_본선3중앙선로_1012-234543.jpg" style="width:100%; border:1px solid #666; display:block">
+   <div class="cap" style="font-size:8.8pt; margin-top:1.5mm">10. 12. 23:45:43 (알람 1172467)</div>
+ </div></div>
+ <div class="col" style="border:none"><div class="bd" style="padding:0">
+   <img src="images/침입_803_본선3중앙선로_1013-181210.jpg" style="width:100%; border:1px solid #666; display:block">
+   <div class="cap" style="font-size:8.8pt; margin-top:1.5mm">10. 13. 18:12:10 (알람 1172607)</div>
+ </div></div>
+</div>
+<ul style="margin-top:3mm">
+  <li><b>사람검출 자체는 정확함.</b> 본선 선로는 사람이 존재해서는 안 되는 구역이므로,
+      화면 내 사람을 검출하여 발화한 동작은 설계 의도에 부합함</li>
+  <li>검출 대상은 통과 중인 <b>열차 차량 창문 너머의 탑승객</b>이며, 궤도면에 진입한 인원은 아님</li>
+  <li>2건 모두 동일 사유이며, 열차 통과 시마다 재현될 수 있는 상시 발생 요인에 해당함</li>
+  <li>따라서 검출 성능의 문제가 아닌 <b>관심영역 설정의 문제</b>로, 궤도면 한정 설정으로 해소 가능함</li>
+</ul>
+
+<h3>정탐 ② 신호기계실 내부 보행자(카메라 811)</h3>
+<div class="cols">
+ <div class="col" style="border:none"><div class="bd" style="padding:0">
+   <img src="images/침입_811_신호기계실_1012-235327.jpg" style="width:100%; border:1px solid #666; display:block">
+   <div class="cap" style="font-size:8.8pt; margin-top:1.5mm">10. 12. 23:53:27 (알람 1172469)</div>
+ </div></div>
+ <div class="col" style="border:none"><div class="bd" style="padding:0">
+   <img src="images/침입_811_신호기계실_1013-164342.jpg" style="width:100%; border:1px solid #666; display:block">
+   <div class="cap" style="font-size:8.8pt; margin-top:1.5mm">10. 13. 16:43:42 (알람 1172604)</div>
+ </div></div>
+</div>
+<ul style="margin-top:3mm">
+  <li>신호기계실 내부를 <b>보행 중인 인원이 실제로 촬영됨.</b> 사람검출 자체는 정확함</li>
+  <li>검출 대상이 궤도면·설비구역 내 실제 인원이므로 <b>검출 목적에 부합하는 정탐</b>에 해당함</li>
+  <li>다만 해당 인원이 근무자인지 외부인인지는 영상만으로 판별 불가</li>
+  <li>근무자 출입이 상시 발생하는 구역이면 운용 기준(출입 허용 시간대 등) 별도 설정 필요</li>
+</ul>
+
+<div class="keep">
+<h3>조치사항</h3>
+<table>
+<tr><th class="c" style="width:8%">순위</th><th style="width:22%">대상</th><th>조치 내용</th></tr>
+<tr><td class="c">1</td><td>카메라 808<br>(종점환기실)</td>
+    <td>관심영역(ROI) 재설정으로 배전반·배관·커튼 구역 제외. 아울러 <b>알람 종료 조건 점검</b> 필요 — 23시간 44분 미종료는 ROI 조정만으로 해소되지 않음</td></tr>
+<tr><td class="c">2</td><td>카메라 803<br>(본선3중앙선로)</td>
+    <td>검출은 정상(정탐). 다만 열차 통과 시마다 발화하여 운용 부담이 발생하므로,
+    관심영역을 <b>궤도면으로 한정</b>하여 열차 차체·창문 영역 제외. 열차 통과 시간대 발화 억제 병행 검토</td></tr>
+<tr><td class="c">3</td><td>카메라 811<br>(신호기계실)</td>
+    <td>검출 자체는 정상. 근무자 출입 허용 기준 수립 후 적용</td></tr>
+</table>
+
+<div class="box">
+침입 검출의 <b>사람검출 성능 자체에는 결함이 확인되지 않음</b>(정탐 4건).
+발화 건수 저감은 전적으로 <b>관심영역 설정</b>으로 달성 가능한 사안임.
+다만 카메라 808의 오탐 1건은 사람 부재 상태에서 23시간 44분간 알람이 유지되었으므로,
+관심영역 조정만으로는 해소되지 않으며 <b>알람 종료 조건 점검을 병행</b>하여야 함.
+</div>
+</div>
+
+</body></html>

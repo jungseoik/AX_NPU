@@ -1,0 +1,83 @@
+{
+ "설정": {
+  "mxq": "/home/models/huggingface/hub/models--PIA-SPACE-LAB--MXQ_NPU/snapshots/f76e03d1f8529403bdd57f27eb4e847e602b650e/W4A16/sws_optq/single/pe_full.mxq",
+  "quant": "W4A16",
+  "tuning": "sws_optq",
+  "scheme": "single",
+  "core_mode": "CoreMode.Single",
+  "text_features": "/home/gpuadmin/AX_NPU/third_party/Product-AI-mono/assets/model/text_features.json",
+  "n_prompts": 13449,
+  "method": "topk",
+  "top_candidate": 13,
+  "queue_size": 3,
+  "alarm_duration": 2,
+  "fps": 1,
+  "npu_cards": 8
+ },
+ "결과": {
+  "falldown": {
+   "1차 단독": {
+    "precision": 1.0,
+    "recall": 0.4840764331210191,
+    "f1": 65.23605150214593,
+    "tp": 152,
+    "fp": 0,
+    "fn": 162,
+    "tn": 1936
+   },
+   "1차+2차": {
+    "precision": 1.0,
+    "recall": 0.44904458598726116,
+    "f1": 61.97802197802198,
+    "tp": 141,
+    "fp": 0,
+    "fn": 173,
+    "tn": 1936
+   }
+  },
+  "fire": {
+   "1차 단독": {
+    "precision": 0.9336650082918739,
+    "recall": 0.8077474892395983,
+    "f1": 86.61538461538461,
+    "tp": 563,
+    "fp": 40,
+    "fn": 134,
+    "tn": 1513
+   },
+   "1차+2차": {
+    "precision": 1.0,
+    "recall": 0.5408895265423243,
+    "f1": 70.2048417132216,
+    "tp": 377,
+    "fp": 0,
+    "fn": 320,
+    "tn": 1553
+   }
+  },
+  "smoke": {
+   "1차 단독": {
+    "precision": 1.0,
+    "recall": 0.4027777777777778,
+    "f1": 57.425742574257434,
+    "tp": 290,
+    "fp": 0,
+    "fn": 430,
+    "tn": 780
+   },
+   "1차+2차": {
+    "precision": 1.0,
+    "recall": 0.11944444444444445,
+    "f1": 21.33995037220844,
+    "tp": 86,
+    "fp": 0,
+    "fn": 634,
+    "tn": 780
+   }
+  }
+ },
+ "매크로F1": {
+  "1차 단독": 69.75905956392933,
+  "1차+2차": 51.174271354484006
+ }
+}
